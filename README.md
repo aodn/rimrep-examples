@@ -1,7 +1,7 @@
 # rimrep-examples
 A repository to contain example notebooks and documentation for the RIMReP project
 
-## RLS - data from Reef Life Survey
+## USE CASE 01: RLS - data from Reef Life Survey
 
 The notebook responds to this request: 
 
