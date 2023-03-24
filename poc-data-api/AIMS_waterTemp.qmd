@@ -13,7 +13,6 @@ This notebook is to demonstrate how to interact with RIMReP `geoparquet` collect
 
 
 ```{r setup}
-suppressMessages(library(aws.s3))
 suppressMessages(library(arrow))
 suppressMessages(library(dplyr))
 suppressMessages(library(leaflet))
