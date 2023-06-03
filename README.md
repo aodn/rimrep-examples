@@ -1,6 +1,6 @@
 # rimrep-examples
 
-A repository to contain example notebooks and documentation for the RIMReP project
+A repository to contain example notebooks and documentation for the RIMReP project.
 
 ## Data API proof-of-concept
 
@@ -13,7 +13,7 @@ A repository to contain example notebooks and documentation for the RIMReP proje
 
 #### R
 
-These are [quarto](https://quarto.org) R notebooks
+These are [quarto](https://quarto.org) R notebooks:
 
 - [AIMS temperature loggers](https://github.com/aodn/rimrep-examples/blob/main/poc-data-api/AIMS_waterTemp.qmd)
 
