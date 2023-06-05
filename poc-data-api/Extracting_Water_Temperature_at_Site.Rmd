@@ -1,0 +1,211 @@
+---
+title: "Extracting temperature at specific reefs"
+author: "Denisse Fierro Arcos"
+date: "2023-06-05"
+output: 
+  github_document:
+    toc: true
+    html_preview: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Goal of this notebook
+
+This notebook will demonstrate how to access the RIMReP `geoparquet` collection for AIMS Sea Surface Temperature Monitoring Program. This dataset includes data since 1980 for tropical and subtropical coral reefs around Australia, including 80 Great Barrier Reef sites.
+
+Then, we will extract the coordinates for all sites sampled in this monitoring program. This way we can extract data for the site of our choice using the name of the site of our interest, without the need to know their coordinates.
+
+## Loading libraries
+
+```{r libraries, results = "hide", message = F, warning = F}
+library(arrow)
+library(dplyr)
+library(magrittr)
+library(stringr)
+library(wkb)
+library(ggplot2)
+library(sf)
+library(lubridate)
+```
+
+## Connecting to RIMReP collection
+
+As mentioned above, we will connect to the AIMS Sea Surface Temperature Monitoring Program. This can take a minute or so.
+
+```{r connect}
+#Establishing connection
+data_bucket <- s3_bucket("s3://rimrep-data-public/091-aims-sst/test-50-64-spatialpart")
+
+#Accessing dataset
+data_df <- open_dataset(data_bucket)
+```
+
+## Exploring dataset structure
+
+We can explore the dataset `schema` to understand its structure, and identify the fields that are relevant to us.
+
+
+```{r explore}
+#Checking data structure
+data_df$schema
+```
+We can see that there are a number of variables available in this dataset. We will need to access two variables to create our list of sampled sites in this monitoring program:  
+- `site`, which includes the name of all sites sampled
+- `geometry`, which includes latitude and longitude coordinates in [well-known binary (WKB)](https://loc.gov/preservation/digital/formats/fdd/fdd000549.shtml) format.
+  
+We will transform the information in the `geometry` field into coordinate pairs (i.e., latitude and longitude in degrees).  
+Note that you get additional information about our dataset by exploring its metadata as shown below.
+
+```{r metadata}
+#Checking metadata
+data_df$metadata
+```
+## Extracting sites and coordinates from dataset
+
+We can extract data from the AIMS dataset by using `dplyr` verbs as shown below.
+
+```{r sites_bin}
+sites <- data_df %>% 
+  #We select unique sites included in the dataset
+  distinct(site, geometry) %>%
+  #This will load them into memory
+  collect()
+
+#Checking results
+glimpse(sites)
+```
+As explained above, the `geometry` field is in WKB format, which we will transform into degree coordinates in the next step. Here, we will use the `WKB` to transform the `geometry` and then we will convert it to an `sf` object for easy data manipulation.
+
+### Transforming `geometry` format
+```{r sites_deg}
+sites <- sites %>% 
+  #Adding column with coordinate pairs in degrees
+  mutate(coords_deg = readWKB(geometry) %>% st_as_sf()) %>% 
+  #Separating coordinate pairs into latitude and longitude columns
+  mutate(lon = st_coordinates(coords_deg)[,"X"],
+         lat = st_coordinates(coords_deg)[,"Y"])
+
+#Checking results - We will exclude the geometry column
+head(sites) %>% 
+  select(!geometry) %>% 
+  head()
+```
+
+## Plotting map of sampled sites in this dataset
+
+We will make a map of all sites included in the AIMS Water Temperature Monitoring Program. We will also highlight the location of two sites: **Hayman Island** and **Heron Island** in red. We will use these sites as an example to show how to extract data at multiple sites of interest.
+
+```{r map_sites}
+#Loading basemap with countries in Oceania and Asia
+oce_asia <- rnaturalearth::ne_countries(continent = c("oceania", "asia"), 
+                                     returnclass = "sf")
+
+#Creating map with all sites included in dataset
+#First we plot the basemap with the countries in Oceania and Asia
+oce_asia %>% 
+  ggplot()+
+  geom_sf()+
+  #Plotting monitoring sites
+  geom_point(inherit.aes = F, data = sites, aes(x = lon, y = lat))+
+  geom_point(inherit.aes = F, data = sites[sites["site"] == "Hayman Island" | sites["site"] == "Heron Island",], 
+             aes(x = lon, y = lat), color = "red", size = 2)+
+  #Changing map limits - Adding a buffer of 2 degree around max and min site coordinates
+  lims(y = c(floor(min(sites$lat))-2, ceiling(max(sites$lat))+2),
+       x = c(floor(min(sites$lon))-2, ceiling(max(sites$lon))+2))+
+  #Removing default grey background
+  theme_bw()
+```
+
+## Extracting data for one site of interest
+
+We can use the information in our `sites` variable to extract data for a site of interest. All we need to know is the name of the site, as shown below.  
+  
+Here, we will use data collected at **Hayman Island** and **Heron Island** as an example. We will calculate monthly means at each site, so we can plot time series that will show us how temperature has changed over time.
+
+```{r site_coords}
+sites_coords <- sites %>% 
+  #Using random site as example
+  filter(site %in% c("Hayman Island", "Heron Island")) %>% 
+  #Extracting latitude and longitude coordinates
+  select(site, lon, lat)
+
+#Checking results
+sites_coords
+```
+
+We can see that there are multiple coordinates for each site, but they are located in close proximity to one another. We will use this information to extract data from the dataset.  
+  
+Note that `qc_val` is the variable containing the temperature data in this dataset.
+
+```{r extract}
+sites_temp <- data_df %>% 
+  #We will only keep data for the sites of our interest
+  inner_join(sites_coords, by = c("site", "lon", "lat"))%>% 
+  #We will two new columns: year and month to calculate monthly means
+  mutate(year = year(time),
+         month = month(time)) %>% 
+  #We will now group data by month, year and site
+  group_by(year, month, site) %>% 
+  #Calculating monthly means for temperature at each site
+  summarise(temp_monthly_mean = round(mean(qc_val, na.rm = TRUE), 2),
+            #Number of points used in monthly mean calculations
+            nPoints = n()) %>% 
+  #Arranging in chronological order
+  arrange(site, year, month) %>% 
+  #Turning results into data frame
+  collect()
+
+#Checking results
+head(sites_temp)
+```
+
+### Plotting timeseries
+
+We can now use `ggplot2` to create a plot showing how temperature has changed over time. We will save the plot as a variable so we can save it to our local machine later.
+
+```{r timeseries_plot}
+temp_plot <- sites_temp %>% 
+  #Combining year and month columns into one
+  mutate(date = ym(paste0(year, "-", month))) %>% 
+  #Plotting temperature of y axis and time on x axis. Color data by site.
+  ggplot(aes(x = date, y = temp_monthly_mean, color = site))+
+  #Plot data as points and lines
+  geom_point()+
+  geom_line()+
+  #Creating subplots for each site for easy comparison
+  facet_grid(~site)+
+  #Removing default grey background
+  theme_bw()+
+  #Change position of legend
+  theme(legend.position = "top")+
+  #Change position and title of legend
+  guides(colour = guide_legend(title.position = "top", title.hjust = 0.5, title = "Site names"))
+
+#Checking plot
+temp_plot
+```
+
+## Saving data summaries and plot
+We will need to provide a path to the folder where we want to save our data summaries and plots, as well as the file names for our outputs.
+
+```{r saving_outputs, eval = F}
+#First we will provide a path to the folder where we want to save our data
+folder_out <- "Outputs"
+
+#Checking if folder exists, if not, create it
+if(!dir.exists(folder_out)){
+  dir.create(folder_out)
+}
+
+#Saving data summaries
+data_out <- paste(folder_out, "monthly_means_temperature.csv", sep = "/")
+write_csv_arrow(sites_temp, file = data_out)
+
+#Saving plot
+plot_out <- paste(folder_out, "monthly_means_timeseries.tif", sep = "/")
+ggsave(plot_out, temp_plot, device = "tiff")
+```
+
