@@ -147,8 +147,8 @@ glimpse(sites)
 
     ## Rows: 516
     ## Columns: 2
-    ## $ site     <chr> "Hamelin Bay", "Flinders Bay", "Geographe Bay", "Cowaramup Ba…
-    ## $ geometry <arrw_bnr> <01, 01, 00, 00, 00, 19, e2, 58, 17, b7, c1, 5c, 40, b1,…
+    ## $ site     <chr> "Vannessas", "Hamelin Bay", "Flinders Bay", "Geographe Bay", …
+    ## $ geometry <arrw_bnr> <01, 01, 00, 00, 00, 27, 31, 08, ac, 1c, c4, 62, 40, ae,…
 
 As explained above, the `geometry` field is in WKB format, which we will
 transform into degree coordinates in the next step. Here, we will use
@@ -166,20 +166,20 @@ sites <- sites %>%
          lat = st_coordinates(coords_deg)[,"Y"])
 
 #Checking results - We will exclude the geometry column
-head(sites) %>% 
+sites %>% 
   select(!geometry) %>% 
   head()
 ```
 
     ## # A tibble: 6 × 4
-    ##   site          coords_deg$geometry   lon   lat
-    ##   <chr>                     <POINT> <dbl> <dbl>
-    ## 1 Hamelin Bay   (115.0268 -34.2206)  115. -34.2
-    ## 2 Flinders Bay  (115.2009 -34.3725)  115. -34.4
-    ## 3 Geographe Bay (115.1499 -33.6308)  115. -33.6
-    ## 4 Cowaramup Bay  (114.9875 -33.861)  115. -33.9
-    ## 5 Canal Rocks    (114.997 -33.6693)  115. -33.7
-    ## 6 Nambung Bay   (115.0803 -30.5377)  115. -30.5
+    ##   site          coords_deg$geometry   lon    lat
+    ##   <chr>                     <POINT> <dbl>  <dbl>
+    ## 1 Vannessas       (150.1285 -5.295)  150.  -5.30
+    ## 2 Hamelin Bay   (115.0268 -34.2206)  115. -34.2 
+    ## 3 Flinders Bay  (115.2009 -34.3725)  115. -34.4 
+    ## 4 Geographe Bay (115.1499 -33.6308)  115. -33.6 
+    ## 5 Cowaramup Bay  (114.9875 -33.861)  115. -33.9 
+    ## 6 Canal Rocks    (114.997 -33.6693)  115. -33.7
 
 ## Plotting map of sampled sites in this dataset
 

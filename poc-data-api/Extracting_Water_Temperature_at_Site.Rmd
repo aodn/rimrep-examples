@@ -89,7 +89,7 @@ sites <- sites %>%
          lat = st_coordinates(coords_deg)[,"Y"])
 
 #Checking results - We will exclude the geometry column
-head(sites) %>% 
+sites %>% 
   select(!geometry) %>% 
   head()
 ```
