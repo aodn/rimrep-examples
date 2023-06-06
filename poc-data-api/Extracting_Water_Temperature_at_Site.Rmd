@@ -63,7 +63,7 @@ Note that you get additional information about our dataset by exploring its meta
 #Checking metadata
 data_df$metadata
 ```
-## Extracting sites and coordinates from dataset
+## Extracting sites and coordinates from dataset (Option #1)
 
 We can extract data from the AIMS dataset by using `dplyr` verbs as shown below.
 
@@ -91,8 +91,26 @@ sites <- sites %>%
 #Checking results - We will exclude the geometry column
 sites %>% 
   select(!geometry) %>% 
+  arrange(site) %>% 
   head()
 ```
+
+## Extracting sites and coordinates from dataset (Option #2)
+
+You may have noticed while [exploring the dataset structure](#exploring-dataset-structure) that this dataset also includes `lat` and `lon` fields. As their name suggest, they contain latitude and longitude values in decimal degrees. We could also use these fields to extract coordinates as shown in the block below.
+
+```{r lat_lon}
+data_df %>% 
+  #We select unique sites included in the dataset together with lat and lon values
+  distinct(site, lon, lat) %>% 
+  #Selecting the first rows for comparison with option#1
+  arrange(site) %>% 
+  head() %>% 
+  #We load them into memory
+  collect()
+```
+The two options shown for extracting sites and coordinates from our dataset offer the same results!
+
 
 ## Plotting map of sampled sites in this dataset
 

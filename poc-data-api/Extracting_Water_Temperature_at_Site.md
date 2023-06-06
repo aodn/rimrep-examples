@@ -12,12 +12,15 @@ Denisse Fierro Arcos
     collection</a>
   - <a href="#exploring-dataset-structure"
     id="toc-exploring-dataset-structure">Exploring dataset structure</a>
-  - <a href="#extracting-sites-and-coordinates-from-dataset"
-    id="toc-extracting-sites-and-coordinates-from-dataset">Extracting sites
-    and coordinates from dataset</a>
+  - <a href="#extracting-sites-and-coordinates-from-dataset-option-1"
+    id="toc-extracting-sites-and-coordinates-from-dataset-option-1">Extracting
+    sites and coordinates from dataset (Option #1)</a>
     - <a href="#transforming-geometry-format"
       id="toc-transforming-geometry-format">Transforming <code>geometry</code>
       format</a>
+  - <a href="#extracting-sites-and-coordinates-from-dataset-option-2"
+    id="toc-extracting-sites-and-coordinates-from-dataset-option-2">Extracting
+    sites and coordinates from dataset (Option #2)</a>
   - <a href="#plotting-map-of-sampled-sites-in-this-dataset"
     id="toc-plotting-map-of-sampled-sites-in-this-dataset">Plotting map of
     sampled sites in this dataset</a>
@@ -129,7 +132,7 @@ data_df$metadata
     ## $geo
     ## [1] "{\"primary_column\": \"geometry\", \"columns\": {\"geometry\": {\"encoding\": \"WKB\", \"crs\": null, \"geometry_type\": \"Point\", \"bbox\": [112.9866, -34.3725, 115.7104, -22.495]}}, \"version\": \"0.4.0\", \"creator\": {\"library\": \"geopandas\", \"version\": \"0.12.2\"}}"
 
-## Extracting sites and coordinates from dataset
+## Extracting sites and coordinates from dataset (Option \#1)
 
 We can extract data from the AIMS dataset by using `dplyr` verbs as
 shown below.
@@ -147,8 +150,8 @@ glimpse(sites)
 
     ## Rows: 516
     ## Columns: 2
-    ## $ site     <chr> "Vannessas", "Hamelin Bay", "Flinders Bay", "Geographe Bay", …
-    ## $ geometry <arrw_bnr> <01, 01, 00, 00, 00, 27, 31, 08, ac, 1c, c4, 62, 40, ae,…
+    ## $ site     <chr> "Hamelin Bay", "Flinders Bay", "Geographe Bay", "Cowaramup Ba…
+    ## $ geometry <arrw_bnr> <01, 01, 00, 00, 00, 19, e2, 58, 17, b7, c1, 5c, 40, b1,…
 
 As explained above, the `geometry` field is in WKB format, which we will
 transform into degree coordinates in the next step. Here, we will use
@@ -168,18 +171,51 @@ sites <- sites %>%
 #Checking results - We will exclude the geometry column
 sites %>% 
   select(!geometry) %>% 
+  arrange(site) %>% 
   head()
 ```
 
     ## # A tibble: 6 × 4
-    ##   site          coords_deg$geometry   lon    lat
-    ##   <chr>                     <POINT> <dbl>  <dbl>
-    ## 1 Vannessas       (150.1285 -5.295)  150.  -5.30
-    ## 2 Hamelin Bay   (115.0268 -34.2206)  115. -34.2 
-    ## 3 Flinders Bay  (115.2009 -34.3725)  115. -34.4 
-    ## 4 Geographe Bay (115.1499 -33.6308)  115. -33.6 
-    ## 5 Cowaramup Bay  (114.9875 -33.861)  115. -33.9 
-    ## 6 Canal Rocks    (114.997 -33.6693)  115. -33.7
+    ##   site        coords_deg$geometry   lon   lat
+    ##   <chr>                   <POINT> <dbl> <dbl>
+    ## 1 100th Site   (96.8709 -12.1069)  96.9 -12.1
+    ## 2 19-131 Reef (149.3786 -19.7641) 149.  -19.8
+    ## 3 19-131 Reef (149.3802 -19.7662) 149.  -19.8
+    ## 4 19-131 Reef  (149.376 -19.7728) 149.  -19.8
+    ## 5 19-138 Reef (149.4305 -19.8069) 149.  -19.8
+    ## 6 19-138 Reef (149.4199 -19.8024) 149.  -19.8
+
+## Extracting sites and coordinates from dataset (Option \#2)
+
+You may have noticed while [exploring the dataset
+structure](#exploring-dataset-structure) that this dataset also includes
+`lat` and `lon` fields. As their name suggest, they contain latitude and
+longitude values in decimal degrees. We could also use these fields to
+extract coordinates as shown in the block below.
+
+``` r
+data_df %>% 
+  #We select unique sites included in the dataset together with lat and lon values
+  distinct(site, lon, lat) %>% 
+  #Selecting the first rows for comparison with option#1
+  arrange(site) %>% 
+  head() %>% 
+  #We load them into memory
+  collect()
+```
+
+    ## # A tibble: 6 × 3
+    ##   site          lon   lat
+    ##   <chr>       <dbl> <dbl>
+    ## 1 100th Site   96.9 -12.1
+    ## 2 19-131 Reef 149.  -19.8
+    ## 3 19-131 Reef 149.  -19.8
+    ## 4 19-131 Reef 149.  -19.8
+    ## 5 19-138 Reef 149.  -19.8
+    ## 6 19-138 Reef 149.  -19.8
+
+The two options shown for extracting sites and coordinates from our
+dataset offer the same results!
 
 ## Plotting map of sampled sites in this dataset
 
