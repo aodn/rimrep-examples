@@ -15,7 +15,7 @@ library(sf)
 library(lubridate)
 
 
-# Defining functions ------------------------------------------------------
+# Defining supporting functions -------------------------------------------
 
 #Extracting features by feature name
 sub_site <- function(site_name, sites){
@@ -112,6 +112,8 @@ gbr_features <- function(site_name = NULL, site_ID = NULL){
     #Assigning reference systems: WGS84 (EPSG: 4326)
     st_set_crs(4326)
   
+  sites_all <- st_make_valid(sites_all)
+  
   if(!is.null(site_name) & !is.null(site_ID)){
     names_sub <- sub_site(site_name, sites_all)
     ids_sub <- sub_ID(site_ID, sites_all)
@@ -123,7 +125,21 @@ gbr_features <- function(site_name = NULL, site_ID = NULL){
   
   if(is.null(site_name) & is.null(site_ID)){
     return(sites_all)
-  }else(return(sites_sub))
+  }else(return(st_make_valid(sites_sub)))
 }
 
 
+# Clipping AIMS sites with GBR features -----------------------------------
+sites_of_interest <- function(sites_pts, area_polygons){
+  #Checking all polygons have valid geometries, otherwise fix
+  if(sum(!st_is_valid(un_reefs)) != 0){
+    area_polygons <- st_make_valid(area_polygons)
+  }
+  #Cropping to polygon boundaries
+  crop_sites <- st_crop(sites_pts, area_polygons)
+  #Extracting points that intersect with polygon
+  sites_index <- st_intersects(crop_sites, area_polygons)
+  crop_sites <- crop_sites[lengths(sites_index) > 0,]
+  
+  return(crop_sites)
+}
