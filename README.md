@@ -28,6 +28,7 @@ These are [quarto](https://quarto.org) R notebooks:
 We also have the following `R` markdown notebooks:
 - [Extracting water temperature at site](https://github.com/aodn/rimrep-examples/blob/main/poc-data-api/Extracting_Water_Temperature_at_site.md): This notebook calculates monthly temperature means for any sites of interest included in the AIMS Sea Surface Temperature Monitoring Program. Data summaries and plots saved in local machine.  
 - [Extracting spatial data GBR](https://github.com/aodn/rimrep-examples/blob/main/poc-data-api/Extracting_Spatial_Data_GBR_Features.md): This notebook extracts spatial data for all above water features within the Great Barrier Reef Marine Protected Area.
+- [Extracting water temperature within GBR feature boundaries](https://github.com/aodn/rimrep-examples/blob/main/poc-data-api/Extracting_Water_Temperature_GBR_Features.md): This notebook will identify AIMS water temperature monitoring sites within a GBR feature and calculate monthly means.
   
 **Note:** You will notice that there are two files with the same name, but two different extensions: `.md` and `.Rmd`. They contain the same information, but in different formats. The `.Rmd` file is the source code of the notebook, which you can open in RStudio and run. While the `.md` file is the output of the `.Rmd` file and they include the results of running the code. If you click on the notebook links above, it will take you to the `.md` files, which are nicely formatted for GitHub.
   
