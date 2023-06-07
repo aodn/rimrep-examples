@@ -5,30 +5,36 @@ Denisse Fierro Arcos
 
 - <a href="#goal-of-this-notebook" id="toc-goal-of-this-notebook">Goal of
   this notebook</a>
-  - <a href="#loading-libraries" id="toc-loading-libraries">Loading
-    libraries</a>
-  - <a href="#connecting-to-rimrep-collection"
-    id="toc-connecting-to-rimrep-collection">Connecting to RIMReP
-    collection</a>
+- <a href="#loading-libraries" id="toc-loading-libraries">Loading
+  libraries</a>
+- <a href="#connecting-to-rimrep-collection"
+  id="toc-connecting-to-rimrep-collection">Connecting to RIMReP
+  collection</a>
   - <a href="#exploring-dataset-structure"
     id="toc-exploring-dataset-structure">Exploring dataset structure</a>
-  - <a href="#extracting-sites-and-coordinates-from-dataset-option-1"
-    id="toc-extracting-sites-and-coordinates-from-dataset-option-1">Extracting
-    sites and coordinates from dataset (Option #1)</a>
+- <a href="#extracting-variables-of-our-interest-from-dataset"
+  id="toc-extracting-variables-of-our-interest-from-dataset">Extracting
+  variables of our interest from dataset</a>
+  - <a href="#creating-deployment_location-column"
+    id="toc-creating-deployment_location-column">Creating
+    <code>deployment_location</code> column</a>
+  - <a href="#extracting-latitude-and-longitude-values-option-1"
+    id="toc-extracting-latitude-and-longitude-values-option-1">Extracting
+    latitude and longitude values (Option #1)</a>
     - <a href="#transforming-geometry-format"
       id="toc-transforming-geometry-format">Transforming <code>geometry</code>
       format</a>
   - <a href="#extracting-sites-and-coordinates-from-dataset-option-2"
     id="toc-extracting-sites-and-coordinates-from-dataset-option-2">Extracting
     sites and coordinates from dataset (Option #2)</a>
-  - <a href="#plotting-map-of-sampled-sites-in-this-dataset"
-    id="toc-plotting-map-of-sampled-sites-in-this-dataset">Plotting map of
-    sampled sites in this dataset</a>
-  - <a href="#extracting-data-for-one-site-of-interest"
-    id="toc-extracting-data-for-one-site-of-interest">Extracting data for
-    one site of interest</a>
-    - <a href="#plotting-timeseries" id="toc-plotting-timeseries">Plotting
-      timeseries</a>
+- <a href="#plotting-map-of-sampled-sites-in-this-dataset"
+  id="toc-plotting-map-of-sampled-sites-in-this-dataset">Plotting map of
+  sampled sites in this dataset</a>
+- <a href="#extracting-data-for-sites-of-interest"
+  id="toc-extracting-data-for-sites-of-interest">Extracting data for sites
+  of interest</a>
+  - <a href="#plotting-timeseries" id="toc-plotting-timeseries">Plotting
+    timeseries</a>
   - <a href="#saving-data-summaries-and-plot"
     id="toc-saving-data-summaries-and-plot">Saving data summaries and
     plot</a>
@@ -45,7 +51,7 @@ monitoring program. This way we can extract data for the site of our
 choice using the name of the site of our interest, without the need to
 know their coordinates.
 
-## Loading libraries
+# Loading libraries
 
 ``` r
 library(arrow)
@@ -58,7 +64,7 @@ library(sf)
 library(lubridate)
 ```
 
-## Connecting to RIMReP collection
+# Connecting to RIMReP collection
 
 As mentioned above, we will connect to the AIMS Sea Surface Temperature
 Monitoring Program. This can take a minute or so.
@@ -109,17 +115,31 @@ data_df$schema
     ## See $metadata for additional Schema metadata
 
 We can see that there are a number of variables available in this
-dataset. We will need to access two variables to create our list of
+dataset. We will need to access three variables to create a list of all
 sampled sites in this monitoring program:  
-- `site`, which includes the name of all sites sampled - `geometry`,
-which includes latitude and longitude coordinates in [well-known binary
+- `site`, which includes the name of all sites where temperature loggers
+were deployed - `subsite`, which includes a shorten version of the site
+name and an indication of where loggers where deployed (see below for
+more details) - `geometry`, which includes latitude and longitude
+coordinates in [well-known binary
 (WKB)](https://loc.gov/preservation/digital/formats/fdd/fdd000549.shtml)
-format.
+format
 
-We will transform the information in the `geometry` field into
-coordinate pairs (i.e., latitude and longitude in degrees).  
-Note that you get additional information about our dataset by exploring
-its metadata as shown below.
+Based on the `subsite` information, we will create a new column that we
+will call `deployment_location`. If `subsite` string includes `SL`, this
+indicates the temperature logger was deployed on a reef slope (depths of
+3 m or more). If this is the case, our new column will be labelled
+`reef slope`. If `FL` is included in the `subsite` string, this means
+the temperature logger was deployed on a reef flat (areas less than 3 m
+deep). In this case, we will classify this as `reef flat` in our new
+column.
+
+Next, we will transform the information contained in the `geometry`
+field into coordinate pairs (i.e., latitude and longitude in decimal
+degrees).
+
+**Note** that you can get additional information about the AIMS dataset
+by exploring its metadata as shown below.
 
 ``` r
 #Checking metadata
@@ -132,7 +152,7 @@ data_df$metadata
     ## $geo
     ## [1] "{\"primary_column\": \"geometry\", \"columns\": {\"geometry\": {\"encoding\": \"WKB\", \"crs\": null, \"geometry_type\": \"Point\", \"bbox\": [112.9866, -34.3725, 115.7104, -22.495]}}, \"version\": \"0.4.0\", \"creator\": {\"library\": \"geopandas\", \"version\": \"0.12.2\"}}"
 
-## Extracting sites and coordinates from dataset (Option \#1)
+# Extracting variables of our interest from dataset
 
 We can extract data from the AIMS dataset by using `dplyr` verbs as
 shown below.
@@ -140,7 +160,7 @@ shown below.
 ``` r
 sites <- data_df %>% 
   #We select unique sites included in the dataset
-  distinct(site, geometry) %>%
+  distinct(site, subsite, geometry) %>%
   #This will load them into memory
   collect()
 
@@ -148,15 +168,44 @@ sites <- data_df %>%
 glimpse(sites)
 ```
 
-    ## Rows: 516
-    ## Columns: 2
+    ## Rows: 589
+    ## Columns: 3
     ## $ site     <chr> "Hamelin Bay", "Flinders Bay", "Geographe Bay", "Cowaramup Ba…
+    ## $ subsite  <chr> "HAMBAYFL1", "FLINDERSBAY1", "GEOBAYFL1", "COWBAYFL1", "CANAL…
     ## $ geometry <arrw_bnr> <01, 01, 00, 00, 00, 19, e2, 58, 17, b7, c1, 5c, 40, b1,…
 
-As explained above, the `geometry` field is in WKB format, which we will
-transform into degree coordinates in the next step. Here, we will use
-the `WKB` to transform the `geometry` and then we will convert it to an
-`sf` object for easy data manipulation.
+## Creating `deployment_location` column
+
+We will use the `subsite` column to create the categories in our new
+column, as explained in the [exploring the dataset
+structure](#exploring-dataset-structure). If no condition is met, then
+we will label the row as `NA`.
+
+``` r
+sites <- sites %>% 
+  #Adding new column - Given categories based on a condition
+  mutate(deployment_location =  case_when(str_detect(subsite, "FL[0-9]{1}") ~ "reef flat",
+                                          str_detect(subsite, "SL[0-9]{1}") ~ "reef slope",
+                                          #If no condition is met, return NA
+                                          T ~ NA))
+
+#Checking results
+glimpse(sites)
+```
+
+    ## Rows: 589
+    ## Columns: 4
+    ## $ site                <chr> "Hamelin Bay", "Flinders Bay", "Geographe Bay", "C…
+    ## $ subsite             <chr> "HAMBAYFL1", "FLINDERSBAY1", "GEOBAYFL1", "COWBAYF…
+    ## $ geometry            <arrw_bnr> <01, 01, 00, 00, 00, 19, e2, 58, 17, b7, c1, …
+    ## $ deployment_location <chr> "reef flat", NA, "reef flat", "reef flat", "reef f…
+
+## Extracting latitude and longitude values (Option \#1)
+
+As explained [above](#exploring-dataset-structure), the `geometry` field
+is in WKB format, which we will transform into degree coordinates in the
+next step. Here, we will use the `WKB` to transform the `geometry` and
+then we will convert it to an `sf` object for easy data manipulation.
 
 ### Transforming `geometry` format
 
@@ -175,15 +224,15 @@ sites %>%
   head()
 ```
 
-    ## # A tibble: 6 × 4
-    ##   site        coords_deg$geometry   lon   lat
-    ##   <chr>                   <POINT> <dbl> <dbl>
-    ## 1 100th Site   (96.8709 -12.1069)  96.9 -12.1
-    ## 2 19-131 Reef (149.3786 -19.7641) 149.  -19.8
-    ## 3 19-131 Reef (149.3802 -19.7662) 149.  -19.8
-    ## 4 19-131 Reef  (149.376 -19.7728) 149.  -19.8
-    ## 5 19-138 Reef (149.4305 -19.8069) 149.  -19.8
-    ## 6 19-138 Reef (149.4199 -19.8024) 149.  -19.8
+    ## # A tibble: 6 × 6
+    ##   site        subsite  deployment_location coords_deg$geometry   lon   lat
+    ##   <chr>       <chr>    <chr>                           <POINT> <dbl> <dbl>
+    ## 1 100th Site  100THSI… <NA>                 (96.8709 -12.1069)  96.9 -12.1
+    ## 2 19-131 Reef 19131FL1 reef flat           (149.3786 -19.7641) 149.  -19.8
+    ## 3 19-131 Reef 19131SL1 reef slope          (149.3802 -19.7662) 149.  -19.8
+    ## 4 19-131 Reef 19131SL3 reef slope           (149.376 -19.7728) 149.  -19.8
+    ## 5 19-138 Reef 19138SL1 reef slope          (149.4305 -19.8069) 149.  -19.8
+    ## 6 19-138 Reef 19138FL1 reef flat           (149.4199 -19.8024) 149.  -19.8
 
 ## Extracting sites and coordinates from dataset (Option \#2)
 
@@ -196,7 +245,7 @@ extract coordinates as shown in the block below.
 ``` r
 data_df %>% 
   #We select unique sites included in the dataset together with lat and lon values
-  distinct(site, lon, lat) %>% 
+  distinct(site, subsite, lon, lat) %>% 
   #Selecting the first rows for comparison with option#1
   arrange(site) %>% 
   head() %>% 
@@ -204,25 +253,27 @@ data_df %>%
   collect()
 ```
 
-    ## # A tibble: 6 × 3
-    ##   site          lon   lat
-    ##   <chr>       <dbl> <dbl>
-    ## 1 100th Site   96.9 -12.1
-    ## 2 19-131 Reef 149.  -19.8
-    ## 3 19-131 Reef 149.  -19.8
-    ## 4 19-131 Reef 149.  -19.8
-    ## 5 19-138 Reef 149.  -19.8
-    ## 6 19-138 Reef 149.  -19.8
+    ## # A tibble: 6 × 4
+    ##   site        subsite     lon   lat
+    ##   <chr>       <chr>     <dbl> <dbl>
+    ## 1 100th Site  100THSITE  96.9 -12.1
+    ## 2 19-131 Reef 19131FL1  149.  -19.8
+    ## 3 19-131 Reef 19131SL1  149.  -19.8
+    ## 4 19-131 Reef 19131SL3  149.  -19.8
+    ## 5 19-138 Reef 19138SL1  149.  -19.8
+    ## 6 19-138 Reef 19138FL1  149.  -19.8
 
-The two options shown for extracting sites and coordinates from our
-dataset offer the same results!
+The two options shown above for extracting latitude and longitude values
+for each site are equivalent and produce the same results. They are
+interchangeable and you can use whichever you prefer.
 
-## Plotting map of sampled sites in this dataset
+# Plotting map of sampled sites in this dataset
 
 We will make a map of all sites included in the AIMS Water Temperature
 Monitoring Program. We will also highlight the location of two sites:
-**Hayman Island** and **Heron Island** in red. We will use these sites
-as an example to show how to extract data at multiple sites of interest.
+**Hayman Island** and **Heron Island** in red. We will use these
+highlighted sites as examples to show you how to extract data at
+multiple sites of interest.
 
 ``` r
 #Loading basemap with countries in Oceania and Asia
@@ -247,7 +298,7 @@ oce_asia %>%
 
 ![](Extracting_Water_Temperature_at_Site_files/figure-gfm/map_sites-1.png)<!-- -->
 
-## Extracting data for one site of interest
+# Extracting data for sites of interest
 
 We can use the information in our `sites` variable to extract data for a
 site of interest. All we need to know is the name of the site, as shown
@@ -263,27 +314,28 @@ sites_coords <- sites %>%
   #Using random site as example
   filter(site %in% c("Hayman Island", "Heron Island")) %>% 
   #Extracting latitude and longitude coordinates
-  select(site, lon, lat)
+  select(site, lon, lat, deployment_location)
 
 #Checking results
 sites_coords
 ```
 
-    ## # A tibble: 8 × 3
-    ##   site            lon   lat
-    ##   <chr>         <dbl> <dbl>
-    ## 1 Heron Island   152. -23.4
-    ## 2 Heron Island   152. -23.4
-    ## 3 Heron Island   152. -23.4
-    ## 4 Heron Island   152. -23.4
-    ## 5 Heron Island   152. -23.4
-    ## 6 Heron Island   152. -23.4
-    ## 7 Hayman Island  149. -20.0
-    ## 8 Hayman Island  149. -20.1
+    ## # A tibble: 8 × 4
+    ##   site            lon   lat deployment_location
+    ##   <chr>         <dbl> <dbl> <chr>              
+    ## 1 Heron Island   152. -23.4 reef flat          
+    ## 2 Heron Island   152. -23.4 reef flat          
+    ## 3 Heron Island   152. -23.4 reef flat          
+    ## 4 Heron Island   152. -23.4 reef flat          
+    ## 5 Heron Island   152. -23.4 reef flat          
+    ## 6 Heron Island   152. -23.4 reef slope         
+    ## 7 Hayman Island  149. -20.0 reef flat          
+    ## 8 Hayman Island  149. -20.1 reef slope
 
 We can see that there are multiple coordinates for each site, but they
-are located in close proximity to one another. We will use this
-information to extract data from the dataset.
+are located in close proximity to one another. In this case, both sites
+include instrument deployments in the reef flat and slope. We will use
+this information to extract data from the original AIMS dataset.
 
 Note that `qc_val` is the variable containing the temperature data in
 this dataset.
@@ -291,18 +343,18 @@ this dataset.
 ``` r
 sites_temp <- data_df %>% 
   #We will only keep data for the sites of our interest
-  inner_join(sites_coords, by = c("site", "lon", "lat"))%>% 
+  inner_join(sites_coords, by = c("site", "lon", "lat")) %>% 
   #We will two new columns: year and month to calculate monthly means
   mutate(year = year(time),
-         month = month(time)) %>% 
+         month = month(time)) %>%
   #We will now group data by month, year and site
-  group_by(year, month, site) %>% 
+  group_by(year, month, site, deployment_location) %>%
   #Calculating monthly means for temperature at each site
   summarise(temp_monthly_mean = round(mean(qc_val, na.rm = TRUE), 2),
-            #Number of points used in monthly mean calculations
-            nPoints = n()) %>% 
+            #Total number of observations used in monthly mean calculations
+            tot_obs = n()) %>%
   #Arranging in chronological order
-  arrange(site, year, month) %>% 
+  arrange(site, deployment_location, year, month) %>%
   #Turning results into data frame
   collect()
 
@@ -310,18 +362,18 @@ sites_temp <- data_df %>%
 head(sites_temp)
 ```
 
-    ## # A tibble: 6 × 5
-    ## # Groups:   year, month [6]
-    ##    year month site          temp_monthly_mean nPoints
-    ##   <int> <int> <chr>                     <dbl>   <int>
-    ## 1  1996     5 Hayman Island              25.0     232
-    ## 2  1996     6 Hayman Island              24.1    2878
-    ## 3  1996     7 Hayman Island              23.0    2973
-    ## 4  1996     8 Hayman Island              22.4    2976
-    ## 5  1996     9 Hayman Island              23.3    2283
-    ## 6  1996    10 Hayman Island              25.0    1487
+    ## # A tibble: 6 × 6
+    ## # Groups:   year, month, site [6]
+    ##    year month site          deployment_location temp_monthly_mean tot_obs
+    ##   <int> <int> <chr>         <chr>                           <dbl>   <int>
+    ## 1  1996     5 Hayman Island reef flat                        25.2     116
+    ## 2  1996     6 Hayman Island reef flat                        24.4    1439
+    ## 3  1996     7 Hayman Island reef flat                        23.2    1488
+    ## 4  1996     8 Hayman Island reef flat                        22.7    1488
+    ## 5  1996     9 Hayman Island reef flat                        23.6    1440
+    ## 6  1996    10 Hayman Island reef flat                        25.0    1487
 
-### Plotting timeseries
+## Plotting timeseries
 
 We can now use `ggplot2` to create a plot showing how temperature has
 changed over time. We will save the plot as a variable so we can save it
@@ -337,19 +389,27 @@ temp_plot <- sites_temp %>%
   geom_point()+
   geom_line()+
   #Creating subplots for each site for easy comparison
-  facet_grid(~site)+
+  facet_grid(~deployment_location)+
   #Removing default grey background
   theme_bw()+
   #Change position of legend
-  theme(legend.position = "top")+
+  theme(legend.position = "top", axis.title.x = element_blank())+
   #Change position and title of legend
-  guides(colour = guide_legend(title.position = "top", title.hjust = 0.5, title = "Site names"))
+  guides(colour = guide_legend(title.position = "top", title.hjust = 0.5, title = "Site names"))+
+  labs(y = expression("Mean monthly temperature  " ( degree~C)))
 
 #Checking plot
 temp_plot
 ```
 
+    ## Warning: Removed 3 rows containing missing values (`geom_point()`).
+
 ![](Extracting_Water_Temperature_at_Site_files/figure-gfm/timeseries_plot-1.png)<!-- -->
+
+Note that `ggplot2` is warning us that three rows were removed from the
+plot. This is because between May and July 2010, there were no
+temperature measurements for the logger in the reef flat at Heron
+Island.
 
 ## Saving data summaries and plot
 
