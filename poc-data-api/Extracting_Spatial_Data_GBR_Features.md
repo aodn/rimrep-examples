@@ -121,9 +121,10 @@ We can see that there are a number of variables available in this
 dataset. We will need to access three variables to create a list of all
 above water sites in the Great Barrier Reef Marine Park:  
 - `UNIQUE_ID`, which includes a unique identification number for each
-area above water - `LOC_NAME`, which includes the name of each location
-above water - `geometry`, which includes latitude and longitude
-coordinates in [well-known binary
+area above water - `GBR_NAME`, which includes the name of each location
+above water - `LOC_NAME_S`, combination between feature name and unique
+ID - `geometry`, which includes latitude and longitude coordinates in
+[well-known binary
 (WKB)](https://loc.gov/preservation/digital/formats/fdd/fdd000549.shtml)
 format
 
@@ -131,7 +132,7 @@ We will transform the information in the `geometry` field into
 coordinate pairs (i.e., latitude and longitude in degrees for each node
 along its boundary).
 
-**Note:** One location (`LOC_NAME`) may contain multiple values under
+**Note:** One location (`GBR_NAME`) may contain multiple values under
 the `UNIQUE_ID` column. This is above water structures may not appear
 connected when looking at the surface, but they are part of the same
 structure and thus are connected under water.
@@ -144,7 +145,7 @@ shown below.
 ``` r
 sites <- data_df %>% 
   #We select unique sites included in the dataset
-  distinct(UNIQUE_ID, LOC_NAME_S, geometry) %>%
+  distinct(UNIQUE_ID, GBR_NAME, LOC_NAME_S, geometry) %>%
   #This will load them into memory
   collect()
 
@@ -153,8 +154,9 @@ glimpse(sites)
 ```
 
     ## Rows: 9,612
-    ## Columns: 3
+    ## Columns: 4
     ## $ UNIQUE_ID  <chr> "09347110101", "09347110100", "09355110126", "09355110127",…
+    ## $ GBR_NAME   <chr> "U/N Sand Bank", "U/N Sand Bank", "U/N Sand Bank", "U/N San…
     ## $ LOC_NAME_S <chr> "U/N Sand Bank (09-347a)", "U/N Sand Bank (09-347)", "U/N S…
     ## $ geometry   <arrw_bnr> <01, 03, 00, 00, 00, 01, 00, 00, 00, 57, 00, 00, 00, 9…
 
@@ -186,20 +188,20 @@ sites <- sites %>%
 head(sites)
 ```
 
-    ## Simple feature collection with 6 features and 2 fields
+    ## Simple feature collection with 6 features and 3 fields
     ## Geometry type: POLYGON
     ## Dimension:     XY
     ## Bounding box:  xmin: 143.0087 ymin: -9.399422 xmax: 143.1298 ymax: -9.266528
     ## Geodetic CRS:  WGS 84
-    ## # A tibble: 6 × 3
-    ##   UNIQUE_ID   LOC_NAME_S                                                geometry
-    ##   <chr>       <chr>                                                <POLYGON [°]>
-    ## 1 09347110101 U/N Sand Bank (09-347a)  ((143.0851 -9.26657, 143.087 -9.267642, …
-    ## 2 09347110100 U/N Sand Bank (09-347)   ((143.0549 -9.293396, 143.0547 -9.294603…
-    ## 3 09355110126 U/N Sand Bank (09-355z)  ((143.1056 -9.3908, 143.1054 -9.390851, …
-    ## 4 09355110127 U/N Sand Bank (09-355a0) ((143.0985 -9.390079, 143.0981 -9.390089…
-    ## 5 09355110128 U/N Sand Bank (09-355a1) ((143.0939 -9.391464, 143.0936 -9.391468…
-    ## 6 09355110122 U/N Sand Bank (09-355v)  ((143.1298 -9.36866, 143.1296 -9.36886, …
+    ## # A tibble: 6 × 4
+    ##   UNIQUE_ID   GBR_NAME      LOC_NAME_S                                  geometry
+    ##   <chr>       <chr>         <chr>                                  <POLYGON [°]>
+    ## 1 09347110101 U/N Sand Bank U/N Sand Bank (09-347a)  ((143.0851 -9.26657, 143.0…
+    ## 2 09347110100 U/N Sand Bank U/N Sand Bank (09-347)   ((143.0549 -9.293396, 143.…
+    ## 3 09355110126 U/N Sand Bank U/N Sand Bank (09-355z)  ((143.1056 -9.3908, 143.10…
+    ## 4 09355110127 U/N Sand Bank U/N Sand Bank (09-355a0) ((143.0985 -9.390079, 143.…
+    ## 5 09355110128 U/N Sand Bank U/N Sand Bank (09-355a1) ((143.0939 -9.391464, 143.…
+    ## 6 09355110122 U/N Sand Bank U/N Sand Bank (09-355v)  ((143.1298 -9.36866, 143.1…
 
 ## Plotting all features
 
