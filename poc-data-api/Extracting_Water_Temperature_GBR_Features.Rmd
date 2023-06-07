@@ -1,0 +1,166 @@
+---
+title: "Extracting temperature using GBR features"
+author: "Denisse Fierro Arcos"
+date: "2023-06-07"
+output: 
+  github_document:
+    toc: true
+    html_preview: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Goal of this notebook
+
+This notebook will demonstrate how to use one or more Great Barrier Reef (GBR) features recognised by the Great Barrier Reef Marine Park Authority (GBRMPA) dataset to extract water temperature data from the AIMS Sea Surface Temperature Monitoring Program available at RIMReP `geoparquet` collection.
+
+# Loading libraries
+
+```{r libraries, results = "hide", message = F, warning = F}
+library(arrow)
+library(dplyr)
+library(magrittr)
+library(stringr)
+library(ggplot2)
+library(sf)
+library(lubridate)
+source("useful_spatial_functions_data_extraction.R")
+```
+
+# Connecting to RIMReP collection
+
+Connecting to the AIMS Sea Surface Temperature Monitoring Program. This can take a minute or so.
+
+```{r connect}
+#Establishing connection
+data_bucket <- s3_bucket("s3://rimrep-data-public/091-aims-sst/test-50-64-spatialpart")
+
+#Accessing dataset
+data_df <- open_dataset(data_bucket)
+```
+
+# Extracting monitoring sites and their coordinates
+
+```{r sites_bin}
+sites_shp <- data_df %>% 
+  #We select unique sites included in the dataset
+  distinct(site, subsite, lon, lat) %>%
+  #This will load them into memory
+  collect()
+
+#Creating shapefile of unique locations
+sites_shp <- sites_shp %>% 
+  #Creating column to identify deployment location
+  mutate(deployment_location =  case_when(str_detect(subsite, "FL[0-9]{1}") ~ "reef flat",
+                                          str_detect(subsite, "SL[0-9]{1}") ~ "reef slope",
+                                          #If no condition is met, return NA
+                                          T ~ NA)) %>%
+  #Turning into shapefile
+  st_as_sf(coords = c("lon", "lat"), crs = 4326)
+
+#Checking results
+glimpse(sites_shp)
+```
+# Identifying AIMS sites within GBR feature of interest
+In this section, we will use the functions included in the [useful_spatial_functions_data_extraction](https://github.com/aodn/rimrep-examples/blob/main/poc-data-api/useful_spatial_functions_data_extraction.R) script to load GBR features of interest. We will then use the boundaries of the feature of interest to identify the names of the sites within these limits.
+
+We will use the `gbr_features` function to access the boundaries for our sites of interest. If no parameters are given to this function, it will load all features recognised by the GBRMPA. You could also provide the name of the site using the `site_name` parameter or the GBRMPA unique ID using the `site_id` parameter. You can also use both parameters at the same time in case you have the names for some sites and the IDs for others.
+
+As an example, we will use **U/N Reef** or unnamed reefs. We chose them simply because they cover a large area and will overlap with the most number of AIMS monitoring sites.
+
+```{r gbr_features}
+un_reefs <- gbr_features(site_name = "u/n reef")
+
+#Checking results
+un_reefs
+```
+## Identifying sites of interest
+Depending on the amount of polygons used to identify the sites of interest, this may take a couple of minutes.  
+  
+We will plot the original AIMS monitoring sites (black), the polygon of interest (pink) and the sites within polygons (blue) to check that sites have been correctly identified.
+
+Note that unless the AIMS site is within a polygon, it will not to be identified in our final list.
+
+```{r sites_int}
+site_list <- sites_of_interest(sites_shp, un_reefs)
+
+#Plotting results
+#AIMS monitoring sites
+sites_shp %>% 
+  ggplot()+
+  geom_sf()+
+  #Polygon of interest
+  geom_sf(inherit.aes = F, data = un_reefs, color = "pink")+
+  #AIMS polygons within area of interest
+  geom_sf(inherit.aes = F, data = site_list, color = "blue")+
+  theme_bw()
+```
+
+## Extracting temperature for monitoring site within area of interest
+
+We will now extract data only for the monitoring sites located within the GBR feature of our interest.
+
+```{r sites_extract}
+temp_area_int <- data_df %>%
+  select(site, subsite, time, qc_val) %>% 
+  inner_join(st_drop_geometry(site_list), by = c("site", "subsite")) %>% 
+  mutate(year = year(time),
+         month = month(time)) %>%
+  group_by(year, month, deployment_location) %>%
+  summarise(temp_monthly_mean = round(mean(qc_val, na.rm = TRUE), 2)) %>%
+  collect()
+
+#Checking results
+head(temp_area_int)
+```
+
+## Plotting timeseries
+
+We can now use `ggplot2` to create a plot showing how temperature has changed over time. We will save the plot as a variable so we can save it to our local machine later.
+
+```{r timeseries_plot}
+temp_plot <- temp_area_int %>% 
+  #Combining year and month columns into one
+  mutate(date = ym(paste0(year, "-", month))) %>% 
+  #Plotting temperature of y axis and time on x axis. Color data by site.
+  ggplot(aes(x = date, y = temp_monthly_mean))+
+  #Plot data as points and lines
+  geom_point()+
+  geom_line()+
+  #Creating subplots for each site for easy comparison
+  facet_grid(~deployment_location)+
+  #Removing default grey background
+  theme_bw()+
+  #Change position of legend
+  theme(legend.position = "top", axis.title.x = element_blank())+
+  #Change position and title of legend
+  # guides(colour = guide_legend(title.position = "top", title.hjust = 0.5, title = "Site names"))+
+  labs(y = expression("Mean monthly temperature  " ( degree~C)))
+
+#Checking plot
+temp_plot
+```
+
+## Saving data summaries and plot
+We will need to provide a path to the folder where we want to save our data summaries and plots, as well as the file names for our outputs.
+
+```{r saving_outputs, eval = F}
+#First we will provide a path to the folder where we want to save our data
+folder_out <- "Outputs"
+
+#Checking if folder exists, if not, create it
+if(!dir.exists(folder_out)){
+  dir.create(folder_out)
+}
+
+#Saving data summaries
+data_out <- paste(folder_out, "monthly_means_temperature.csv", sep = "/")
+write_csv_arrow(temp_area_int, file = data_out)
+
+#Saving plot
+plot_out <- paste(folder_out, "monthly_means_timeseries.tif", sep = "/")
+ggsave(plot_out, temp_plot, device = "tiff")
+```
+
