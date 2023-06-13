@@ -114,7 +114,7 @@ When [exploring the GBR features dataset](#exploring-dataset-structure), you may
 
 We chose to use the `geometry` field in this notebook because it gives us access to fine scale data about a feature.  
 
-![A feature shown in light blue and the extent shown in dark blue]("../images/extent_geom.jpeg").
+![A feature shown in light blue and the extent shown in dark blue](../images/extent_geom.jpeg).
 
 
 ## Plotting all features 

@@ -230,7 +230,7 @@ We chose to use the `geometry` field in this notebook because it gives
 us access to fine scale data about a feature.
 
 ![A feature shown in light blue and the extent shown in dark
-blue](%22../images/extent_geom.jpeg%22).
+blue](../images/extent_geom.jpeg).
 
 ## Plotting all features
 
