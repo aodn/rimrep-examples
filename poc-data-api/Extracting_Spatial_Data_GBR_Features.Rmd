@@ -14,9 +14,20 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Goal of this notebook
 
-This notebook will show how to access the RIMReP `geoparquet` collection for Great Barrier Reef (GBR) Feature from the Great Barrier Reef Marine Park Authority (GBRMPA). This dataset includes the unique IDs and names of all features above water, including sand banks, reefs, cays, islets, and islands. Since this dataset includes spatial data, we can extract the spatial limits of each feature included in this dataset.
+This notebook will show how to access the RIMReP `geoparquet` collection for Great Barrier Reef (GBR) Feature from the Great Barrier Reef Marine Park Authority (GBRMPA). This dataset includes the unique IDs and names of all features above water, including sand banks, reefs, cays, islets, and islands. Since this dataset includes spatial data, we can extract the spatial limits of each feature included in this dataset.  
+  
+We will use the spatial boundaries to extract environmental or biological information for sites of our interest.  
 
-We could use this spatial data to extract environmental or biological information for sites of our interest.
+# Workflow to be followed in this notebook
+1. Connect to RIMReP_DMS to access and explore it the GBR features data collection
+2. Get GBR features geometries to extract information from biological or environmental dataset within an area of interest
+3. Convert WKB geometries into Simple Feature (sf) objects. 
+4. Export polygons as shapefiles
+
+
+**Glosary:**  
+- WKB stands for [well-known binary](https://loc.gov/preservation/digital/formats/fdd/fdd000549.shtml), which is one way to represent geometries (i.e., spatial compondng of a feature).  
+- A simple feature refers to the two-dimensional representation of an object in the real world (e.g., a tree, a reef, island, country, etc.). Here we use the `sf` package to deal with simple features. If you would like more information on simple features, you can refer to the [`sf website](https://r-spatial.github.io/sf/articles/sf1.html#what-is-a-feature).  
 
 ## Loading libraries
 
@@ -29,6 +40,7 @@ library(wkb)
 library(ggplot2)
 library(sf)
 library(lubridate)
+library(rnaturalearth)
 ```
 
 ## Connecting to RIMReP collection
@@ -55,7 +67,7 @@ We can see that there are a number of variables available in this dataset. We wi
 - `UNIQUE_ID`, which includes a unique identification number for each area above water
 - `GBR_NAME`, which includes the name of each location above water
 - `LOC_NAME_S`, combination between feature name and unique ID
-- `geometry`, which includes latitude and longitude coordinates in [well-known binary (WKB)](https://loc.gov/preservation/digital/formats/fdd/fdd000549.shtml) format
+- `geometry`, which includes latitude and longitude coordinates in WKB format.  
   
 We will transform the information in the `geometry` field into coordinate pairs (i.e., latitude and longitude in degrees for each node along its boundary).  
   
@@ -63,7 +75,7 @@ We will transform the information in the `geometry` field into coordinate pairs 
   
 ## Extracting sites and coordinates from dataset
 
-We can extract data from the AIMS dataset by using `dplyr` verbs as shown below.
+We can extract data from the AIMS Sea Surface Water Temperature dataset by using `dplyr` verbs as shown below. This could take from a few seconds up to a minute depending on the speed of your Internet connection.
 
 ```{r sites_bin}
 sites <- data_df %>% 
@@ -75,7 +87,7 @@ sites <- data_df %>%
 #Checking results
 glimpse(sites)
 ```
-As explained above, the `geometry` field is in WKB format, which we will transform into degree coordinates in the next step. Here, we will use the `WKB` to transform the `geometry` and then we will convert it to an `sf` object for easy data manipulation.
+As explained above, the `geometry` field is in WKB format, which we will transform into degree coordinates in the next step. Here, we will use the `readWKB` function from the `WKB` package to transform the `geometry` and then we will convert it to an `sf` object for easy data manipulation.
 
 ### Transforming `geometry` format
 ```{r sites_deg}
@@ -98,6 +110,12 @@ sites <- sites %>%
 #Checking results - We will exclude the geometry column
 head(sites)
 ```
+When [exploring the GBR features dataset](#exploring-dataset-structure), you may have noticed other fields besides `geometry` that contain spatial information. For example, `X_COORD` and `Y_COORD` contain the coordinates of the centroid of each feature in the GBR dataset. While, `minx`, `miny`, `maxx`, and `maxy` fields contain the coordinates for the lower left corner and the upper right corner of a feature. This is otherwise known as the extent, which is a rectangle covering the maximum spatial extent of a feature. 
+
+We chose to use the `geometry` field in this notebook because it gives us access to fine scale data about a feature.  
+
+![A feature shown in light blue and the extent shown in dark blue]("../images/extent_geom.jpeg").
+
 
 ## Plotting all features 
 
@@ -105,7 +123,7 @@ We will make a map of all features included within the Great Barrier Reef Marine
 
 ```{r map_sites}
 #Loading basemap with countries in Oceania and Asia
-australia <- rnaturalearth::ne_countries(country = "Australia", returnclass = "sf")
+australia <- ne_countries(country = "Australia", returnclass = "sf")
 
 #Extracting mainland Australia for plotting
 mainland_aus <- sites %>% 

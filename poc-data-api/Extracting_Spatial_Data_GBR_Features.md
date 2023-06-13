@@ -3,26 +3,18 @@ Extracting spatial data for Great Barrier Reef features
 Denisse Fierro Arcos
 2023-06-05
 
-- <a href="#goal-of-this-notebook" id="toc-goal-of-this-notebook">Goal of
-  this notebook</a>
-  - <a href="#loading-libraries" id="toc-loading-libraries">Loading
-    libraries</a>
-  - <a href="#connecting-to-rimrep-collection"
-    id="toc-connecting-to-rimrep-collection">Connecting to RIMReP
-    collection</a>
-  - <a href="#exploring-dataset-structure"
-    id="toc-exploring-dataset-structure">Exploring dataset structure</a>
-  - <a href="#extracting-sites-and-coordinates-from-dataset"
-    id="toc-extracting-sites-and-coordinates-from-dataset">Extracting sites
-    and coordinates from dataset</a>
-    - <a href="#transforming-geometry-format"
-      id="toc-transforming-geometry-format">Transforming <code>geometry</code>
-      format</a>
-  - <a href="#plotting-all-features" id="toc-plotting-all-features">Plotting
-    all features</a>
-  - <a href="#saving-gbr-features-as-shapefile"
-    id="toc-saving-gbr-features-as-shapefile">Saving GBR features as
-    shapefile</a>
+- [Goal of this notebook](#goal-of-this-notebook)
+- [Workflow to be followed in this
+  notebook](#workflow-to-be-followed-in-this-notebook)
+  - [Loading libraries](#loading-libraries)
+  - [Connecting to RIMReP collection](#connecting-to-rimrep-collection)
+  - [Exploring dataset structure](#exploring-dataset-structure)
+  - [Extracting sites and coordinates from
+    dataset](#extracting-sites-and-coordinates-from-dataset)
+    - [Transforming `geometry` format](#transforming-geometry-format)
+  - [Plotting all features](#plotting-all-features)
+  - [Saving GBR features as
+    shapefile](#saving-gbr-features-as-shapefile)
 
 # Goal of this notebook
 
@@ -33,8 +25,28 @@ of all features above water, including sand banks, reefs, cays, islets,
 and islands. Since this dataset includes spatial data, we can extract
 the spatial limits of each feature included in this dataset.
 
-We could use this spatial data to extract environmental or biological
-information for sites of our interest.
+We will use the spatial boundaries to extract environmental or
+biological information for sites of our interest.
+
+# Workflow to be followed in this notebook
+
+1.  Connect to RIMReP_DMS to access and explore it the GBR features data
+    collection
+2.  Get GBR features geometries to extract information from biological
+    or environmental dataset within an area of interest
+3.  Convert WKB geometries into Simple Feature (sf) objects.
+4.  Export polygons as shapefiles
+
+**Glosary:**  
+- WKB stands for [well-known
+binary](https://loc.gov/preservation/digital/formats/fdd/fdd000549.shtml),
+which is one way to represent geometries (i.e., spatial compondng of a
+feature).  
+- A simple feature refers to the two-dimensional representation of an
+object in the real world (e.g., a tree, a reef, island, country, etc.).
+Here we use the `sf` package to deal with simple features. If you would
+like more information on simple features, you can refer to the [\`sf
+website](https://r-spatial.github.io/sf/articles/sf1.html#what-is-a-feature).
 
 ## Loading libraries
 
@@ -47,6 +59,7 @@ library(wkb)
 library(ggplot2)
 library(sf)
 library(lubridate)
+library(rnaturalearth)
 ```
 
 ## Connecting to RIMReP collection
@@ -124,9 +137,7 @@ above water sites in the Great Barrier Reef Marine Park:
 area above water - `GBR_NAME`, which includes the name of each location
 above water - `LOC_NAME_S`, combination between feature name and unique
 ID - `geometry`, which includes latitude and longitude coordinates in
-[well-known binary
-(WKB)](https://loc.gov/preservation/digital/formats/fdd/fdd000549.shtml)
-format
+WKB format.
 
 We will transform the information in the `geometry` field into
 coordinate pairs (i.e., latitude and longitude in degrees for each node
@@ -139,8 +150,10 @@ structure and thus are connected under water.
 
 ## Extracting sites and coordinates from dataset
 
-We can extract data from the AIMS dataset by using `dplyr` verbs as
-shown below.
+We can extract data from the AIMS Sea Surface Water Temperature dataset
+by using `dplyr` verbs as shown below. This could take from a few
+seconds up to a minute depending on the speed of your Internet
+connection.
 
 ``` r
 sites <- data_df %>% 
@@ -162,8 +175,9 @@ glimpse(sites)
 
 As explained above, the `geometry` field is in WKB format, which we will
 transform into degree coordinates in the next step. Here, we will use
-the `WKB` to transform the `geometry` and then we will convert it to an
-`sf` object for easy data manipulation.
+the `readWKB` function from the `WKB` package to transform the
+`geometry` and then we will convert it to an `sf` object for easy data
+manipulation.
 
 ### Transforming `geometry` format
 
@@ -203,6 +217,21 @@ head(sites)
     ## 5 09355110128 U/N Sand Bank U/N Sand Bank (09-355a1) ((143.0939 -9.391464, 143.…
     ## 6 09355110122 U/N Sand Bank U/N Sand Bank (09-355v)  ((143.1298 -9.36866, 143.1…
 
+When [exploring the GBR features dataset](#exploring-dataset-structure),
+you may have noticed other fields besides `geometry` that contain
+spatial information. For example, `X_COORD` and `Y_COORD` contain the
+coordinates of the centroid of each feature in the GBR dataset. While,
+`minx`, `miny`, `maxx`, and `maxy` fields contain the coordinates for
+the lower left corner and the upper right corner of a feature. This is
+otherwise known as the extent, which is a rectangle covering the maximum
+spatial extent of a feature.
+
+We chose to use the `geometry` field in this notebook because it gives
+us access to fine scale data about a feature.
+
+![A feature shown in light blue and the extent shown in dark
+blue](%22../images/extent_geom.jpeg%22).
+
 ## Plotting all features
 
 We will make a map of all features included within the Great Barrier
@@ -213,7 +242,7 @@ red.
 
 ``` r
 #Loading basemap with countries in Oceania and Asia
-australia <- rnaturalearth::ne_countries(country = "Australia", returnclass = "sf")
+australia <- ne_countries(country = "Australia", returnclass = "sf")
 
 #Extracting mainland Australia for plotting
 mainland_aus <- sites %>% 
