@@ -227,7 +227,11 @@ otherwise known as the extent, which is a rectangle covering the maximum
 spatial extent of a feature.
 
 We chose to use the `geometry` field in this notebook because it gives
-us access to fine scale data about a feature.
+us access to fine scale data about a feature (see light blue line in
+image below). The centroid (`X_COORD` and `Y_COORD` fields) would have
+only given information about a single point (white dot at the centre of
+the image). The extent (dark blue rectangle), on the other hand, would
+have coarsen the resolution of a feature.
 
 ![A feature shown in light blue and the extent shown in dark
 blue](../images/extent_geom.jpeg).
