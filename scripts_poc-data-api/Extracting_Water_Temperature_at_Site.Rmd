@@ -14,21 +14,27 @@ knitr::opts_chunk$set(echo = TRUE)
 
 # Goal of this notebook
 
-This notebook will demonstrate how to access the RIMReP `geoparquet` collection for AIMS Sea Surface Temperature Monitoring Program. This dataset includes data since 1980 for tropical and subtropical coral reefs around Australia, including 80 Great Barrier Reef sites.
+This notebook will demonstrate how to access the RIMReP `geoparquet` collection for AIMS Sea Surface Temperature Monitoring Program. This dataset includes sea temperature data since 1980 for tropical and subtropical coral reefs around Australia, including sites at the Great Barrier Reef.
 
-Then, we will extract the coordinates for all sites sampled in this monitoring program. This way we can extract data for the site of our choice using the name of the site of our interest, without the need to know their coordinates.
+We will also extract the coordinates for all sites sampled in this monitoring program. This way we can extract data for the site of our choice using the name of the site of our interest, without the need to know their coordinates.
 
 # Loading libraries
 
 ```{r libraries, results = "hide", message = F, warning = F}
+#Accessing S3 bucket
 library(arrow)
+#Data manipulation
 library(dplyr)
 library(magrittr)
 library(stringr)
-library(wkb)
-library(ggplot2)
-library(sf)
+#Managing dates
 library(lubridate)
+#Plotting
+library(ggplot2)
+library(rnaturalearth)
+#Managing spatial data
+library(sf)
+library(wkb)
 ```
 
 # Connecting to RIMReP collection
@@ -37,7 +43,7 @@ As mentioned above, we will connect to the AIMS Sea Surface Temperature Monitori
 
 ```{r connect}
 #Establishing connection
-data_bucket <- s3_bucket("s3://rimrep-data-public/091-aims-sst/test-50-64-spatialpart")
+data_bucket <- s3_bucket("s3://rimrep-data-public/091-aims-sst/test-50-64-spatialpart/")
 
 #Accessing dataset
 data_df <- open_dataset(data_bucket)
@@ -68,7 +74,7 @@ data_df$metadata
 ```
 # Extracting variables of our interest from dataset
 
-We can extract data from the AIMS dataset by using `dplyr` verbs as shown below.
+We can extract location (coordinates) from the AIMS dataset by using `dplyr` verbs as shown below.
 
 ```{r sites_bin}
 sites <- data_df %>% 
@@ -80,23 +86,24 @@ sites <- data_df %>%
 #Checking results
 glimpse(sites)
 ```
+
 ## Creating `deployment_location` column
 
-We will use the `subsite` column to create the categories in our new column, as explained in the [exploring the dataset structure](#exploring-dataset-structure). If no condition is met, then we will label the row as `NA`.
+We will use the `subsite` column to create the categories in our new column, as explained in the [exploring the dataset structure](#exploring-dataset-structure). If no condition is met, then we will label the row as *other*.
 
 ```{r dep_loc}
 sites <- sites %>% 
   #Adding new column - Given categories based on a condition
   mutate(deployment_location =  case_when(str_detect(subsite, "FL[0-9]{1}") ~ "reef flat",
                                           str_detect(subsite, "SL[0-9]{1}") ~ "reef slope",
-                                          #If no condition is met, return NA
-                                          T ~ NA))
+                                          #If no condition is met, return other
+                                          T ~ "other"))
 
 #Checking results
 glimpse(sites)
 ```
 ## Extracting latitude and longitude values (Option #1)
-As explained [above](#exploring-dataset-structure), the `geometry` field is in WKB format, which we will transform into degree coordinates in the next step. Here, we will use the `WKB` to transform the `geometry` and then we will convert it to an `sf` object for easy data manipulation.
+As explained [above](#exploring-dataset-structure), the `geometry` field is in WKB format, which we will transform into degree coordinates in the next step. Here, we will use the `readWKB` function from the `WKB` library to transform the `geometry` and then we will convert it to an `sf` object for easy data manipulation.
 
 ### Transforming `geometry` format
 ```{r sites_deg}
@@ -137,7 +144,7 @@ We will make a map of all sites included in the AIMS Water Temperature Monitorin
 
 ```{r map_sites}
 #Loading basemap with countries in Oceania and Asia
-oce_asia <- rnaturalearth::ne_countries(continent = c("oceania", "asia"), 
+oce_asia <- ne_countries(continent = c("oceania", "asia"), 
                                      returnclass = "sf")
 
 #Creating map with all sites included in dataset
@@ -175,12 +182,20 @@ sites_coords
 
 We can see that there are multiple coordinates for each site, but they are located in close proximity to one another. In this case, both sites include instrument deployments in the reef flat and slope. We will use this information to extract data from the original AIMS dataset.  
   
-Note that `qc_val` is the variable containing the temperature data in this dataset.
+Note that `qc_val` is the variable containing quality-controlled temperature data in this dataset.
 
 ```{r extract}
 sites_temp <- data_df %>% 
   #We will only keep data for the sites of our interest
   inner_join(sites_coords, by = c("site", "lon", "lat")) %>% 
+  #Turning results into data frame
+  collect()
+```
+
+We will now calculate the monthly temperature means at each site and deployment location (i.e., reef flat, reef slope, other).
+
+```{r means}
+sites_temp <- sites_temp %>% 
   #We will two new columns: year and month to calculate monthly means
   mutate(year = year(time),
          month = month(time)) %>%
@@ -191,9 +206,7 @@ sites_temp <- data_df %>%
             #Total number of observations used in monthly mean calculations
             tot_obs = n()) %>%
   #Arranging in chronological order
-  arrange(site, deployment_location, year, month) %>%
-  #Turning results into data frame
-  collect()
+  arrange(site, deployment_location, year, month)
 
 #Checking results
 head(sites_temp)
@@ -245,7 +258,7 @@ data_out <- paste(folder_out, "monthly_means_temperature.csv", sep = "/")
 write_csv_arrow(sites_temp, file = data_out)
 
 #Saving plot
-plot_out <- paste(folder_out, "monthly_means_timeseries.tif", sep = "/")
-ggsave(plot_out, temp_plot, device = "tiff")
+plot_out <- paste(folder_out, "monthly_means_timeseries.png", sep = "/")
+ggsave(plot_out, temp_plot, device = "png")
 ```
 

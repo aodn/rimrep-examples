@@ -3,50 +3,35 @@ Extracting temperature at specific reefs
 Denisse Fierro Arcos
 2023-06-05
 
-- <a href="#goal-of-this-notebook" id="toc-goal-of-this-notebook">Goal of
-  this notebook</a>
-- <a href="#loading-libraries" id="toc-loading-libraries">Loading
-  libraries</a>
-- <a href="#connecting-to-rimrep-collection"
-  id="toc-connecting-to-rimrep-collection">Connecting to RIMReP
-  collection</a>
-  - <a href="#exploring-dataset-structure"
-    id="toc-exploring-dataset-structure">Exploring dataset structure</a>
-- <a href="#extracting-variables-of-our-interest-from-dataset"
-  id="toc-extracting-variables-of-our-interest-from-dataset">Extracting
-  variables of our interest from dataset</a>
-  - <a href="#creating-deployment_location-column"
-    id="toc-creating-deployment_location-column">Creating
-    <code>deployment_location</code> column</a>
-  - <a href="#extracting-latitude-and-longitude-values-option-1"
-    id="toc-extracting-latitude-and-longitude-values-option-1">Extracting
-    latitude and longitude values (Option #1)</a>
-    - <a href="#transforming-geometry-format"
-      id="toc-transforming-geometry-format">Transforming <code>geometry</code>
-      format</a>
-  - <a href="#extracting-sites-and-coordinates-from-dataset-option-2"
-    id="toc-extracting-sites-and-coordinates-from-dataset-option-2">Extracting
-    sites and coordinates from dataset (Option #2)</a>
-- <a href="#plotting-map-of-sampled-sites-in-this-dataset"
-  id="toc-plotting-map-of-sampled-sites-in-this-dataset">Plotting map of
-  sampled sites in this dataset</a>
-- <a href="#extracting-data-for-sites-of-interest"
-  id="toc-extracting-data-for-sites-of-interest">Extracting data for sites
-  of interest</a>
-  - <a href="#plotting-timeseries" id="toc-plotting-timeseries">Plotting
-    timeseries</a>
-  - <a href="#saving-data-summaries-and-plot"
-    id="toc-saving-data-summaries-and-plot">Saving data summaries and
-    plot</a>
+- [Goal of this notebook](#goal-of-this-notebook)
+- [Loading libraries](#loading-libraries)
+- [Connecting to RIMReP collection](#connecting-to-rimrep-collection)
+  - [Exploring dataset structure](#exploring-dataset-structure)
+- [Extracting variables of our interest from
+  dataset](#extracting-variables-of-our-interest-from-dataset)
+  - [Creating `deployment_location`
+    column](#creating-deployment_location-column)
+  - [Extracting latitude and longitude values (Option
+    \#1)](#extracting-latitude-and-longitude-values-option-1)
+    - [Transforming `geometry` format](#transforming-geometry-format)
+  - [Extracting sites and coordinates from dataset (Option
+    \#2)](#extracting-sites-and-coordinates-from-dataset-option-2)
+- [Plotting map of sampled sites in this
+  dataset](#plotting-map-of-sampled-sites-in-this-dataset)
+- [Extracting data for sites of
+  interest](#extracting-data-for-sites-of-interest)
+  - [Plotting timeseries](#plotting-timeseries)
+  - [Saving data summaries and plot](#saving-data-summaries-and-plot)
 
 # Goal of this notebook
 
 This notebook will demonstrate how to access the RIMReP `geoparquet`
 collection for AIMS Sea Surface Temperature Monitoring Program. This
-dataset includes data since 1980 for tropical and subtropical coral
-reefs around Australia, including 80 Great Barrier Reef sites.
+dataset includes sea temperature data since 1980 for tropical and
+subtropical coral reefs around Australia, including sites at the Great
+Barrier Reef.
 
-Then, we will extract the coordinates for all sites sampled in this
+We will also extract the coordinates for all sites sampled in this
 monitoring program. This way we can extract data for the site of our
 choice using the name of the site of our interest, without the need to
 know their coordinates.
@@ -54,14 +39,20 @@ know their coordinates.
 # Loading libraries
 
 ``` r
+#Accessing S3 bucket
 library(arrow)
+#Data manipulation
 library(dplyr)
 library(magrittr)
 library(stringr)
-library(wkb)
-library(ggplot2)
-library(sf)
+#Managing dates
 library(lubridate)
+#Plotting
+library(ggplot2)
+library(rnaturalearth)
+#Managing spatial data
+library(sf)
+library(wkb)
 ```
 
 # Connecting to RIMReP collection
@@ -71,7 +62,7 @@ Monitoring Program. This can take a minute or so.
 
 ``` r
 #Establishing connection
-data_bucket <- s3_bucket("s3://rimrep-data-public/091-aims-sst/test-50-64-spatialpart")
+data_bucket <- s3_bucket("s3://rimrep-data-public/091-aims-sst/test-50-64-spatialpart/")
 
 #Accessing dataset
 data_df <- open_dataset(data_bucket)
@@ -154,8 +145,8 @@ data_df$metadata
 
 # Extracting variables of our interest from dataset
 
-We can extract data from the AIMS dataset by using `dplyr` verbs as
-shown below.
+We can extract location (coordinates) from the AIMS dataset by using
+`dplyr` verbs as shown below.
 
 ``` r
 sites <- data_df %>% 
@@ -179,15 +170,15 @@ glimpse(sites)
 We will use the `subsite` column to create the categories in our new
 column, as explained in the [exploring the dataset
 structure](#exploring-dataset-structure). If no condition is met, then
-we will label the row as `NA`.
+we will label the row as *other*.
 
 ``` r
 sites <- sites %>% 
   #Adding new column - Given categories based on a condition
   mutate(deployment_location =  case_when(str_detect(subsite, "FL[0-9]{1}") ~ "reef flat",
                                           str_detect(subsite, "SL[0-9]{1}") ~ "reef slope",
-                                          #If no condition is met, return NA
-                                          T ~ NA))
+                                          #If no condition is met, return other
+                                          T ~ "other"))
 
 #Checking results
 glimpse(sites)
@@ -198,14 +189,15 @@ glimpse(sites)
     ## $ site                <chr> "Hamelin Bay", "Flinders Bay", "Geographe Bay", "C…
     ## $ subsite             <chr> "HAMBAYFL1", "FLINDERSBAY1", "GEOBAYFL1", "COWBAYF…
     ## $ geometry            <arrw_bnr> <01, 01, 00, 00, 00, 19, e2, 58, 17, b7, c1, …
-    ## $ deployment_location <chr> "reef flat", NA, "reef flat", "reef flat", "reef f…
+    ## $ deployment_location <chr> "reef flat", "other", "reef flat", "reef flat", "r…
 
 ## Extracting latitude and longitude values (Option \#1)
 
 As explained [above](#exploring-dataset-structure), the `geometry` field
 is in WKB format, which we will transform into degree coordinates in the
-next step. Here, we will use the `WKB` to transform the `geometry` and
-then we will convert it to an `sf` object for easy data manipulation.
+next step. Here, we will use the `readWKB` function from the `WKB`
+library to transform the `geometry` and then we will convert it to an
+`sf` object for easy data manipulation.
 
 ### Transforming `geometry` format
 
@@ -227,7 +219,7 @@ sites %>%
     ## # A tibble: 6 × 6
     ##   site        subsite  deployment_location coords_deg$geometry   lon   lat
     ##   <chr>       <chr>    <chr>                           <POINT> <dbl> <dbl>
-    ## 1 100th Site  100THSI… <NA>                 (96.8709 -12.1069)  96.9 -12.1
+    ## 1 100th Site  100THSI… other                (96.8709 -12.1069)  96.9 -12.1
     ## 2 19-131 Reef 19131FL1 reef flat           (149.3786 -19.7641) 149.  -19.8
     ## 3 19-131 Reef 19131SL1 reef slope          (149.3802 -19.7662) 149.  -19.8
     ## 4 19-131 Reef 19131SL3 reef slope           (149.376 -19.7728) 149.  -19.8
@@ -277,7 +269,7 @@ multiple sites of interest.
 
 ``` r
 #Loading basemap with countries in Oceania and Asia
-oce_asia <- rnaturalearth::ne_countries(continent = c("oceania", "asia"), 
+oce_asia <- ne_countries(continent = c("oceania", "asia"), 
                                      returnclass = "sf")
 
 #Creating map with all sites included in dataset
@@ -326,9 +318,9 @@ sites_coords
     ## 1 Heron Island   152. -23.4 reef flat          
     ## 2 Heron Island   152. -23.4 reef flat          
     ## 3 Heron Island   152. -23.4 reef flat          
-    ## 4 Heron Island   152. -23.4 reef flat          
+    ## 4 Heron Island   152. -23.4 reef slope         
     ## 5 Heron Island   152. -23.4 reef flat          
-    ## 6 Heron Island   152. -23.4 reef slope         
+    ## 6 Heron Island   152. -23.4 reef flat          
     ## 7 Hayman Island  149. -20.0 reef flat          
     ## 8 Hayman Island  149. -20.1 reef slope
 
@@ -337,13 +329,22 @@ are located in close proximity to one another. In this case, both sites
 include instrument deployments in the reef flat and slope. We will use
 this information to extract data from the original AIMS dataset.
 
-Note that `qc_val` is the variable containing the temperature data in
-this dataset.
+Note that `qc_val` is the variable containing quality-controlled
+temperature data in this dataset.
 
 ``` r
 sites_temp <- data_df %>% 
   #We will only keep data for the sites of our interest
   inner_join(sites_coords, by = c("site", "lon", "lat")) %>% 
+  #Turning results into data frame
+  collect()
+```
+
+We will now calculate the monthly temperature means at each site and
+deployment location (i.e., reef flat, reef slope, other).
+
+``` r
+sites_temp <- sites_temp %>% 
   #We will two new columns: year and month to calculate monthly means
   mutate(year = year(time),
          month = month(time)) %>%
@@ -354,10 +355,13 @@ sites_temp <- data_df %>%
             #Total number of observations used in monthly mean calculations
             tot_obs = n()) %>%
   #Arranging in chronological order
-  arrange(site, deployment_location, year, month) %>%
-  #Turning results into data frame
-  collect()
+  arrange(site, deployment_location, year, month)
+```
 
+    ## `summarise()` has grouped output by 'year', 'month', 'site'. You can override
+    ## using the `.groups` argument.
+
+``` r
 #Checking results
 head(sites_temp)
 ```
@@ -365,7 +369,7 @@ head(sites_temp)
     ## # A tibble: 6 × 6
     ## # Groups:   year, month, site [6]
     ##    year month site          deployment_location temp_monthly_mean tot_obs
-    ##   <int> <int> <chr>         <chr>                           <dbl>   <int>
+    ##   <dbl> <dbl> <chr>         <chr>                           <dbl>   <int>
     ## 1  1996     5 Hayman Island reef flat                        25.2     116
     ## 2  1996     6 Hayman Island reef flat                        24.4    1439
     ## 3  1996     7 Hayman Island reef flat                        23.2    1488
@@ -430,6 +434,6 @@ data_out <- paste(folder_out, "monthly_means_temperature.csv", sep = "/")
 write_csv_arrow(sites_temp, file = data_out)
 
 #Saving plot
-plot_out <- paste(folder_out, "monthly_means_timeseries.tif", sep = "/")
-ggsave(plot_out, temp_plot, device = "tiff")
+plot_out <- paste(folder_out, "monthly_means_timeseries.png", sep = "/")
+ggsave(plot_out, temp_plot, device = "png")
 ```
