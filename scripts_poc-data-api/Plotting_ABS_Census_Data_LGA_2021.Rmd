@@ -1,0 +1,111 @@
+---
+title: "Plotting ABS data"
+author: "Denisse Fierro Arcos"
+date: "2023-06-14"
+output: 
+  github_document:
+    toc: true
+    html_preview: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Goal of this notebook
+
+This notebook will show how to access the RIMReP `geoparquet` collection for the Regional Census Data by Local Government Area (LGA) 2021 from the Australian Bureau of Statistics (ABS).
+
+## Loading libraries
+
+```{r libraries, results = "hide", message = F, warning = F}
+library(arrow)
+library(dplyr)
+library(magrittr)
+library(stringr)
+library(wkb)
+library(ggplot2)
+library(sf)
+library(lubridate)
+library(rnaturalearth)
+```
+
+## Connecting to RIMReP collection
+
+This will give us access to the ABS regional census dataset.
+
+```{r connect}
+#Establishing connection
+data_bucket <-  s3_bucket("s3://rimrep-data-public/abs-regional-lga-2021/data.parquet")
+
+#Accessing dataset
+data_df <- open_dataset(data_bucket)
+```
+
+## Exploring dataset structure
+
+We will use the `schema` to understand and explore the ABS regional census dataset.
+
+```{r explore}
+#Checking schema
+# data_df$schema
+```
+
+## Extracting spatial information from dataset
+
+In the [ABS website](https://www.abs.gov.au/statistics/standards/australian-statistical-geography-standard-asgs-edition-3/jul2021-jun2026/non-abs-structures/local-government-areas), their LGA documentation says that LGAs are identified by a unique five digit code. The first digit identifies the state or territory where the LGA is located and the four remaining digits identify the LGA.  
+  
+We will only extract data for LGAs in Queensland, which according to the [ABS website](https://www.abs.gov.au/statistics/standards/australian-statistical-geography-standard-asgs-edition-3/jul2021-jun2026/main-structure-and-greater-capital-city-statistical-areas/australia-and-stateterritory) can be identified by LGA codes starting with the number three (3). In the ABS dataset, the `REGION_CODE` field is where the LGA codes are recorded, so we will use this to filter the original ABS regional census dataset.
+
+```{r LGA_qld}
+sites <- data_df %>% 
+  #Filtering LGAs within Queensland
+  # mutate(REGION_CODE = as.character(REGION_CODE)) %>%
+  filter(str_starts(as.character(REGION_CODE), "[3]")) %>%
+  #Selecting unique LGAs
+  distinct(REGION_NAME, REGION_CODE, geometry) %>% 
+  #Loading them to memory
+  collect()
+
+#Checking results
+glimpse(sites)
+```
+
+## Transforming data frame to simple feature
+We will use the `geometry` field to extract the spatial data for each LGA. The spatial information is stored in WKB format and here we will transform it into degree coordinates before creating a simple feature object for plotting.
+
+```{r sp_qld_lga}
+sites <- sites %>% 
+  #Adding column with spatial information in degrees
+  mutate(coords_deg = readWKB(geometry) %>% st_as_sf())
+
+#Clean up sites information transforming into shapefile
+sites <- sites %>%
+  #Removing original geometry column
+  select(!geometry) %>% 
+  #Renaming coordinate degrees column
+  mutate(coords_deg = coords_deg$geometry) %>% 
+  rename("geometry" = "coords_deg") %>% 
+  #Transforming into shapefile
+  st_as_sf() %>% 
+  #Assigning reference systems: WGS84 (EPSG: 4326)
+  st_set_crs(4326)
+
+#Checking results - We will exclude the geometry column
+head(sites)
+```
+
+## Plotting map
+```{r}
+sites %>% ggplot()+geom_sf()+theme_bw()
+```
+
+
+```{r}
+# qld_lgas <- data_df %>% 
+#   #Filtering LGAs within Queensland
+#   filter(str_detect(as.character(REGION_CODE), "^3")) %>% 
+#   collect()
+```
+
+
