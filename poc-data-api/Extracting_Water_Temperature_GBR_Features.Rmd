@@ -1,11 +1,14 @@
 ---
 title: "Extracting temperature using GBR features"
 author: "Denisse Fierro Arcos"
-date: "2023-06-07"
+date: "2023-06-14"
+always_allow_html: true
+leafletmap: true
 output: 
-  github_document:
+  md_document:
+    variant: gfm
     toc: true
-    html_preview: false
+    preserve_yaml: true    
 ---
 
 ```{r setup, include=FALSE}
@@ -16,22 +19,31 @@ knitr::opts_chunk$set(echo = TRUE)
 
 This notebook will demonstrate how to use one or more Great Barrier Reef (GBR) features recognised by the Great Barrier Reef Marine Park Authority (GBRMPA) dataset to extract water temperature data from the AIMS Sea Surface Temperature Monitoring Program available at RIMReP `geoparquet` collection.
 
+In addition to published `R` libraries, this notebooks will use a set of functions especially created for manipulating RIMReP dtaa collections. These functions are available in the `useful_spatial_functions_data_extraction.R` script, which **must** exist in the same directory where this notebook is located.
+
 # Loading libraries
 
 ```{r libraries, results = "hide", message = F, warning = F}
+#Accessing S3 bucket
 library(arrow)
+#Data manipulation
 library(dplyr)
 library(magrittr)
 library(stringr)
-library(ggplot2)
-library(sf)
+#Managing dates
 library(lubridate)
+#Plotting
+library(ggplot2)
+library(leaflet)
+#Mapping
+library(sf)
+#Custom library
 source("useful_spatial_functions_data_extraction.R")
 ```
 
 # Connecting to RIMReP collection
 
-Connecting to the AIMS Sea Surface Temperature Monitoring Program. This can take a minute or so.
+Connecting to the AIMS Sea Surface Temperature Monitoring Program dataset. This can take a minute or so.
 
 ```{r connect}
 #Establishing connection
@@ -55,20 +67,20 @@ sites_shp <- sites_shp %>%
   #Creating column to identify deployment location
   mutate(deployment_location =  case_when(str_detect(subsite, "FL[0-9]{1}") ~ "reef flat",
                                           str_detect(subsite, "SL[0-9]{1}") ~ "reef slope",
-                                          #If no condition is met, return NA
-                                          T ~ NA)) %>%
-  #Turning into shapefile
+                                          #If no condition is met, classify as "other"
+                                          T ~ "other")) %>%
+  #Turning into sf object
   st_as_sf(coords = c("lon", "lat"), crs = 4326)
 
 #Checking results
 glimpse(sites_shp)
 ```
 # Identifying AIMS sites within GBR feature of interest
-In this section, we will use the functions included in the [useful_spatial_functions_data_extraction](https://github.com/aodn/rimrep-examples/blob/main/poc-data-api/useful_spatial_functions_data_extraction.R) script to load GBR features of interest. We will then use the boundaries of the feature of interest to identify the names of the sites within these limits.
-
-We will use the `gbr_features` function to access the boundaries for our sites of interest. If no parameters are given to this function, it will load all features recognised by the GBRMPA. You could also provide the name of the site using the `site_name` parameter or the GBRMPA unique ID using the `site_id` parameter. You can also use both parameters at the same time in case you have the names for some sites and the IDs for others.
-
-As an example, we will use **U/N Reef** or unnamed reefs. We chose them simply because they cover a large area and will overlap with the most number of AIMS monitoring sites.
+In this section, we will use the functions included in the [useful_spatial_functions_data_extraction](https://github.com/aodn/rimrep-examples/blob/main/poc-data-api/useful_spatial_functions_data_extraction.R) script to load GBR features of interest. We will then use the boundaries of the feature of interest to identify the names of the sites within these limits.  
+  
+We will use the `gbr_features` function to access the boundaries for our sites of interest. If no parameters are given to this function, it will load all features recognised by GBRMPA. You could also provide the name of the site using the `site_name` parameter or the GBRMPA unique ID using the `site_id` parameter. You can also use both parameters at the same time in case you have the names for some sites and the IDs for others.  
+  
+As an example, we will use **U/N Reef** or unnamed reefs. It should be noted that **U/N Reef** refers to multiple unnamed reefs, and each reef can be identified by its `UNIQUE_ID`. We chose to use **U/N Reef** for this example simply because it will return multiple reefs within the GBR and thus will overlap with the most number of AIMS monitoring sites. 
 
 ```{r gbr_features}
 un_reefs <- gbr_features(site_name = "u/n reef")
@@ -83,7 +95,10 @@ We will plot the original AIMS monitoring sites (black), the polygon of interest
 
 Note that unless the AIMS site is within a polygon, it will not to be identified in our final list.
 
-```{r sites_int}
+Below we are including two ways of plotting sites and polygons: using `ggplot2`, which produces a static map, and using `leaflet`, which produces an interactive map.
+
+### Mapping with `ggplot2`
+```{r gg_map}
 site_list <- sites_of_interest(sites_shp, un_reefs)
 
 #Plotting results
@@ -97,20 +112,47 @@ sites_shp %>%
   geom_sf(inherit.aes = F, data = site_list, color = "blue")+
   theme_bw()
 ```
+### Mapping with `leaflet`
+
+Maps produced with `leaflet` are interactive and allows users to zoom in and out as they need.
+
+```{r leaflet_map}
+#Starting interactive map
+leaflet() %>% 
+  #Adding a basemap from Open Street Map
+  addTiles() %>% 
+  #Adding polygons of the unnamed (U/N) reefs
+  addPolygons(data = un_reefs, weight = 1) %>% 
+  #Adding all sites in black
+  addCircleMarkers(data = sites_shp, radius = 1.5, color = "black") %>% 
+  #Adding sites within U/N reefs in pink
+  addCircleMarkers(data = site_list, radius = 3, color = "pink")
+```
+
 
 ## Extracting temperature for monitoring site within area of interest
 
 We will now extract data only for the monitoring sites located within the GBR feature of our interest.
 
 ```{r sites_extract}
+#Extracting data points within U/N reefs from the cloud
 temp_area_int <- data_df %>%
   select(site, subsite, time, qc_val) %>% 
   inner_join(st_drop_geometry(site_list), by = c("site", "subsite")) %>% 
+  collect()
+```
+
+Now we will calculate the monthly means for temperature. We will group the monthly means on deployment location. Note that points of interest within the U/N reefs were only deployed in reef flats, or reef slopes. There were no deployments in an unknown deployment location.
+
+```{r calc_means}
+temp_area_int <- temp_area_int %>% 
+  #Adding year and month columns
   mutate(year = year(time),
          month = month(time)) %>%
+  #Group by month, year and deployment location
   group_by(year, month, deployment_location) %>%
-  summarise(temp_monthly_mean = round(mean(qc_val, na.rm = TRUE), 2)) %>%
-  collect()
+  #Calculating means for groups
+  summarise(temp_monthly_mean = round(mean(qc_val, na.rm = TRUE), 2))
 
 #Checking results
 head(temp_area_int)
@@ -160,7 +202,7 @@ data_out <- paste(folder_out, "monthly_means_temperature.csv", sep = "/")
 write_csv_arrow(temp_area_int, file = data_out)
 
 #Saving plot
-plot_out <- paste(folder_out, "monthly_means_timeseries.tif", sep = "/")
-ggsave(plot_out, temp_plot, device = "tiff")
+plot_out <- paste(folder_out, "monthly_means_timeseries.png", sep = "/")
+ggsave(plot_out, temp_plot, device = "png")
 ```
 
