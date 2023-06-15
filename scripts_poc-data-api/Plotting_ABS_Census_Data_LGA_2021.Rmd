@@ -43,7 +43,7 @@ dim(data_df)
 ```
 ## Subsetting ABS dataset: QLD LGAs
 
-As we can see above, the ABS dataset contains `r nrow(data_df)` rows and `r ncol(data_df)` columns. However, this dataset should only include 4,355 rows, which means that it has been duplicated. We can remove any duplicate rows when loading the dataset into memory. We can further explore the contents of this dataset looking at its `schema`, which will print the name of all columns available in the dataset. Since there are 665 columns, we will just inspect the first 10 column names.
+As we can see above, the ABS dataset contains `r nrow(data_df)` rows and `r ncol(data_df)` columns. We can explore the contents of this dataset looking at its `schema`, which will print the name of all columns available in the dataset. Since there are 665 columns, we will just inspect the first 10 column names.
 
 ```{r exploring_dataset}
 head(data_df$schema, n = 10)
@@ -53,21 +53,10 @@ We can see that there is a `REGION_CODE` column, which as its name suggests, it 
 According to the [LGA documentation](https://www.abs.gov.au/statistics/standards/australian-statistical-geography-standard-asgs-edition-3/jul2021-jun2026/main-structure-and-greater-capital-city-statistical-areas/australia-and-stateterritory) in the ABS website, the digit identifying the state of QLD is the number three (3). Given that LGA codes have five digits in total, we know that QLD LGAs will range between 30000 and 39999. We can now build our query to extract the data we need.
 
 ```{r subset_qld}
-#Start a query
-build_scan_query <- data_df$NewScan()
-#Write query
-build_scan_query$Filter(Expression$field_ref("REGION_CODE") >= 30000 & Expression$field_ref("REGION_CODE") <= 39999)
-#End query
-query <- build_scan_query$Finish()
-
-#Apply query and load as data frame
-qld_lgas <- query$ToTable() %>% 
-  as.data.frame() %>% 
-  #Removing duplicates 
-  distinct(across(-geometry), .keep_all = T)
-
-#Removing variables that are no longer needed
-rm(build_scan_query, query)
+#Selecting LGAs for QLD only
+qld_lgas <- data_df %>% 
+  filter(REGION_CODE >= 30000 & REGION_CODE <= 39999) %>% 
+  collect()
 
 #Check dimensions
 dim(qld_lgas)
@@ -78,7 +67,6 @@ Our dataset now has `r nrow(qld_lgas)` rows instead of `r nrow(data_df)`, but we
 head(qld_lgas)
 ```
 The first few column names are informative, we can guess what the contents of the `REGION_CODE` and `REGION_NAME` are. But the information contained in `ACTIV_2` or `ADFS_2` is unclear. The good news is that the RIMReP collection has a table that gives a description of the data that is stored in each column. In the next step we will load this table so we can inspect it.
-
 
 ## Connecting to RIMReP collection and loading description of each column
 
@@ -111,6 +99,23 @@ table %>%
   filter(str_detect(str_to_lower(DESCRIPTION), "overseas"))
 ```
 
+Before we continue subsetting the data, you may have noticed that when we inspected the dataset, all columns appear as character.
+
+```{r}
+head(qld_lgas)
+```
+
+We will change all columns included in the description table to numeric, which is the correct data type.
+
+```{r}
+#Changing all columns in the description table to numeric
+qld_lgas <- qld_lgas %>%
+  mutate(across(all_of(table$CODE), as.numeric))
+
+#Checking result
+head(qld_lgas)
+```
+
 ## Subsetting ABS dataset: Keeping columns of interest
 
 In addition to the columns identified above, we will also keep the columns identifying the date the data was collected (`TIME_PERIOD`), the LGAs where it was collected (`REGION_CODE` and `REGION_NAME`), and the `geometry` because this column will allow us to create maps later.
@@ -130,7 +135,7 @@ We will use data for the most recent census (2021) to create a summary table for
 ```{r sum_table_data}
 qld_2021 <- qld_lgas_sub %>% 
   #Selecting data for 2021
-  filter(year(TIME_PERIOD) == 2021) %>% 
+  filter(TIME_PERIOD == 2021) %>% 
   #Calculating percentage of population per gender
   mutate(female_per = round((ERP_F_20/ERP_P_20)*100, 2),
          male_per = round((ERP_M_20/ERP_P_20)*100, 2)) %>% 
@@ -179,7 +184,7 @@ age_groups <- table %>%
 
 #Extracting data for Townsville (2016 and 2021 only)
 townsville <- qld_lgas %>% 
-  filter(REGION_NAME == "Townsville" & (year(TIME_PERIOD) == 2016 | year(TIME_PERIOD) == 2021)) %>% 
+  filter(REGION_NAME == "Townsville" & (TIME_PERIOD == 2016 | TIME_PERIOD == 2021)) %>% 
   #Select relevant columns 
   select(TIME_PERIOD, starts_with("ERP_F") | starts_with("ERP_M")) %>% 
   #Reduce number of columns
@@ -188,7 +193,7 @@ townsville <- qld_lgas %>%
   #Keeping only information about relevant age groups
   right_join(age_groups, by = "age_group") %>% 
   #Adding a column for year
-  mutate(year = year(TIME_PERIOD))
+  mutate(year = TIME_PERIOD)
 
 #Checking results
 townsville
@@ -230,7 +235,7 @@ We will select 2021 data from the QLD data we extracted at the beginning. We wil
 #Selecting population data from 2021
 qld_pop_2021 <- qld_lgas_sub %>% 
   #Selecting data for 2021
-  filter(year(TIME_PERIOD) == 2021) %>% 
+  filter(TIME_PERIOD == 2021) %>% 
   #Keeping only columns of interest
   select(REGION_CODE, REGION_NAME, ERP_P_20, geometry) %>% 
   #Adding column with spatial information in degrees
