@@ -128,4 +128,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# R related files to be ignored
 .DS_Store
+.Rproj.user
+.Rhistory

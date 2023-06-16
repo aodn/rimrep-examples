@@ -1,0 +1,22 @@
+name: rimrep
+channels:
+  - defaults
+dependencies:
+  - xarray
+  - ipython
+  - ipykernel
+  - netcdf4
+  - bottleneck
+  - dask
+  - scipy
+  - h5netcdf
+  - zarr
+  - cartopy
+  - matplotlib
+  - seaborn
+  - geopandas
+  - dask-geopandas
+  - s3fs
+  - owslib
+  - pystac-client
+prefix: C:\Users\ldfierro\AppData\Local\miniconda3\envs\rimrep

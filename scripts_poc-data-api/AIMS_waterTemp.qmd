@@ -1,0 +1,94 @@
+---
+title: "AIMS temp data: map of sites"
+author: "E Klein"
+format: 
+  html: 
+    code-fold: false
+    self-contained: true
+---
+
+## Goal
+
+This notebook is to demonstrate how to interact with RIMReP `geoparquet` collection for the AIMS water temperature logger data, and make a map of all sites where loggers have been deployed.
+
+
+```{r setup}
+suppressMessages(library(arrow))
+suppressMessages(library(dplyr))
+suppressMessages(library(leaflet))
+suppressMessages(library(tictoc))
+suppressMessages(library(DT))
+```
+
+### Connect to S3 parquet directory
+
+This chunk will create a S3 bucket access and open a connection. Note that the `df` object is a "data frame like" arrow object, not an R data frame
+
+```{r S3connect}
+tic("Total time") ## This is the full run timer
+tic("S3")
+tempBucket <- s3_bucket(bucket = 's3://rimrep-data-public/091-aims-sst/test-50-64-spatialpart')
+df <- open_dataset(tempBucket)
+toc(log = TRUE)
+```
+
+### Explore the collection:
+
+The `(geo)parquet` dataset is a collection of files, but it is transparent to the user. You can explore the structure of the `df` object
+
+```{r explore}
+tic("Metadata")
+print(paste0("Number of files in the parquet directory: ", length(df$files)))
+print(df$schema)
+toc(log = TRUE)
+```
+
+### Analyse the Data
+
+Now I can use standard `dplyr` calls to play with the data. I will summarise by `site`, count the number of observations, and average the coordinates and the mean temperature (no use of it, just for fun) of every record. Note the use of `collect` at the end to trigger the action:
+
+```{r summarise}
+tic("Summarise")
+dfSites <- df |> 
+  filter(lon>140.5) |> 
+  group_by(site) |> 
+  summarise(tempMean = round(mean(qc_val, na.rm=TRUE), 2),
+            lonMean = round(mean(lon, na.rm=TRUE), 4),
+            latMean = round(mean(lat, na.rm=TRUE), 4),
+            dateMin = min(time), 
+            dateMax = max(time),
+            nPoints = n()) |> 
+  collect()
+toc(log = TRUE)
+```
+
+Let's look the table: 
+
+```{r}
+datatable(dfSites)
+```
+
+
+### Map sites
+
+Make a map of the sites where loggers are. The size of the marker is proportional to the number of records for each site
+
+```{r map}
+tic("Map")
+scaleFactor <- 2e-6
+m <- leaflet(dfSites) |> 
+  addTiles() |> 
+  addCircleMarkers(lat = ~latMean, lng=~lonMean, 
+                   radius = ~nPoints*scaleFactor, fill = TRUE, 
+                   stroke = FALSE, fillOpacity = 0.5)
+m
+toc(log = TRUE)
+```
+
+Total execution time
+
+```{r}
+toc(log = TRUE)
+
+tic.log(format=TRUE)
+```
