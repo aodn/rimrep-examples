@@ -99,23 +99,6 @@ table %>%
   filter(str_detect(str_to_lower(DESCRIPTION), "overseas"))
 ```
 
-Before we continue subsetting the data, you may have noticed that when we inspected the dataset, all columns appear as character.
-
-```{r}
-head(qld_lgas)
-```
-
-We will change all columns included in the description table to numeric, which is the correct data type.
-
-```{r}
-#Changing all columns in the description table to numeric
-qld_lgas <- qld_lgas %>%
-  mutate(across(all_of(table$CODE), as.numeric))
-
-#Checking result
-head(qld_lgas)
-```
-
 ## Subsetting ABS dataset: Keeping columns of interest
 
 In addition to the columns identified above, we will also keep the columns identifying the date the data was collected (`TIME_PERIOD`), the LGAs where it was collected (`REGION_CODE` and `REGION_NAME`), and the `geometry` because this column will allow us to create maps later.

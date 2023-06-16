@@ -72,14 +72,14 @@ head(data_df$schema, n = 10)
     ## Schema
     ## DATAFLOW: string
     ## FREQUENCY: string
-    ## TIME_PERIOD: string
+    ## TIME_PERIOD: int64
     ## REGIONTYPE: string
-    ## REGION_CODE: string
+    ## REGION_CODE: int64
     ## REGION_NAME: string
-    ## ACTIV_2: string
-    ## ACTIV_3: string
-    ## ADFS_2: string
-    ## ADFS_3: string
+    ## ACTIV_2: double
+    ## ACTIV_3: double
+    ## ADFS_2: double
+    ## ADFS_3: double
 
 We can see that there is a `REGION_CODE` column, which as its name
 suggests, it contains a code that identifies its region or LGA included
@@ -120,20 +120,20 @@ head(qld_lgas)
 
     ## # A tibble: 6 × 665
     ##   DATAFLOW      FREQUENCY TIME_PERIOD REGIONTYPE REGION_CODE REGION_NAME ACTIV_2
-    ##   <chr>         <chr>     <chr>       <chr>      <chr>       <chr>       <chr>  
-    ## 1 ABS:ABS_REGI… A         2011        LGA2021    30250       Aurukun     3.2    
-    ## 2 ABS:ABS_REGI… A         2011        LGA2021    30300       Balonne     3.4    
-    ## 3 ABS:ABS_REGI… A         2011        LGA2021    30370       Banana      3.3    
-    ## 4 ABS:ABS_REGI… A         2011        LGA2021    30410       Barcaldine  3.5    
-    ## 5 ABS:ABS_REGI… A         2011        LGA2021    30450       Barcoo      3.9    
-    ## 6 ABS:ABS_REGI… A         2011        LGA2021    30760       Blackall T… 4.4    
-    ## # ℹ 658 more variables: ACTIV_3 <chr>, ADFS_2 <chr>, ADFS_3 <chr>,
-    ## #   ADFS_4 <chr>, ADFS_5 <chr>, AGEMIG_10 <chr>, AGEMIG_11 <chr>,
-    ## #   AGEMIG_12 <chr>, AGEMIG_13 <chr>, AGEMIG_14 <chr>, AGEMIG_15 <chr>,
-    ## #   AGEMIG_16 <chr>, AGEMIG_17 <chr>, AGEMIG_18 <chr>, AGEMIG_19 <chr>,
-    ## #   AGEMIG_2 <chr>, AGEMIG_3 <chr>, AGEMIG_4 <chr>, AGEMIG_5 <chr>,
-    ## #   AGEMIG_6 <chr>, AGEMIG_7 <chr>, AGEMIG_8 <chr>, AGEMIG_9 <chr>,
-    ## #   AGRIC_10 <chr>, AGRIC_11 <chr>, AGRIC_12 <chr>, AGRIC_13 <chr>, …
+    ##   <chr>         <chr>           <int> <chr>            <int> <chr>         <dbl>
+    ## 1 ABS:ABS_REGI… A                2011 LGA2021          30250 Aurukun         3.2
+    ## 2 ABS:ABS_REGI… A                2011 LGA2021          30300 Balonne         3.4
+    ## 3 ABS:ABS_REGI… A                2011 LGA2021          30370 Banana          3.3
+    ## 4 ABS:ABS_REGI… A                2011 LGA2021          30410 Barcaldine      3.5
+    ## 5 ABS:ABS_REGI… A                2011 LGA2021          30450 Barcoo          3.9
+    ## 6 ABS:ABS_REGI… A                2011 LGA2021          30760 Blackall T…     4.4
+    ## # ℹ 658 more variables: ACTIV_3 <dbl>, ADFS_2 <dbl>, ADFS_3 <dbl>,
+    ## #   ADFS_4 <dbl>, ADFS_5 <dbl>, AGEMIG_10 <dbl>, AGEMIG_11 <dbl>,
+    ## #   AGEMIG_12 <dbl>, AGEMIG_13 <dbl>, AGEMIG_14 <dbl>, AGEMIG_15 <dbl>,
+    ## #   AGEMIG_16 <dbl>, AGEMIG_17 <dbl>, AGEMIG_18 <dbl>, AGEMIG_19 <dbl>,
+    ## #   AGEMIG_2 <dbl>, AGEMIG_3 <dbl>, AGEMIG_4 <dbl>, AGEMIG_5 <dbl>,
+    ## #   AGEMIG_6 <dbl>, AGEMIG_7 <dbl>, AGEMIG_8 <dbl>, AGEMIG_9 <dbl>,
+    ## #   AGRIC_10 <dbl>, AGRIC_11 <dbl>, AGRIC_12 <dbl>, AGRIC_13 <dbl>, …
 
 The first few column names are informative, we can guess what the
 contents of the `REGION_CODE` and `REGION_NAME` are. But the information
@@ -203,59 +203,6 @@ table %>%
     ## 10 Persons born overseas: 85 years and over Number <NA>       AGEMIG_19
     ## # ℹ 64 more rows
 
-Before we continue subsetting the data, you may have noticed that when
-we inspected the dataset, all columns appear as character.
-
-``` r
-head(qld_lgas)
-```
-
-    ## # A tibble: 6 × 665
-    ##   DATAFLOW      FREQUENCY TIME_PERIOD REGIONTYPE REGION_CODE REGION_NAME ACTIV_2
-    ##   <chr>         <chr>     <chr>       <chr>      <chr>       <chr>       <chr>  
-    ## 1 ABS:ABS_REGI… A         2011        LGA2021    30250       Aurukun     3.2    
-    ## 2 ABS:ABS_REGI… A         2011        LGA2021    30300       Balonne     3.4    
-    ## 3 ABS:ABS_REGI… A         2011        LGA2021    30370       Banana      3.3    
-    ## 4 ABS:ABS_REGI… A         2011        LGA2021    30410       Barcaldine  3.5    
-    ## 5 ABS:ABS_REGI… A         2011        LGA2021    30450       Barcoo      3.9    
-    ## 6 ABS:ABS_REGI… A         2011        LGA2021    30760       Blackall T… 4.4    
-    ## # ℹ 658 more variables: ACTIV_3 <chr>, ADFS_2 <chr>, ADFS_3 <chr>,
-    ## #   ADFS_4 <chr>, ADFS_5 <chr>, AGEMIG_10 <chr>, AGEMIG_11 <chr>,
-    ## #   AGEMIG_12 <chr>, AGEMIG_13 <chr>, AGEMIG_14 <chr>, AGEMIG_15 <chr>,
-    ## #   AGEMIG_16 <chr>, AGEMIG_17 <chr>, AGEMIG_18 <chr>, AGEMIG_19 <chr>,
-    ## #   AGEMIG_2 <chr>, AGEMIG_3 <chr>, AGEMIG_4 <chr>, AGEMIG_5 <chr>,
-    ## #   AGEMIG_6 <chr>, AGEMIG_7 <chr>, AGEMIG_8 <chr>, AGEMIG_9 <chr>,
-    ## #   AGRIC_10 <chr>, AGRIC_11 <chr>, AGRIC_12 <chr>, AGRIC_13 <chr>, …
-
-We will change all columns included in the description table to numeric,
-which is the correct data type.
-
-``` r
-#Changing all columns in the description table to numeric
-qld_lgas <- qld_lgas %>%
-  mutate(across(all_of(table$CODE), as.numeric))
-
-#Checking result
-head(qld_lgas)
-```
-
-    ## # A tibble: 6 × 665
-    ##   DATAFLOW      FREQUENCY TIME_PERIOD REGIONTYPE REGION_CODE REGION_NAME ACTIV_2
-    ##   <chr>         <chr>     <chr>       <chr>      <chr>       <chr>         <dbl>
-    ## 1 ABS:ABS_REGI… A         2011        LGA2021    30250       Aurukun         3.2
-    ## 2 ABS:ABS_REGI… A         2011        LGA2021    30300       Balonne         3.4
-    ## 3 ABS:ABS_REGI… A         2011        LGA2021    30370       Banana          3.3
-    ## 4 ABS:ABS_REGI… A         2011        LGA2021    30410       Barcaldine      3.5
-    ## 5 ABS:ABS_REGI… A         2011        LGA2021    30450       Barcoo          3.9
-    ## 6 ABS:ABS_REGI… A         2011        LGA2021    30760       Blackall T…     4.4
-    ## # ℹ 658 more variables: ACTIV_3 <dbl>, ADFS_2 <dbl>, ADFS_3 <dbl>,
-    ## #   ADFS_4 <dbl>, ADFS_5 <dbl>, AGEMIG_10 <dbl>, AGEMIG_11 <dbl>,
-    ## #   AGEMIG_12 <dbl>, AGEMIG_13 <dbl>, AGEMIG_14 <dbl>, AGEMIG_15 <dbl>,
-    ## #   AGEMIG_16 <dbl>, AGEMIG_17 <dbl>, AGEMIG_18 <dbl>, AGEMIG_19 <dbl>,
-    ## #   AGEMIG_2 <dbl>, AGEMIG_3 <dbl>, AGEMIG_4 <dbl>, AGEMIG_5 <dbl>,
-    ## #   AGEMIG_6 <dbl>, AGEMIG_7 <dbl>, AGEMIG_8 <dbl>, AGEMIG_9 <dbl>,
-    ## #   AGRIC_10 <dbl>, AGRIC_11 <dbl>, AGRIC_12 <dbl>, AGRIC_13 <dbl>, …
-
 ## Subsetting ABS dataset: Keeping columns of interest
 
 In addition to the columns identified above, we will also keep the
@@ -273,17 +220,17 @@ qld_lgas_sub
 
     ## # A tibble: 616 × 82
     ##    TIME_PERIOD REGION_CODE REGION_NAME   ERP_17 ERP_23 ERP_P_20 EQUIV_2 ERP_F_10
-    ##    <chr>       <chr>       <chr>          <dbl>  <dbl>    <dbl>   <dbl>    <dbl>
-    ##  1 2011        30250       Aurukun           NA     NA       NA     348       NA
-    ##  2 2011        30300       Balonne           NA     NA       NA     669       NA
-    ##  3 2011        30370       Banana            NA     NA       NA     852       NA
-    ##  4 2011        30410       Barcaldine        NA     NA       NA     676       NA
-    ##  5 2011        30450       Barcoo            NA     NA       NA     752       NA
-    ##  6 2011        30760       Blackall Tam…     NA     NA       NA     600       NA
-    ##  7 2011        30900       Boulia            NA     NA       NA     703       NA
-    ##  8 2011        31000       Brisbane          NA     NA       NA     951       NA
-    ##  9 2011        31750       Bulloo            NA     NA       NA     720       NA
-    ## 10 2011        31820       Bundaberg         NA     NA       NA     550       NA
+    ##          <int>       <int> <chr>          <dbl>  <dbl>    <dbl>   <dbl>    <dbl>
+    ##  1        2011       30250 Aurukun           NA     NA       NA     348       NA
+    ##  2        2011       30300 Balonne           NA     NA       NA     669       NA
+    ##  3        2011       30370 Banana            NA     NA       NA     852       NA
+    ##  4        2011       30410 Barcaldine        NA     NA       NA     676       NA
+    ##  5        2011       30450 Barcoo            NA     NA       NA     752       NA
+    ##  6        2011       30760 Blackall Tam…     NA     NA       NA     600       NA
+    ##  7        2011       30900 Boulia            NA     NA       NA     703       NA
+    ##  8        2011       31000 Brisbane          NA     NA       NA     951       NA
+    ##  9        2011       31750 Bulloo            NA     NA       NA     720       NA
+    ## 10        2011       31820 Bundaberg         NA     NA       NA     550       NA
     ## # ℹ 606 more rows
     ## # ℹ 74 more variables: ERP_F_11 <dbl>, ERP_F_12 <dbl>, ERP_F_13 <dbl>,
     ## #   ERP_F_14 <dbl>, ERP_F_15 <dbl>, ERP_F_16 <dbl>, ERP_F_17 <dbl>,
@@ -319,17 +266,17 @@ qld_2021
 
     ## # A tibble: 78 × 7
     ##    REGION_NAME    REGION_CODE tot_population female_per male_per working_age_per
-    ##    <chr>          <chr>                <dbl>      <dbl>    <dbl>           <dbl>
-    ##  1 Aurukun        30250                 1131       52.7     47.3            72.1
-    ##  2 Balonne        30300                 4379       49.7     50.3            63.4
-    ##  3 Banana         30370                14663       48.3     51.7            62.9
-    ##  4 Barcaldine     30410                 2863       49.0     51.0            62.6
-    ##  5 Barcoo         30450                  312       46.5     53.5            67.9
-    ##  6 Blackall Tambo 30760                 1920       51.0     49.0            55.8
-    ##  7 Boulia         30900                  470       56.4     43.6            61.3
-    ##  8 Brisbane       31000              1264024       50.4     49.6            69.2
-    ##  9 Bulloo         31750                  342       47.7     52.3            77.2
-    ## 10 Bundaberg      31820               100118       50.6     49.4            57.9
+    ##    <chr>                <int>          <dbl>      <dbl>    <dbl>           <dbl>
+    ##  1 Aurukun              30250           1131       52.7     47.3            72.1
+    ##  2 Balonne              30300           4379       49.7     50.3            63.4
+    ##  3 Banana               30370          14663       48.3     51.7            62.9
+    ##  4 Barcaldine           30410           2863       49.0     51.0            62.6
+    ##  5 Barcoo               30450            312       46.5     53.5            67.9
+    ##  6 Blackall Tambo       30760           1920       51.0     49.0            55.8
+    ##  7 Boulia               30900            470       56.4     43.6            61.3
+    ##  8 Brisbane             31000        1264024       50.4     49.6            69.2
+    ##  9 Bulloo               31750            342       47.7     52.3            77.2
+    ## 10 Bundaberg            31820         100118       50.6     49.4            57.9
     ## # ℹ 68 more rows
     ## # ℹ 1 more variable: med_house_inc_AUD <dbl>
 
@@ -352,10 +299,10 @@ qld_2021 %>%
 
     ## # A tibble: 3 × 7
     ##   REGION_NAME REGION_CODE tot_population female_per male_per working_age_per
-    ##   <chr>       <chr>                <dbl>      <dbl>    <dbl>           <dbl>
-    ## 1 Bulloo      31750                  342       47.7     52.3            77.2
-    ## 2 Diamantina  32750                  270       43.7     56.3            76.3
-    ## 3 McKinlay    34800                  838       45.9     54.1            78.8
+    ##   <chr>             <int>          <dbl>      <dbl>    <dbl>           <dbl>
+    ## 1 Bulloo            31750            342       47.7     52.3            77.2
+    ## 2 Diamantina        32750            270       43.7     56.3            76.3
+    ## 3 McKinlay          34800            838       45.9     54.1            78.8
     ## # ℹ 1 more variable: med_house_inc_AUD <dbl>
 
 ## Plotting age classes
@@ -403,18 +350,18 @@ townsville
 ```
 
     ## # A tibble: 72 × 6
-    ##    TIME_PERIOD gender age_group number_ind age_class   year 
-    ##    <chr>       <chr>  <chr>          <dbl> <chr>       <chr>
-    ##  1 2016        F      10              6516 40-44 years 2016 
-    ##  2 2016        F      11              6483 45-49 years 2016 
-    ##  3 2016        F      12              6044 50-54 years 2016 
-    ##  4 2016        F      13              5617 55-59 years 2016 
-    ##  5 2016        F      14              4589 60-64 years 2016 
-    ##  6 2016        F      15              3946 65-69 years 2016 
-    ##  7 2016        F      16              2753 70-74 years 2016 
-    ##  8 2016        F      17              2041 75-79 years 2016 
-    ##  9 2016        F      18              1373 80-84 years 2016 
-    ## 10 2016        F      19              1318 85 and over 2016 
+    ##    TIME_PERIOD gender age_group number_ind age_class    year
+    ##          <int> <chr>  <chr>          <dbl> <chr>       <int>
+    ##  1        2016 F      10              6516 40-44 years  2016
+    ##  2        2016 F      11              6483 45-49 years  2016
+    ##  3        2016 F      12              6044 50-54 years  2016
+    ##  4        2016 F      13              5617 55-59 years  2016
+    ##  5        2016 F      14              4589 60-64 years  2016
+    ##  6        2016 F      15              3946 65-69 years  2016
+    ##  7        2016 F      16              2753 70-74 years  2016
+    ##  8        2016 F      17              2041 75-79 years  2016
+    ##  9        2016 F      18              1373 80-84 years  2016
+    ## 10        2016 F      19              1318 85 and over  2016
     ## # ℹ 62 more rows
 
 ### Plotting data
@@ -519,4 +466,4 @@ australia %>%
   theme(legend.position = "bottom", plot.title = element_text(hjust = 0.5))
 ```
 
-![](Plotting_ABS_Census_Data_LGA_2021_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](Plotting_ABS_Census_Data_LGA_2021_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
