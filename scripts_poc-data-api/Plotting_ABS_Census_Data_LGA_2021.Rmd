@@ -206,6 +206,8 @@ towns_age <- townsville %>%
   ggplot(aes(age_class, number_ind, fill = gender))+
   #Showing gender columns next to each other 
   geom_col(position = position_dodge())+
+  #Choosing a colour-blind friendly palette
+  scale_fill_viridis_d(option = "G", begin = 0.5, end = 0.85)+
   #Showing data for each year in a different row
   facet_grid(year~.)+
   #Removing grey background
