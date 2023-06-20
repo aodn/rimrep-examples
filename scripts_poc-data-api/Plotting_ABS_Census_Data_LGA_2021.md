@@ -343,7 +343,10 @@ townsville <- qld_lgas %>%
   #Keeping only information about relevant age groups
   right_join(age_groups, by = "age_group") %>% 
   #Adding a column for year
-  mutate(year = TIME_PERIOD)
+  mutate(year = TIME_PERIOD,
+         age_group = as.numeric(age_group)) %>% 
+  #Ordering data by age groups
+  arrange(age_group) 
 
 #Checking results
 townsville
@@ -351,23 +354,32 @@ townsville
 
     ## # A tibble: 72 × 6
     ##    TIME_PERIOD gender age_group number_ind age_class    year
-    ##          <int> <chr>  <chr>          <dbl> <chr>       <int>
-    ##  1        2016 F      10              6516 40-44 years  2016
-    ##  2        2016 F      11              6483 45-49 years  2016
-    ##  3        2016 F      12              6044 50-54 years  2016
-    ##  4        2016 F      13              5617 55-59 years  2016
-    ##  5        2016 F      14              4589 60-64 years  2016
-    ##  6        2016 F      15              3946 65-69 years  2016
-    ##  7        2016 F      16              2753 70-74 years  2016
-    ##  8        2016 F      17              2041 75-79 years  2016
-    ##  9        2016 F      18              1373 80-84 years  2016
-    ## 10        2016 F      19              1318 85 and over  2016
+    ##          <int> <chr>      <dbl>      <dbl> <chr>       <int>
+    ##  1        2016 F              2       6403 0-4 years    2016
+    ##  2        2016 M              2       6960 0-4 years    2016
+    ##  3        2021 F              2       5481 0-4 years    2021
+    ##  4        2021 M              2       6113 0-4 years    2021
+    ##  5        2016 F              3       6654 5-9 years    2016
+    ##  6        2016 M              3       6720 5-9 years    2016
+    ##  7        2021 F              3       6231 5-9 years    2021
+    ##  8        2021 M              3       6786 5-9 years    2021
+    ##  9        2016 F              4       6055 10-14 years  2016
+    ## 10        2016 M              4       6351 10-14 years  2016
     ## # ℹ 62 more rows
 
 ### Plotting data
 
 ``` r
-towns_age <- townsville %>% 
+#Fix order of groups - Select the unique age classes
+age_class_ord <- townsville %>% 
+  distinct(age_class) %>% 
+  pull()
+#This will give us the age classes in order.
+
+#Creating plot
+towns_age <- townsville %>%
+  #We will turn the age class into an ordered factor. We use the class in order from above
+  mutate(age_class = factor(age_class, levels = age_class_ord, ordered = T)) %>% 
   #Showing age class on x axis and color by gender
   ggplot(aes(age_class, number_ind, fill = gender))+
   #Showing gender columns next to each other 

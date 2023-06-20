@@ -19,4 +19,4 @@ dependencies:
   - s3fs
   - owslib
   - pystac-client
-prefix: C:\Users\ldfierro\AppData\Local\miniconda3\envs\rimrep
+
