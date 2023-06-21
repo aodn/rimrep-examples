@@ -1,0 +1,55 @@
+---
+title: "install.packages-2023.06.20"
+output: html_document
+date: "2023-06-20"
+author: "Michaela E. Miller"
+---
+
+# Installing Packages for Notebook Examples
+
+## List of packages
+
+This will create a list of all packages required for the training notebooks. 
+Note that if the notebooks are updated, this list may become non-exhaustive. We will update you when this occurs.
+
+```{r packages list}
+packages <- c("DBI", "DT", "KernSmooth", "MASS", "Matrix", "R6", "RColorBrewer", "Rcpp", 
+              "askpass", "assertthat", "crosstalk","leaflet","leaflet.providers","arrow",
+              "sf","rnaturalearth","backports", "base64enc", "bit", "bit64", "blob", "broom", 
+              "bslib", "cachem", "callr", "cellranger", "class","classInt", "cli", "clipr", 
+              "colorspace", "commonmark", "conflicted", "cpp11", "crayon", "curl", "data.table", 
+              "dbplyr", "digest", "dplyr", "dtplyr", "e1071", "ellipsis", "evaluate", "fansi", 
+              "farver", "fastmap", "fontawesome", "forcats", "fs", "gargle", "generics", "ggplot2",
+              "glue", "googledrive", "googlesheets4", "gridExtra", "gtable", "haven", "highr", 
+              "hms", "htmltools", "htmlwidgets", "httr", "ids", "isoband", "jquerylib", "jsonlite", 
+              "knitr", "labeling", "later", "lattice", "lazyeval", "lifecycle", "lubridate", "magrittr", 
+              "markdown", "memoise", "mgcv", "mime", "modelr", "munsell", "nlme", "openssl", "pillar",
+              "pkgconfig", "png", "prettyunits", "processx", "progress", "promises", "proxy", "ps", 
+              "purrr", "ragg", "rappdirs", "raster", "readr", "readxl", "rematch", "rematch2", 
+              "renv", "reprex", "rlang", "rmarkdown", "pacman", "rstudioapi", "rvest", "s2", "sass", 
+              "scales", "selectr", "sp", "stringi", "stringr", "sys", "systemfonts", "textshaping", 
+              "tibble", "tictoc", "tidyr", "tidyselect", "tidyverse", "timechange", "tinytex", "tzdb", 
+              "units", "utf8", "uuid", "vctrs", "viridis", "viridisLite", "vroom", "withr", "wk", 
+              "wkb", "xfun", "xml2", "yaml"
+)
+```
+
+## Install packages
+
+Now install the packages that are not already on your computer
+
+```{r install}
+installed_packages <- installed.packages()
+packages_to_install <- setdiff(packages, installed_packages[, "Package"])
+if (length(packages_to_install) > 0) {
+  install.packages(packages_to_install)
+}
+```
+
+## Load the packages
+
+Now load the packages. This essentially is a quick way of doing the `library()` function for all packages we have just installed.
+
+```{r load}
+lapply(packages, require, character.only = TRUE)
+```
