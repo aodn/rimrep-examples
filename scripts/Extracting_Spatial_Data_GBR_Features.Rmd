@@ -75,7 +75,7 @@ We will transform the information in the `geometry` field into coordinate pairs 
   
 ## Extracting sites and coordinates from dataset
 
-We can extract data from the AIMS Sea Surface Water Temperature dataset by using `dplyr` verbs as shown below. This could take from a few seconds up to a minute depending on the speed of your Internet connection.
+We can extract data from the GBR features dataset by using `dplyr` verbs as shown below. This could take from a few seconds up to a minute depending on the speed of your Internet connection.
 
 ```{r sites_bin}
 sites <- data_df %>% 
