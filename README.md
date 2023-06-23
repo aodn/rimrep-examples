@@ -1,16 +1,24 @@
 # rimrep-examples
 
-A repository containing example notebooks and documentation for the RIMReP project.
+This repository contains example notebooks in `R` and `Python` showing how to access datasets available in the Reef 2050 Integrated Monitoring and Reporting Program Data Management System (RIMReP DMS).  
+  
+Example notebooks also include suggested workflows on how to query datasets to create summary tables, figures, and maps.  
 
-## Data API proof-of-concept
+## Setting up your machine
 
-### Direct data access
+After making this repository available locally by either cloning or downloading it, you need to ensure all packages used in this repository are already installed in your local machine. If you are missing any packages in your machine, you will not be able to run the example notebooks.
+  
+The good news is that you will not need to go through every notebook checking the libraries you need. We are providing some files that will automate this process for you whether you use `R`, `Python`, or both.  
+  
+### `R` users
+If you are using the `R` notebooks, run the following two lines in the `RStudio` console:  
+```R
+  source("Installing_R_libraries.R")  
+  checking_libraries()
+```  
+These lines run a function that automatically checks if any `R` libraries used in this repository are not installed in your machine, and it will install them automatically. Bear in mind that these notebooks were developed in `R` version 4.3.1, so you may need to upgrade your `R` version if you encounter any problems during package installation.
 
-#### Python
-
-- [Geoparquet example (using AIMS Temperature Loggers data)](https://github.com/aodn/rimrep-examples/blob/main/poc-data-api/geoparquet.ipynb)
-- [Zarr example (using NOAA Coral Reef Watch degree heating weeks data)](https://github.com/aodn/rimrep-examples/blob/main/poc-data-api/zarr.ipynb)
-
+### `Python` users
 We are also including an `environment.yml` file, which contains all `Python` packages used in the notebooks above. You can use this file to create a [`conda` environment](https://docs.conda.io/projects/conda/en/latest/user-guide/concepts/environments.html) with all the required packages. To do so, run the following command in the Anaconda Prompt (Windows) or in your terminal (MacOS, Linux):  
   
 ```bash
@@ -18,6 +26,16 @@ conda env create -f environment.yml
 ```
   
 **Note**: Before running the code above, you need to have [`conda`](https://conda.io/projects/conda/en/latest/user-guide/install/index.html) installed in your machine. Make sure you choose the correct installation instructions for your operating system.  
+
+
+## Description of example notebooks available
+
+#### Python
+
+- [Geoparquet example (using AIMS Temperature Loggers data)](https://github.com/aodn/rimrep-examples/blob/main/poc-data-api/geoparquet.ipynb)
+- [Zarr example (using NOAA Coral Reef Watch degree heating weeks data)](https://github.com/aodn/rimrep-examples/blob/main/poc-data-api/zarr.ipynb)
+
+
 
 #### R
 
@@ -41,3 +59,9 @@ We also have the following `R` markdown notebooks:
 The notebook responds to this request:
 
 As **Reef Outlook** I need **total reef fish abundance** per **GBR administrative** region at **5 $km^{2}$ aggregates** per **year**.
+
+
+## What is RIMReP DMS?
+RIMReP DMS is an Open Geospatial Consortium (OGC) API service and analysis-ready, cloud-optimised (ARCO) repository for data and metadata relevant to the management of the Great Barrier Reef. RIMReP DMS offers services to allow the discovery of the data and the interaction with external RIMReP systems.  
+  
+In simple terms, RIMReP DMS is a data portal that aims to be a ‘one-stop-shop’ for all data related to the Great Barrier Reef World Heritage Area, which can be easily accessed by the Great Barrier Reef Marine Park Authority (GBRMPA) to support evidence-based management strategies. All datasets have a standard format regardless of their origin, which not only facilitates access to data, but also their analysis as it removes the need to quality control individual datasets. Additionally, we also have plans to make all datasets in the RIMReP DMS publicly available to researchers and other stakeholders.  
