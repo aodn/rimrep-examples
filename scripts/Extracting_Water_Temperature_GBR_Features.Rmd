@@ -116,7 +116,7 @@ sites_shp %>%
 
 Maps produced with `leaflet` are interactive and allows users to zoom in and out as they need.
 
-```{r leaflet_map}
+```{r leaflet_map, eval = F}
 #Starting interactive map
 leaflet() %>% 
   #Adding a basemap from Open Street Map
@@ -129,6 +129,7 @@ leaflet() %>%
   addCircleMarkers(data = site_list, radius = 3, color = "pink")
 ```
 
+**Note**: Due to the size of the interactive map, we chose not to display it in the GitHub markdown (file ending in .md), however, you will be able to see it and interact with it when you run the code above in `RStudio` using the file ending in .Rmd.
 
 ## Extracting temperature for monitoring site within area of interest
 
