@@ -2,8 +2,6 @@
 title: "Extracting temperature using GBR features"
 author: "Denisse Fierro Arcos"
 date: "2023-06-14"
-always_allow_html: true
-leafletmap: true
 output: 
   md_document:
     variant: gfm
