@@ -6,7 +6,7 @@ Example notebooks also include suggested workflows on how to query datasets to c
 
 ## Setting up your machine
 
-After making this repository available locally by either cloning or downloading it, you need to ensure all packages used in this repository are already installed in your local machine. If you are missing any packages in your machine, you will not be able to run the example notebooks.
+After making this repository available locally by either cloning or downloading it from GitHub, you need to ensure all packages used in this repository are installed in your local machine before running any notebooks. If any packages are not installed in your machine, you will not be able to run the example notebooks.
   
 The good news is that you will not need to go through every notebook checking the libraries you need. We are providing some files that will automate this process for you whether you use `R`, `Python`, or both.  
 
@@ -18,7 +18,7 @@ If you are using the `R` notebooks, run the following two lines in the `RStudio`
   source("R_based_scripts/Installing_R_libraries.R")  
   checking_libraries()
 ```  
-These lines run a function that automatically checks if any `R` libraries used in this repository are not installed in your machine, and it will install them automatically. Bear in mind that these notebooks were developed in `R` version 4.3.1, so you may need to upgrade your `R` version if you encounter any problems during package installation.
+The lines above will run a function that automatically checks if any `R` libraries used in this repository are not installed in your machine. If any libraries are missing, it will install them automatically. Bear in mind that these notebooks were developed in `R` version 4.3.1, so you may need to upgrade your `R` version if you encounter any problems during package installation.
 
 ### `Python` users
 We are also including an `environment.yml` file under the `Python_based_scripts` folder, which contains all `Python` packages used in the notebooks above. You can use this file to create a [`conda` environment](https://docs.conda.io/projects/conda/en/latest/user-guide/concepts/environments.html) with all the required packages. To do so, run the following command in the Anaconda Prompt (Windows) or in your terminal (MacOS, Linux):  
@@ -31,7 +31,10 @@ conda env create -f environment.yml
 
 
 ## Description of example notebooks in repository
-All notebooks described in this section can be found under the `scripts` folder.
+All notebooks described in this section are available in `R` and `Python`, you will find them in the `R_based_scripts` and the `Python_based_scripts` folders, respectively. 
+
+- AIMS temperature loggers: Available as a [Quarto notebook](https://github.com/aodn/rimrep-examples/blob/main/R_based_scripts/AIMS_waterTemp.md) for `R` users, and as a [Jupyter notebook](https://github.com/aodn/rimrep-examples/blob/main/Python_based_scripts/AIMS_waterTemp.ipynb) for `Python` users. In this example, we will connect to the RIMReP geoparquet collection in our AWS S3 bucket to access the AIMS temperature logger dataset, which contains over 150 million records! We will calculate the mean latitude, longitude, and temperature, and total number of temperature records for all deployment sites around the Great Barrier Reef Marine Protected Area using familiar [dplyr](https://dplyr.tidyverse.org) verbs. Finally, we aggregated all data at a site level to create a map where the site marker change in size in proportion to the number of records at each site.
+
 
 ### Python
 
@@ -40,11 +43,7 @@ There are two Jupyter notebooks available:
 - [Zarr example (using NOAA Coral Reef Watch degree heating weeks data)](https://github.com/aodn/rimrep-examples/blob/main/poc-data-api/zarr.ipynb)
 
 
-### R
-
-There is one [quarto](https://quarto.org) `R` notebook available:  
-- [AIMS temperature loggers](https://github.com/aodn/rimrep-examples/blob/main/poc-data-api/AIMS_waterTemp.qmd): This notebook connects with the AIMS temperature logger dataset in our AWS S3 bucket, calculates the mean latitude and logitude of all deployments per site and calculates the number of records, using familiar [dplyr](https://dplyr.tidyverse.org) verbs. Then with the aggregated data frame, it creates a map of the sites with the size of the marker proportional to the number of record in the site. This dataset contains more than 150 millions of records!  
-  
+### R 
 The following `R` markdown notebooks are available:
 - [Extracting water temperature at site](https://github.com/aodn/rimrep-examples/blob/main/scripts_poc-data-api/Extracting_Water_Temperature_at_Site.md): This notebook calculates monthly temperature means for any sites of interest included in the AIMS Sea Surface Temperature Monitoring Program. Data summaries and plots saved in local machine.  
 - [Extracting spatial data GBR](https://github.com/aodn/rimrep-examples/blob/main/scripts_poc-data-api/Extracting_Spatial_Data_GBR_Features.md): This notebook extracts spatial data for all above water features within the Great Barrier Reef Marine Protected Area.
@@ -55,11 +54,6 @@ Finally, there is one `R` script [Useful Spatial Functions to extract data](http
   
 **Note:** You will notice that there are two files with the same name, but two different extensions: `.md` and `.Rmd`. They contain the same information, but in different formats. The `.Rmd` file is the source code of the notebook, which you can open in RStudio and run. While the `.md` file is the output of the `.Rmd` file and they include the results of running the code. If you click on the notebook links above, it will take you to the `.md` files, which are nicely formatted for GitHub.
   
-## USE CASE 01: RLS - data from Reef Life Survey
-
-The notebook responds to this request:
-
-As **Reef Outlook** I need **total reef fish abundance** per **GBR administrative** region at **5 $km^{2}$ aggregates** per **year**.
 
 
 ## What is RIMReP DMS?
