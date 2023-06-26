@@ -1,10 +1,7 @@
 ---
 title: "AIMS temp data: map of sites"
 author: "E. Klein, D. Fierro Arcos"
-format: 
-  html: 
-    code-fold: false
-    self-contained: true
+format: gfm
 ---
 
 # Goal
@@ -15,12 +12,14 @@ This dataset includes sea temperature data since 1980 for tropical and subtropic
   
 # Loading libraries
 
-```{r setup, warning = F, message = F}
+```{r setup}
+#| warning: false
+#| message: false
+ 
 #Accessing S3 bucket
 library(arrow)
 #Data manipulation
 library(dplyr)
-library(DT)
 #Plotting maps
 library(leaflet)
 #Measuring time - it checks how long our code takes to run
@@ -106,7 +105,7 @@ toc(log = TRUE)
 Let's look at the resulting table: 
 
 ```{r}
-datatable(dfSites)
+head(dfSites)
 ```
 
 
@@ -115,6 +114,8 @@ datatable(dfSites)
 From the summary table we created in the previous step, we will make a map of all sites where loggers were deployed. We will use the `leaflet` library to create this map, which will make it interactive. We will change the size of the markers so that they are proportional to the number of records at each site (`nPoints` column).
 
 ```{r map}
+#| eval: false
+
 #Starting chunk timer
 tic("Map")
 
@@ -137,6 +138,8 @@ toc(log = TRUE)
 m
 ```
 
+**Note**: Due to the size of the interactive map, we chose not to display it in the GitHub markdown (file ending in `.md`), however, you will be able to see it and interact with it when you run the code above in `RStudio` using the file ending in `.qmd`.
+
 We are done! We can check the total execution time for this notebook below.
 
 ```{r}
@@ -144,5 +147,5 @@ We are done! We can check the total execution time for this notebook below.
 toc(log = TRUE)
 
 #Printing time for all timers
-tic.log(format=TRUE)
+tic.log(format = TRUE)
 ```
