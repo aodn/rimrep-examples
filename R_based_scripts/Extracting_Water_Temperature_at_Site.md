@@ -109,10 +109,12 @@ We can see that there are a number of variables available in this
 dataset. We will need to access three variables to create a list of all
 sampled sites in this monitoring program:  
 - `site`, which includes the name of all sites where temperature loggers
-were deployed - `subsite`, which includes a shorten version of the site
-name and an indication of where loggers where deployed (see below for
-more details) - `geometry`, which includes latitude and longitude
-coordinates in [well-known binary
+were deployed  
+- `subsite`, which includes a shorten version of the site name and an
+indication of where loggers where deployed (see below for more
+details)  
+- `geometry`, which includes latitude and longitude coordinates in
+[well-known binary
 (WKB)](https://loc.gov/preservation/digital/formats/fdd/fdd000549.shtml)
 format
 
@@ -318,9 +320,9 @@ sites_coords
     ## 1 Heron Island   152. -23.4 reef flat          
     ## 2 Heron Island   152. -23.4 reef flat          
     ## 3 Heron Island   152. -23.4 reef flat          
-    ## 4 Heron Island   152. -23.4 reef slope         
+    ## 4 Heron Island   152. -23.4 reef flat          
     ## 5 Heron Island   152. -23.4 reef flat          
-    ## 6 Heron Island   152. -23.4 reef flat          
+    ## 6 Heron Island   152. -23.4 reef slope         
     ## 7 Hayman Island  149. -20.0 reef flat          
     ## 8 Hayman Island  149. -20.1 reef slope
 

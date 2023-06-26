@@ -58,9 +58,9 @@ We can explore the dataset `schema` to understand its structure, and identify th
 data_df$schema
 ```
 We can see that there are a number of variables available in this dataset. We will need to access three variables to create a list of all sampled sites in this monitoring program:  
-- `site`, which includes the name of all sites where temperature loggers were deployed
-- `subsite`, which includes a shorten version of the site name and an indication of where loggers where deployed (see below for more details)
-- `geometry`, which includes latitude and longitude coordinates in [well-known binary (WKB)](https://loc.gov/preservation/digital/formats/fdd/fdd000549.shtml) format
+- `site`, which includes the name of all sites where temperature loggers were deployed  
+- `subsite`, which includes a shorten version of the site name and an indication of where loggers where deployed (see below for more details)  
+- `geometry`, which includes latitude and longitude coordinates in [well-known binary (WKB)](https://loc.gov/preservation/digital/formats/fdd/fdd000549.shtml) format  
   
 Based on the `subsite` information, we will create a new column that we will call `deployment_location`. If `subsite` string includes `SL`, this indicates the temperature logger was deployed on a reef slope (depths of 3 m or more). If this is the case, our new column will be labelled `reef slope`. If `FL` is included in the `subsite` string, this means the temperature logger was deployed on a reef flat (areas less than 3 m deep). In this case, we will classify this as `reef flat` in our new column.  
   
