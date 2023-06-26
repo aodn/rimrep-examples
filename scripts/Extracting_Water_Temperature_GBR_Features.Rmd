@@ -127,7 +127,7 @@ leaflet() %>%
   addCircleMarkers(data = site_list, radius = 3, color = "pink")
 ```
 
-**Note**: Due to the size of the interactive map, we chose not to display it in the GitHub markdown (file ending in .md), however, you will be able to see it and interact with it when you run the code above in `RStudio` using the file ending in .Rmd.
+**Note**: Due to the size of the interactive map, we chose not to display it in the GitHub markdown (file ending in `.md`), however, you will be able to see it and interact with it when you run the code above in `RStudio` using the file ending in `.Rmd`.
 
 ## Extracting temperature for monitoring site within area of interest
 
