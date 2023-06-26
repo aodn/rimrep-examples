@@ -1,6 +1,7 @@
 name: rimrep
 channels:
   - defaults
+  - conda-forge
 dependencies:
   - xarray
   - ipython
