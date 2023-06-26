@@ -15,13 +15,13 @@ The good news is that you will not need to go through every notebook checking th
 ### `R` users
 If you are using the `R` notebooks, run the following two lines in the `RStudio` console:  
 ```R
-  source("Installing_R_libraries.R")  
+  source("R_based_scripts/Installing_R_libraries.R")  
   checking_libraries()
 ```  
 These lines run a function that automatically checks if any `R` libraries used in this repository are not installed in your machine, and it will install them automatically. Bear in mind that these notebooks were developed in `R` version 4.3.1, so you may need to upgrade your `R` version if you encounter any problems during package installation.
 
 ### `Python` users
-We are also including an `environment.yml` file, which contains all `Python` packages used in the notebooks above. You can use this file to create a [`conda` environment](https://docs.conda.io/projects/conda/en/latest/user-guide/concepts/environments.html) with all the required packages. To do so, run the following command in the Anaconda Prompt (Windows) or in your terminal (MacOS, Linux):  
+We are also including an `environment.yml` file under the `Python_based_scripts` folder, which contains all `Python` packages used in the notebooks above. You can use this file to create a [`conda` environment](https://docs.conda.io/projects/conda/en/latest/user-guide/concepts/environments.html) with all the required packages. To do so, run the following command in the Anaconda Prompt (Windows) or in your terminal (MacOS, Linux):  
   
 ```bash
 conda env create -f environment.yml
