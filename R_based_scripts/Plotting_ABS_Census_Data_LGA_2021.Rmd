@@ -1,0 +1,287 @@
+---
+title: "Plotting ABS data"
+author: "Denisse Fierro Arcos"
+date: "2023-06-14"
+output: 
+  github_document:
+    toc: true
+    html_preview: false
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Goal of this notebook
+
+This notebook will show how to access the RIMReP `geoparquet` collection for the Regional Data by Local Government Area (LGA) from the Australian Bureau of Statistics (ABS), which contains data for the period between 2011 and 2022. This dataset includes data for the Census of Population and Housing for 2011, 2016 and 2021.  
+  
+Although this dataset has information available for all Australian states and territories, we will focus on accessing data for the state of Queensland only. We will create some summary table, as well as figures and maps.  
+
+## Loading libraries
+
+```{r libraries, results = "hide", message = F, warning = F}
+library(arrow)
+library(wkb)
+library(tidyverse)
+library(sf)
+library(lubridate)
+library(rnaturalearth)
+```
+
+## Connecting to RIMReP collection and loading ABS regional dataset
+
+```{r connect_abs_data}
+#Establishing connection
+data_bucket <- s3_bucket("s3://rimrep-data-public/abs-regional-lga-2021/data.parquet")
+
+#Accessing ABS dataset
+data_df <- open_dataset(data_bucket)
+
+#Checking dimension of dataset
+dim(data_df)
+```
+## Subsetting ABS dataset: QLD LGAs
+
+As we can see above, the ABS dataset contains `r nrow(data_df)` rows and `r ncol(data_df)` columns. We can explore the contents of this dataset looking at its `schema`, which will print the name of all columns available in the dataset. Since there are 665 columns, we will just inspect the first 10 column names.
+
+```{r exploring_dataset}
+head(data_df$schema, n = 10)
+```
+We can see that there is a `REGION_CODE` column, which as its name suggests, it contains a code that identifies its region or LGA included in the dataset. The [ABS website](https://www.abs.gov.au/statistics/standards/australian-statistical-geography-standard-asgs-edition-3/jul2021-jun2026/non-abs-structures/local-government-areas) states that LGAs are identified by a unique five digit code. The first digit identifies the state or territory where the LGA is located and the four remaining digits identify the LGA itself. This means that we can use this column to select LGAs within Queensland only, which will reduce the size of the dataset.  
+  
+According to the [LGA documentation](https://www.abs.gov.au/statistics/standards/australian-statistical-geography-standard-asgs-edition-3/jul2021-jun2026/main-structure-and-greater-capital-city-statistical-areas/australia-and-stateterritory) in the ABS website, the digit identifying the state of QLD is the number three (3). Given that LGA codes have five digits in total, we know that QLD LGAs will range between 30000 and 39999. We can now build our query to extract the data we need.
+
+```{r subset_qld}
+#Selecting LGAs for QLD only
+qld_lgas <- data_df %>% 
+  filter(REGION_CODE >= 30000 & REGION_CODE <= 39999) %>% 
+  collect()
+
+#Check dimensions
+dim(qld_lgas)
+```
+Our dataset now has `r nrow(qld_lgas)` rows instead of `r nrow(data_df)`, but we still have `r ncol(qld_lgas)` columns. We can check the contents of the QLD data and decide which columns to keep.
+
+```{r check_qld_lga}
+head(qld_lgas)
+```
+The first few column names are informative, we can guess what the contents of the `REGION_CODE` and `REGION_NAME` are. But the information contained in `ACTIV_2` or `ADFS_2` is unclear. The good news is that the RIMReP collection has a table that gives a description of the data that is stored in each column. In the next step we will load this table so we can inspect it.
+
+## Connecting to RIMReP collection and loading description of each column
+
+```{r connect_description}
+#Establishing connection
+table_bucket <- s3_bucket("s3://rimrep-data-public/abs-regional-lga-2021/measure-codes.parquet") 
+#Loading table as a tibble
+table <- read_parquet(table_bucket)
+
+#Checking first few rows
+head(table)
+```
+
+For this example, we have already selected some columns of interest:
+`ERP_23`: Median age
+`ERP_F_(2-19)`: Number of females per age group
+`ERP_F_20`: Estimated number of females in population
+`ERP_M_(2-19)`: Number of males per age group
+`ERP_M_20`: Estimated number of males in population
+`ERP_P_20`: Estimated resident population
+`ERP_17`: Percentage population of working age (15-64 years old)
+`EQUIV_2`: Median household income
+
+However, if you would like to choose different columns, you can either view the table in its entirety and scroll through its content, or you could query it using the `filter` function from the `dplyr` package as shown below. 
+
+As an example, we will look for people born overseas. We will use a partial match using the `str_detect` function from the `stringr` package. We will also force the contents in the `DESCRIPTION` column to be set to lower case to avoid missing any rows where the keyword may be capitalised.
+
+```{r query_description}
+table %>% 
+  filter(str_detect(str_to_lower(DESCRIPTION), "overseas"))
+```
+
+## Subsetting ABS dataset: Keeping columns of interest
+
+In addition to the columns identified above, we will also keep the columns identifying the date the data was collected (`TIME_PERIOD`), the LGAs where it was collected (`REGION_CODE` and `REGION_NAME`), and the `geometry` because this column will allow us to create maps later.
+
+```{r qld_lga_sub}
+qld_lgas_sub <- qld_lgas %>% 
+  select(TIME_PERIOD, REGION_CODE, REGION_NAME, ERP_17, ERP_23, ERP_P_20,
+         EQUIV_2, starts_with("ERP_F_") | starts_with("ERP_M_"), geometry)
+
+qld_lgas_sub
+```
+
+## Creating summary tables
+
+We will use data for the most recent census (2021) to create a summary table for all LGAs in Queensland. We will include total population and population percentage by gender, median age, percentage of working population and median household income.
+
+```{r sum_table_data}
+qld_2021 <- qld_lgas_sub %>% 
+  #Selecting data for 2021
+  filter(TIME_PERIOD == 2021) %>% 
+  #Calculating percentage of population per gender
+  mutate(female_per = round((ERP_F_20/ERP_P_20)*100, 2),
+         male_per = round((ERP_M_20/ERP_P_20)*100, 2)) %>% 
+  #Renaming columns so data can be easily identified
+  rename("tot_population" = "ERP_P_20", "working_age_per" = "ERP_17", 
+         "med_house_inc_AUD" = "EQUIV_2") %>% 
+  #Select columns of interest
+  select(REGION_NAME, REGION_CODE, tot_population, female_per, male_per, 
+         working_age_per, med_house_inc_AUD)
+  
+#See result
+qld_2021
+```
+
+We can then save this summary table into a local machine as a csv file using the code below.
+
+```{r save_sum2021, eval = F}
+write_csv(qld_2021, "QLD_LGA_summaries_2021.csv")
+```
+
+The summary table is also available to be filtered by LGA name or code or using any other conditions. For example, we will select LGAs where median house income is above $1,000, and percentage of people of working age is 75% or more.
+
+```{r subsetting_2021data}
+qld_2021 %>% 
+  filter(med_house_inc_AUD > 1000 & working_age_per >= 75)
+```
+
+## Plotting age classes
+
+As part of our dataset we have information about the number of people in different age classes by gender. We can create a bar plot using this data. For this example, we will select census data from Townsville for the years 2016 and 2021.
+
+### Extracting data for Townsville
+We will also need to get information about the age ranges included in the age group columns. We will get this information from the description table. We will use the column names starting with `ERP_F`, which contain information about number of individuals for females, but the age ranges in each class is the same across all genders.
+
+```{r age_class}
+#Getting information about age classes
+age_groups <- table %>% 
+  #Select column names starting with ERP_F except ERP_F_20 because it contains 
+  #total number of people. We will also include only columns with number of people 
+  #and not percentages
+  filter(str_starts(CODE, "ERP_F") & UNIT == "Persons" & CODE != "ERP_F_20") %>% 
+  #Getting the age group numbers and age range for each age class
+  mutate(age_group = str_extract(CODE, "[0-9]{1,2}"), 
+         age_class = str_remove(DESCRIPTION, "Females aged ")) %>% 
+  select(age_group, age_class)
+
+#Extracting data for Townsville (2016 and 2021 only)
+townsville <- qld_lgas %>% 
+  filter(REGION_NAME == "Townsville" & (TIME_PERIOD == 2016 | TIME_PERIOD == 2021)) %>% 
+  #Select relevant columns 
+  select(TIME_PERIOD, starts_with("ERP_F") | starts_with("ERP_M")) %>% 
+  #Reduce number of columns
+  pivot_longer(!TIME_PERIOD, names_to = c("gender", "age_group"), 
+               names_pattern = ("ERP_(.*)_(.*)"), values_to = "number_ind") %>% 
+  #Keeping only information about relevant age groups
+  right_join(age_groups, by = "age_group") %>% 
+  #Adding a column for year
+  mutate(year = TIME_PERIOD,
+         age_group = as.numeric(age_group)) %>% 
+  #Ordering data by age groups
+  arrange(age_group) 
+
+#Checking results
+townsville
+```
+
+### Plotting data
+
+```{r age_plot}
+#Fix order of groups - Select the unique age classes
+age_class_ord <- townsville %>% 
+  distinct(age_class) %>% 
+  pull()
+#This will give us the age classes in order.
+
+#Creating plot
+towns_age <- townsville %>%
+  #We will turn the age class into an ordered factor. We use the class in order from above
+  mutate(age_class = factor(age_class, levels = age_class_ord, ordered = T)) %>% 
+  #Showing age class on x axis and color by gender
+  ggplot(aes(age_class, number_ind, fill = gender))+
+  #Showing gender columns next to each other 
+  geom_col(position = position_dodge())+
+  #Choosing a colour-blind friendly palette
+  scale_fill_viridis_d(option = "G", begin = 0.5, end = 0.85)+
+  #Showing data for each year in a different row
+  facet_grid(year~.)+
+  #Removing grey background
+  theme_bw()+
+  #Remove x axis label, change y axis label and adding a title
+  labs(x = element_blank(), y = "number of people", 
+       title = "Age distribution per gender in Townsville between 2016 and 2021")+
+  #Changing the angle and location of the text in the x axis and centering title
+  theme(axis.text.x.bottom = element_text(angle = 45, vjust = 1, hjust = 1), 
+        title = element_text(hjust = 0.5))
+
+towns_age
+```
+From this plot, we can see that the amount of people in the younger age classes has decreased, while there was an increase in the older classes between the 2016 and 2021 censuses.  
+  
+Since we saved this plot in a variable in our session, we can save it to our local machine with the code below.
+
+```{r saving_barplot, eval = F}
+ggsave("Townsville_age_classes_2016_2021.png", towns_age, device = "png")
+```
+
+## Creating choropleth map with poulation data from the 2021 census
+
+We will select 2021 data from the QLD data we extracted at the beginning. We will select two columns only: `ERP_P_20`, which has information about total number of inhabitants per LGA, and `geometry`, which has the coordinates for the boundaries of each LGA. The spatial information is given in [well-known binary (WKB)](https://loc.gov/preservation/digital/formats/fdd/fdd000549.shtml) format. which we will transform into coordinate pairs (latitude and longitude) before we create our map.
+
+```{r}
+#Selecting population data from 2021
+qld_pop_2021 <- qld_lgas_sub %>% 
+  #Selecting data for 2021
+  filter(TIME_PERIOD == 2021) %>% 
+  #Keeping only columns of interest
+  select(REGION_CODE, REGION_NAME, ERP_P_20, geometry) %>% 
+  #Adding column with spatial information in degrees
+  mutate(coords_deg = readWKB(geometry) %>% st_as_sf()) %>%
+  #Removing original geometry column
+  select(!geometry) %>% 
+  #Renaming coordinate degrees column
+  mutate(coords_deg = coords_deg$geometry) %>% 
+  rename("geometry" = "coords_deg") %>% 
+  #Transforming into simple feature
+  st_as_sf() %>% 
+  #Assigning reference systems: WGS84 (EPSG: 4326)
+  st_set_crs(4326)
+```
+
+Now we are ready to plot the population data for Queensland.
+
+```{r}
+#Getting basemap of Australia
+australia <- ne_countries(country = "Australia", returnclass = "sf")
+
+#This will ensure no scientific notation is used in population values
+options(scipen = 999)
+
+#Plotting Australia as base map
+australia %>% 
+  ggplot()+
+  geom_sf()+
+  #Plotting QLD population data
+  geom_sf(inherit.aes = F, data = qld_pop_2021, aes(fill = ERP_P_20))+
+  #Adding title
+  labs(title = "Population per Local Government Area (2021)")+
+  #Selecting colour-blind friendly palette. Applying transformation to colorbar 
+  #setting scale breaks
+  scale_fill_viridis_c(trans = "log", breaks = c(1e3, 1e4, 1e5, 1e6), 
+                       #Giving title to colorbar
+                       name = "Number of inhabitants", 
+                       #Adjusting legend parameters
+                       guide = guide_legend(keyheight = unit(3, units = "mm"), 
+                                            keywidth = unit(12, units = "mm"), 
+                                            label.position = "bottom", title.hjust = 0.5,
+                                            title.position = 'top', nrow = 1))+
+  #Focusing map on QLD
+  lims(x = c(138, NA), y = c(-30, NA))+
+  #Remove grey background
+  theme_bw()+
+  #Adjusting position of legend and plot title
+  theme(legend.position = "bottom", plot.title = element_text(hjust = 0.5))
+```
+
+
