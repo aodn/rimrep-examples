@@ -35,6 +35,7 @@ All notebooks described in this section are available in `R` and `Python`, you w
 
 - **AIMS temperature loggers**: Available as a [Quarto notebook](https://github.com/aodn/rimrep-examples/blob/main/R_based_scripts/AIMS_waterTemp.md) for `R` users, and as a [Jupyter notebook](https://github.com/aodn/rimrep-examples/blob/main/Python_based_scripts/AIMS_waterTemp.ipynb) for `Python` users. In this example, we will connect to the RIMReP geoparquet collection in our AWS S3 bucket to access the AIMS temperature logger dataset, which contains over 150 million records! We will calculate the mean latitude, longitude, and temperature, and total number of temperature records for all deployment sites around the Great Barrier Reef Marine Protected Area using familiar [dplyr](https://dplyr.tidyverse.org) verbs. Finally, we aggregated all data at a site level to create a map where the site marker change in size in proportion to the number of records at each site.  
 - **Extracting water temperature at site**: Available as a [markdown notebook](https://github.com/aodn/rimrep-examples/blob/main/R_based_scripts/Extracting_Water_Temperature_at_Site.md) for `R` users, and as a [Jupyter notebook](https://github.com/aodn/rimrep-examples/blob/main/Python_based_scripts/Extracting_Water_Temperature_at_Site.ipynb) for `Python` users. This notebook calculates monthly temperature means for any sites of interest included in the AIMS Sea Surface Temperature Monitoring Program. Data summaries and plots saved in local machine.  
+- **Extracting spatial data GBR**: Available as a [markdown notebook](https://github.com/aodn/rimrep-examples/blob/main/R_based_scripts/Extracting_Spatial_Data_GBR_Features.md) and as a [Jupyter notebook](https://github.com/aodn/rimrep-examples/blob/main/Python_based_scripts/Extracting_Spatial_Data_GBR_Features.ipynb) for `Python` users. This notebook extracts spatial data for all above water features within the Great Barrier Reef Marine Protected Area.
 
 
 ### Python
@@ -46,7 +47,6 @@ There are two Jupyter notebooks available:
 
 ### R 
 The following `R` markdown notebooks are available:
-- [Extracting spatial data GBR](https://github.com/aodn/rimrep-examples/blob/main/scripts_poc-data-api/Extracting_Spatial_Data_GBR_Features.md): This notebook extracts spatial data for all above water features within the Great Barrier Reef Marine Protected Area.
 - [Extracting water temperature within GBR feature boundaries](https://github.com/aodn/rimrep-examples/blob/main/scripts_poc-data-api/Extracting_Water_Temperature_GBR_Features.md): This notebook will identify AIMS water temperature monitoring sites within a GBR feature and calculate monthly means.
 - [Plotting ABS census data](https://github.com/aodn/rimrep-examples/blob/main/scripts_poc-data-api/Plotting_ABS_Census_Data_LGA_2021.md): This notebooks uses Australian Bureau of Statistics (ABS) census data to create summary tables, bar plots and maps.  
   
