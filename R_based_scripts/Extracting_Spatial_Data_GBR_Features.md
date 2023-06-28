@@ -131,29 +131,29 @@ data_df$schema
     ## See $metadata for additional Schema metadata
 
 We can see that there are a number of variables available in this
-dataset. We will need to access three variables to create a list of all
+dataset. We will need to access four variables to create a list of all
 above water sites in the Great Barrier Reef Marine Park:  
 - `UNIQUE_ID`, which includes a unique identification number for each
-area above water - `GBR_NAME`, which includes the name of each location
-above water - `LOC_NAME_S`, combination between feature name and unique
-ID - `geometry`, which includes latitude and longitude coordinates in
-WKB format.
+area above water  
+- `GBR_NAME`, which includes the name of each location above water  
+- `LOC_NAME_S`, combination between feature name and unique ID  
+- `geometry`, which includes latitude and longitude coordinates in WKB
+format.
 
 We will transform the information in the `geometry` field into
 coordinate pairs (i.e., latitude and longitude in degrees for each node
 along its boundary).
 
 **Note:** One location (`GBR_NAME`) may contain multiple values under
-the `UNIQUE_ID` column. This is above water structures may not appear
-connected when looking at the surface, but they are part of the same
-structure and thus are connected under water.
+the `UNIQUE_ID` column. This is because above water structures may not
+appear connected when looking at the surface, but they are part of the
+same structure and thus are connected under water.
 
 ## Extracting sites and coordinates from dataset
 
-We can extract data from the AIMS Sea Surface Water Temperature dataset
-by using `dplyr` verbs as shown below. This could take from a few
-seconds up to a minute depending on the speed of your Internet
-connection.
+We can extract data from the GBR features dataset by using `dplyr` verbs
+as shown below. This could take from a few seconds up to a minute
+depending on the speed of your Internet connection.
 
 ``` r
 sites <- data_df %>% 
