@@ -3,6 +3,7 @@ channels:
   - defaults
   - conda-forge
 dependencies:
+  - python=3.10.9
   - xarray
   - ipython
   - ipykernel
@@ -12,7 +13,7 @@ dependencies:
   - scipy
   - h5netcdf
   - zarr
-  - cartopy
+  - cartopy=0.21.1
   - matplotlib
   - seaborn
   - geopandas
@@ -20,4 +21,6 @@ dependencies:
   - s3fs
   - owslib
   - pystac-client
+  - pyarrow
+
 
