@@ -18,6 +18,7 @@ output:
   interest](#identifying-aims-sites-within-gbr-feature-of-interest)
   - [Identifying sites of interest](#identifying-sites-of-interest)
     - [Mapping with `ggplot2`](#mapping-with-ggplot2)
+    - [Mapping with `leaflet`](#mapping-with-leaflet)
   - [Extracting temperature for monitoring site within area of
     interest](#extracting-temperature-for-monitoring-site-within-area-of-interest)
   - [Plotting timeseries](#plotting-timeseries)
@@ -31,8 +32,8 @@ Authority (GBRMPA) dataset to extract water temperature data from the
 AIMS Sea Surface Temperature Monitoring Program available at RIMReP
 `geoparquet` collection.
 
-In addition to published `R` libraries, this notebooks will use a set of
-functions especially created for manipulating RIMReP dtaa collections.
+In addition to published `R` libraries, this notebook uses a set of
+functions especially created for manipulating RIMReP data collections.
 These functions are available in the
 `useful_spatial_functions_data_extraction.R` script, which **must**
 exist in the same directory where this notebook is located.
@@ -192,7 +193,8 @@ sites_shp %>%
 ```
 
 ![](Extracting_Water_Temperature_GBR_Features_files/figure-gfm/gg_map-1.png)<!-- -->
-\### Mapping with `leaflet`
+
+### Mapping with `leaflet`
 
 Maps produced with `leaflet` are interactive and allows users to zoom in
 and out as they need.
@@ -211,9 +213,9 @@ leaflet() %>%
 ```
 
 **Note**: Due to the size of the interactive map, we chose not to
-display it in the GitHub markdown (file ending in .md), however, you
+display it in the GitHub markdown (file ending in `.md`), however, you
 will be able to see it and interact with it when you run the code above
-in `RStudio` using the file ending in .Rmd.
+in `RStudio` using the file ending in `.Rmd`.
 
 ## Extracting temperature for monitoring site within area of interest
 
