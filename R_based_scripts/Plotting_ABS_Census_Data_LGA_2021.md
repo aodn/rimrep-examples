@@ -164,13 +164,15 @@ head(table)
     ## 5 Currently serving in the Australian Defence Force (%)   Perc… <NA>       ADFS…
     ## 6 Previously served in the Australian Defence Force (%)   Perc… <NA>       ADFS…
 
-For this example, we have already selected some columns of interest:
-`ERP_23`: Median age `ERP_F_(2-19)`: Number of females per age group
-`ERP_F_20`: Estimated number of females in population `ERP_M_(2-19)`:
-Number of males per age group `ERP_M_20`: Estimated number of males in
-population `ERP_P_20`: Estimated resident population `ERP_17`:
-Percentage population of working age (15-64 years old) `EQUIV_2`: Median
-household income
+For this example, we have already selected some columns of interest:  
+- `ERP_23`: Median age  
+- `ERP_F_(2-19)`: Number of females per age group  
+- `ERP_F_20`: Estimated number of females in population  
+- `ERP_M_(2-19)`: Number of males per age group  
+- `ERP_M_20`: Estimated number of males in population  
+- `ERP_P_20`: Estimated resident population  
+- `ERP_17`: Percentage population of working age (15-64 years old)  
+- `EQUIV_2`: Median household income
 
 However, if you would like to choose different columns, you can either
 view the table in its entirety and scroll through its content, or you
@@ -401,6 +403,7 @@ towns_age
 ```
 
 ![](Plotting_ABS_Census_Data_LGA_2021_files/figure-gfm/age_plot-1.png)<!-- -->
+
 From this plot, we can see that the amount of people in the younger age
 classes has decreased, while there was an increase in the older classes
 between the 2016 and 2021 censuses.
