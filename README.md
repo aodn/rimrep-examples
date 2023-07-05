@@ -21,14 +21,35 @@ If you are using the `R` notebooks, run the following two lines in the `RStudio`
 The lines above will run a function that automatically checks if any `R` libraries used in this repository are not installed in your machine. If any libraries are missing, it will install them automatically. Bear in mind that these notebooks were developed in `R` version 4.3.1, so you may need to upgrade your `R` version if you encounter any problems during package installation.
 
 ### `Python` users
-We are also including an `environment.yml` file under the `Python_based_scripts` folder, which contains all `Python` packages used in the notebooks above. You can use this file to create a [`conda` environment](https://docs.conda.io/projects/conda/en/latest/user-guide/concepts/environments.html) with all the required packages. To do so, run the following command in the Anaconda Prompt (Windows) or in your terminal (MacOS, Linux):  
+We are also including an `requirements.txt` file under the `Python_based_scripts` folder, which contains all `Python` packages used in the `Python` notebooks included in this repository. You can use this file to create a virtual environment with all the required packages. To do so, open a terminal window, navigate to the `Python_based_scripts` folder (this is where the `requirements.txt` is located), and run the following commands:  
   
 ```bash
-conda env create -f environment.yml
+pip install -r requirements.txt
+```
+    
+**Note**: If you are not in the directory where the `requirements.txt` file is located, the code above will not work. You will need to specify the path to the `requirements.txt` file. For example, if your terminal window is in the `rimrep-examples` folder, you will need to specify the full path to the `requirements.txt` file as follows:  
+  
+```bash
+pip install -r Python_based_scripts/requirements.txt
 ```
   
-**Note**: Before running the code above, you need to have [`conda`](https://conda.io/projects/conda/en/latest/user-guide/install/index.html) installed in your machine. Make sure you choose the correct installation instructions for your operating system.  
-
+To check the environment has been successfully installed, you can run the following command in your terminal window:  
+  
+```bash
+pip freeze
+```
+  
+This will print a list of all packages and versions installed in the environment. If you see the packages listed in the `requirements.txt` file, then you are good to go! Additionally, you will see a `requirements` folder within the `Python_based_scripts` folder, which contains all the packages you just installed. To activate the environment, run the following command in your terminal window:  
+  
+```bash
+cd Python_based_scripts/requirements
+activate
+```
+  
+Similar to when installing the virtual environment, you will need to provide the path to the folder, so if you are already in the `rimrep-examples` folder, you will simply need to run `cd requirements` before activating the environment. When you are done running the notebooks, you can deactivate the environment by running `deactivate` in the terminal window.
+  
+**Note**: For more information about virtual environments, you can refer to this [website](https://www.askpython.com/python/examples/virtual-environments-in-python).  
+  
 
 ## Description of example notebooks in repository
 All notebooks described in this section are available in `R` and `Python`, you will find them in the `R_based_scripts` and the `Python_based_scripts` folders, respectively. 
