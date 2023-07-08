@@ -21,14 +21,27 @@ If you are using the `R` notebooks, run the following two lines in the `RStudio`
 The lines above will run a function that automatically checks if any `R` libraries used in this repository are not installed in your machine. If any libraries are missing, it will install them automatically. Bear in mind that these notebooks were developed in `R` version 4.3.1, so you may need to upgrade your `R` version if you encounter any problems during package installation.
 
 ### `Python` users
-We are also including an `environment.yml` file under the `Python_based_scripts` folder, which contains all `Python` packages used in the notebooks above. You can use this file to create a [`conda` environment](https://docs.conda.io/projects/conda/en/latest/user-guide/concepts/environments.html) with all the required packages. To do so, run the following command in the Anaconda Prompt (Windows) or in your terminal (MacOS, Linux):  
+We are also including an `requirements.txt` file under the `Python_based_scripts` folder, which contains all `Python` packages used in the notebooks above. You can use this file to create a [`conda` environment](https://docs.conda.io/projects/conda/en/latest/user-guide/concepts/environments.html) with all the required packages. To do so, run the following command in the Anaconda Prompt (Windows) or in your terminal (MacOS, Linux):  
   
 ```bash
-conda env create -f environment.yml
+conda env create -f requirements.txt -n rimrep
 ```
   
-**Note**: Before running the code above, you need to have [`conda`](https://conda.io/projects/conda/en/latest/user-guide/install/index.html) installed in your machine. Make sure you choose the correct installation instructions for your operating system.  
-
+where `rimrep` is the name of the environment. You can change this name to whatever you want. **Note**: If you are not in the directory where the `requirements.txt` file is located, the code above will not work. You will need to specify the path to the `requirements.txt` file. For example, if your terminal window is in the `rimrep-examples` folder, you will need to specify the full path to the `requirements.txt` file as follows:  
+  
+```bash
+conda env create -f Python_based_scripts/requirements.txt -n rimrep
+```
+    
+Finally, you will need to activate this environment before you are able to run the `Python` notebooks included here. To do so, run the following command in your terminal window:  
+  
+```bash
+conda activate rimrep
+```
+  
+When you are done running the notebooks, you can deactivate the environment by running `conda deactivate` in the terminal window.
+activate.  
+  
 
 ## Description of example notebooks in repository
 All notebooks described in this section are available in `R` and `Python`, you will find them in the `R_based_scripts` and the `Python_based_scripts` folders, respectively. 
@@ -36,6 +49,11 @@ All notebooks described in this section are available in `R` and `Python`, you w
 - **AIMS temperature loggers**: Available as a [Quarto notebook](https://github.com/aodn/rimrep-examples/blob/main/R_based_scripts/AIMS_waterTemp.md) for `R` users, and as a [Jupyter notebook](https://github.com/aodn/rimrep-examples/blob/main/Python_based_scripts/AIMS_waterTemp.ipynb) for `Python` users. In this example, we will connect to the RIMReP geoparquet collection in our AWS S3 bucket to access the AIMS temperature logger dataset, which contains over 150 million records! We will calculate the mean latitude, longitude, and temperature, and total number of temperature records for all deployment sites around the Great Barrier Reef Marine Protected Area using familiar [dplyr](https://dplyr.tidyverse.org) verbs. Finally, we aggregated all data at a site level to create a map where the site marker change in size in proportion to the number of records at each site.  
 - **Extracting water temperature at site**: Available as a [markdown notebook](https://github.com/aodn/rimrep-examples/blob/main/R_based_scripts/Extracting_Water_Temperature_at_Site.md) for `R` users, and as a [Jupyter notebook](https://github.com/aodn/rimrep-examples/blob/main/Python_based_scripts/Extracting_Water_Temperature_at_Site.ipynb) for `Python` users. This notebook calculates monthly temperature means for any sites of interest included in the AIMS Sea Surface Temperature Monitoring Program. Data summaries and plots saved in local machine.  
 - **Extracting spatial data GBR**: Available as a [markdown notebook](https://github.com/aodn/rimrep-examples/blob/main/R_based_scripts/Extracting_Spatial_Data_GBR_Features.md) for `R` users, and as a [Jupyter notebook](https://github.com/aodn/rimrep-examples/blob/main/Python_based_scripts/Extracting_Spatial_Data_GBR_Features.ipynb) for `Python` users. This notebook extracts spatial data for all above water features within the Great Barrier Reef Marine Protected Area.  
+- **Extracting water temperature within GBR feature boundaries**: Available as a [markdown notebook](https://github.com/aodn/rimrep-examples/blob/main/R_based_scripts/Extracting_Water_Temperature_GBR_Features.md) and as a [Jupyter notebook](https://github.com/aodn/rimrep-examples/blob/main/Python_based_scripts/Extracting_Water_Temperature_GBR_Features.ipynb): This notebook will identify AIMS water temperature monitoring sites within a GBR feature and calculate monthly means.  
+- **Plotting ABS census data**: Available as a [markdown notebook](https://github.com/aodn/rimrep-examples/blob/main/R_based_scripts/Plotting_ABS_Census_Data_LGA_2021.md) and as a [Jupyter notebook](https://github.com/aodn/rimrep-examples/blob/main/Python_based_scripts/Plotting_ABS_Census_Data_LGA_2021.ipynb): This notebooks uses Australian Bureau of Statistics (ABS) census data to create summary tables, bar plots and maps.  
+  
+**Note:** You will notice that there are two files with the same name, but two different extensions: `.md` and `.Rmd`. They contain the same information, but in different formats. The `.Rmd` file is the source code of the notebook, which you can open in RStudio and run. While the `.md` file is the output of the `.Rmd` file and they include the results of running the code. If you click on the notebook links above, it will take you to the `.md` files, which are nicely formatted for GitHub.
+  
 
 ## Description of scripts in repository
 All scripts described in this section are available in `R` and `Python`, you will find them in the `R_based_scripts` and the `Python_based_scripts` folders, respectively. 
@@ -44,16 +62,8 @@ All scripts described in this section are available in `R` and `Python`, you wil
 ### Python
 
 There are two Jupyter notebooks available:  
-- [Geoparquet example (using AIMS Temperature Loggers data)](https://github.com/aodn/rimrep-examples/blob/main/Python_based_scripts/geoparquet.ipynb)
-- [Zarr example (using NOAA Coral Reef Watch degree heating weeks data)](https://github.com/aodn/rimrep-examples/blob/main/Python_based_scripts/zarr.ipynb)
-
-
-### R 
-The following `R` markdown notebooks are available:
-- [Extracting water temperature within GBR feature boundaries](https://github.com/aodn/rimrep-examples/blob/main/scripts_poc-data-api/Extracting_Water_Temperature_GBR_Features.md): This notebook will identify AIMS water temperature monitoring sites within a GBR feature and calculate monthly means.
-- [Plotting ABS census data](https://github.com/aodn/rimrep-examples/blob/main/scripts_poc-data-api/Plotting_ABS_Census_Data_LGA_2021.md): This notebooks uses Australian Bureau of Statistics (ABS) census data to create summary tables, bar plots and maps.  
-  
-**Note:** You will notice that there are two files with the same name, but two different extensions: `.md` and `.Rmd`. They contain the same information, but in different formats. The `.Rmd` file is the source code of the notebook, which you can open in RStudio and run. While the `.md` file is the output of the `.Rmd` file and they include the results of running the code. If you click on the notebook links above, it will take you to the `.md` files, which are nicely formatted for GitHub.
+- [Geoparquet example (using AIMS Temperature Loggers data)](https://github.com/aodn/rimrep-examples/blob/main/Python_based_scripts/geoparquet.ipynb)  
+- [Zarr example (using NOAA Coral Reef Watch degree heating weeks data)](https://github.com/aodn/rimrep-examples/blob/main/Python_based_scripts/zarr.ipynb)  
   
 
 ## What is RIMReP DMS?
