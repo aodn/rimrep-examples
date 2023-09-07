@@ -17,7 +17,7 @@ knitr::opts_chunk$set(echo = TRUE)
 This notebook will show how to access the RIMReP `geoparquet` collection for the Social and Economic Long-Term Monitoring Program (SELTMP) from CSIRO, which contains the latest results of this survey (2021). This dataset collects data on a subset of Great Barrier Reef (GBR) human dimension indicators relating to social, economic, cultural, and governance aspects of the GBR, as described within the Reef 2050 Long Term Sustainability Plan (Reef 2050 Plan). These human dimensions are considered to play a pivotal role in resilience-based management of the GBR.  
   
 In this example, we will produce three figures:  
-1. Bar plot showing the proportion of recreational activities people surveyed do within the study area
+1. Bar plot showing the proportion of recreational activities performed by people surveyed
 2. Bar plot showing people's perception of environmental quality (freshwater quality) per LGA  
 3. Bar plot comparing the trust in science by fishers against their perception of climate change  
   
@@ -88,58 +88,119 @@ We will also keep the region column (`quotagroup-label`) because this contains t
 rec <- rec %>% 
   #Creating a new column for each activity
   separate(description, c("q_number", "activity"), sep = " - ") %>% 
-  #Extracting region from questions
+  #Extracting region from new_name column
   mutate(region = str_trim(str_remove(str_match(new_name, " [[:upper:]].+ ONLY"), "ONLY"))) %>%
   #We will only keep columns that are useful for us
   select(activity, field, region)
-```
 
-    
-    
+#Checking results
+rec
+```
+  
+Now we have the necessary information to extract the questions from the complete SELTMP dataset that tell us about recreational activities in the study area. We will also need to do some data wrangling to format our data in a way that is easy to plot.  
     
 ```{r subset_occ}
+#Extracting recreational activities questions
 recreation <- data_df %>% 
-  #Selecting columns of interest
+  #Selecting columns of interest - We use the field column in the above data frame
   select(all_of(rec$field)) %>% 
   #Removing columns ending in  "_OTHER" as this provides a description of what other activities were carried out
   select(!ends_with("_OTHER")) %>% 
+  #Loading data into memory for further processing
   collect()
 
-#We need to clean up the data before plotting the map
-# occupation <- 
+#We need to do some additional clean up before plotting
 recreation <- recreation %>% 
-  #We will now make the data frame longer to make plotting easier
+  #We will make the data frame longer. This means that instead of having multiple columns for each region/activity, 
+  #we will have single column containing information about the activities/region linked to that observation
   pivot_longer(cols = everything(), names_to = "field", values_to = "rec_act") %>%
-  #We can now remove any rows with no data in the occupation column
+  #We remove any rows with no data in the occupation column (i.e., a single respondent cannot be in multiple regions)
   drop_na(rec_act) %>% 
   #Join with metadata table
   left_join(rec, by = "field") %>% 
-  #We will summarise data by region and activate
+  #Summarise data by region and activity
   group_by(region, activity) %>% 
-  #Calculate number of respondents per region
-  mutate(respondent = n()) %>% 
-  #Calculate percentage of respondent doing every activity
+  #Calculate number of respondents per region - This is a simple count of observations per region
+  mutate(respondent = n(),
+         #Removing additional information in the "Other" category for activities
+         activity = case_when(str_detect(activity, "please") ~ "Other",
+                              T ~ activity),
+         #Change from upper case in region to only first letter as uppercase
+         region = case_when(region != "MWI" ~ str_to_title(region),
+                            T ~ region)) %>% 
+  #Correcting spelling mistake in one of the regions
+  mutate(region = case_when(region == "Glastone" ~ "Gladstone",
+                            T ~ region)) %>% 
+  #Calculate percentage of respondents performing an activity
+  #We add the number of people who reported that they performed an activity
   summarise(rec_act = sum(rec_act, na.rm = T),
+            #We get the total respondents per region (Otherwise this column would be lost)
             respondent = mean(respondent, na.rm = T),
+            #We calculate the percentage - No decimals needed
             per_rec = round((rec_act/respondent)*100, 0)) %>% 
-  #Calculate mean % to order data in plot
+  #Calculate mean % by activity to order data in plot
   group_by(activity) %>% 
-  mutate(order_plot = mean(per_rec)) %>% 
-  arrange(order_plot)
+  mutate(order_plot = mean(per_rec))
+
+#Checking result
+head(recreation)
+```
   
-recreation %>% 
+### Plotting data about recreational activities
+Our data is now ready for us to make a plot. We will order our plot by the mean percentage of people reporting performing an activity. Higher proportions will be on the left and decrease to the right.  
+  
+```{r}
+act_plot <- recreation %>% 
+  #We use activity on x axis and ordering by order_plot in descending order
   ggplot(aes(x = reorder(activity, -order_plot), y = per_rec, fill = region))+
-  geom_bar(position = "dodge", stat = "identity")+
+  #The dodge position will plot bars for each region next to each other
+  geom_bar(position = "dodge", stat = "identity", color = "black")+
+  geom_text(aes(label = per_rec), size = 2.25, hjust = -0.1,
+            position = position_dodge(0.9), vjust = 0.3,
+            angle = 90)+
   scale_fill_brewer(type = "qual")+
+  lims(y = c(0, 100))+
   theme_bw()+
-  labs(y = "% respondents")+
+  guides(fill = guide_legend(nrow = 1))+
+  labs(y = "% respondents", title = "Waterway recreation activities performed by respondents")+
   theme(axis.text.x = element_text(angle = 45, hjust = 1), 
         axis.title.x = element_blank(), 
         legend.position = "top", legend.title = element_blank(), 
-        panel.grid = element_blank())
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.grid.major.y = element_line(linetype = "dashed"), 
+        plot.title = element_text(hjust = 0.5))
 
+#Checking results
+act_plot
 ```
   
+  
+```{r}
+recreation %>% 
+  #We use activity on x axis and ordering by order_plot in descending order
+  ggplot(aes(y = reorder(activity, -order_plot), x = per_rec, fill = activity))+
+  #The dodge position will plot bars for each region next to each other
+  geom_bar(position = "dodge", stat = "identity", color = "black")+
+  facet_grid(~region)+
+  geom_text(aes(label = per_rec), size = 2.25, hjust = -0.2,
+            # position = position_dodge(0.9), 
+            vjust = 0.3)+
+  scale_fill_brewer(type = "qual", palette = "Paired")+
+  lims(x = c(0, 75))+
+  theme_bw()+
+  labs(x = "% respondents", title = "Waterway recreation activities performed \nby respondents")+
+  theme(axis.text.x = element_text(angle = 90, hjust = 1),
+        axis.title.y = element_blank(),
+        legend.position = "none",
+        panel.grid.major.x = element_blank(),
+        panel.grid.minor = element_blank(),
+        panel.grid.major.y = element_line(linetype = "dashed"),
+        plot.title = element_text(hjust = 0.5))
+
+
+```
+
 ### Accessing River Basins for the Great Barrier Reef
 The RIMReP `geoparquet` collection also has a shapefile with river catchment areas neighbouring the Great Barrier Reef Marine Park. We will access this dataset to plot the percentage of fishers by catchment region.
 
