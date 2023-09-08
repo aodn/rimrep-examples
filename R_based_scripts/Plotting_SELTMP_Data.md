@@ -52,7 +52,7 @@ library(janitor)
 
 ``` r
 #Establishing connection
-data_bucket <- s3_bucket("s3://rimrep-data-public-development/csiro-seltmp-baseline-surveys-jul22/data.parquet")
+data_bucket <- s3_bucket("s3://rimrep-data-public/csiro-seltmp-baseline-surveys-jul22/data.parquet")
 
 #Accessing SELTMP dataset
 data_df <- open_dataset(data_bucket)
