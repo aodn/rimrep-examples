@@ -698,10 +698,3 @@ governance %>%
 ```
 
 ![](Plotting_SELTMP_Data_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
-
-``` r
-#Checking result
-rec_plot
-```
-
-![](Plotting_SELTMP_Data_files/figure-gfm/unnamed-chunk-13-2.png)<!-- -->
