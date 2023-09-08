@@ -20,6 +20,8 @@ Denisse Fierro Arcos
     - [Extracting data about
       governance](#extracting-data-about-governance)
     - [Plotting data about governance](#plotting-data-about-governance)
+  - [Wordcloud example using favourite waterways for
+    recreation](#wordcloud-example-using-favourite-waterways-for-recreation)
 
 # Goal of this notebook
 
@@ -46,6 +48,7 @@ perception of climate change
 library(arrow)
 library(tidyverse)
 library(janitor)
+library(wordcloud2)
 ```
 
 ## Connecting to RIMReP collection and loading SELTMP dataset
@@ -698,3 +701,97 @@ governance %>%
 ```
 
 ![](Plotting_SELTMP_Data_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+
+## Wordcloud example using favourite waterways for recreation
+
+We will search for the relevant questions in our table of variables, and
+prepare query results to extract data from SELTMP dataset.
+
+``` r
+#Searching for matches
+water <- table %>%
+  filter(str_detect(str_to_lower(new_name), "favourite.*waterway")) %>%
+  separate(new_name, c("q_number", "region"), sep = " - ") %>%
+  #Extracting region from new_name column
+  mutate(region = str_remove(region, " ONLY")) %>%
+  #We will only keep columns that are useful for us
+  select(field, region)
+```
+
+    ## Warning: Expected 2 pieces. Additional pieces discarded in 4 rows [1, 2, 3, 4].
+
+``` r
+#Checking results
+water
+```
+
+    ## # A tibble: 4 × 2
+    ##   field region     
+    ##   <chr> <chr>      
+    ## 1 w10   WET TROPICS
+    ## 2 t10   TOWNSVILLE 
+    ## 3 m10   MWI        
+    ## 4 f10   FITZROY
+
+In this case, we will show global results, so we will ignore regions.
+However, by changing the grouping of the data, we can create wordclouds
+for each region.
+
+``` r
+#Extracting waterway health perception questions
+fav_water <- data_df %>%
+  #Selecting columns of interest - We use the field column in the above data frame
+  select(all_of(water$field)) %>% 
+  #Loading data into memory for further processing
+  collect()
+
+#We need to do some additional clean up before plotting
+#Defining answers that are not informative
+not_accepted <- "do not|dont|none|not |no |know|ocean|\\?|car|fishing|all|any|;|beaches|boat|impossible|chair|unsure|^beach$|secret|swimming"
+
+#Cleaning data
+fav_water <- fav_water %>%
+  #We will make the data frame longer as we did in the previous examples
+  pivot_longer(cols = everything(), names_to = "field", values_to = "waterways") %>%
+  #We remove any rows with no data in the occupation column (i.e., a single respondent cannot be in multiple regions)
+  drop_na(waterways) %>% 
+  #Separate responses by commas
+  separate_longer_delim(waterways, delim = ", ") %>% 
+  separate_longer_delim(waterways, delim = " - ") %>% 
+  separate_longer_delim(waterways, delim = "- ") %>%
+  separate_longer_delim(waterways, delim = ". ") %>%
+  #Remove "do not know"
+  filter(!str_detect(str_to_lower(waterways), not_accepted)) %>% 
+  mutate(waterways = str_trim(str_to_lower(waterways), "both")) %>% 
+  count(waterways)
+
+#Checking results
+fav_water
+```
+
+    ## # A tibble: 1,024 × 2
+    ##    waterways                             n
+    ##    <chr>                             <int>
+    ##  1 4 mile beach                          1
+    ##  2 4 mile beach and gillinbin creek      1
+    ##  3 4 mile beach port douglas             1
+    ##  4 5 rocks                               1
+    ##  5 abor creek                            1
+    ##  6 above barrage                         1
+    ##  7 above barrage..saltwater section.     1
+    ##  8 above the barrage                     2
+    ##  9 airlie and yeppoon                    1
+    ## 10 airlie bay                            1
+    ## # ℹ 1,014 more rows
+
+More work needs to be done in cleaning this dataset. However, since
+there are over 1,000 rows with responses, it is beyond the scope of this
+notebook to complete harmonise the answers in the dataset. For now, we
+will move on to plotting the results.
+
+Note that you will need to run this notebook in your local machine to
+see the results of the wordcloud.
+
+``` r
+wordcloud2(fav_water)
+```
