@@ -435,7 +435,7 @@ governance %>%
 
 ```
     
-## Wordcloud example using favourite waterways for recreation
+### Word cloud example using favourite waterways for recreation
   
 We will search for the relevant questions in our table of variables, and prepare query results to extract data from SELTMP dataset.    
 
@@ -481,15 +481,16 @@ fav_water <- fav_water %>%
   #Remove "do not know"
   filter(!str_detect(str_to_lower(waterways), not_accepted)) %>% 
   mutate(waterways = str_trim(str_to_lower(waterways), "both")) %>% 
-  count(waterways)
+  count(waterways) %>% 
+  arrange(desc(n))
 
 #Checking results
 fav_water
 ```
   
-More work needs to be done in cleaning this dataset. However, since there are over 1,000 rows with responses, it is beyond the scope of this notebook to complete harmonise the answers in the dataset. For now, we will move on to plotting the results.  
+More work needs to be done in cleaning this dataset. However, since there are over 1,000 rows with responses, it is beyond the scope of this notebook to complete harmonise the answers in the dataset. For now, we will move on to plotting these results.  
   
-Note that you will need to run this notebook in your local machine to see the results of the wordcloud.  
+Note that you will need to run this notebook in your local machine to see the results of the word cloud.  
   
 ```{r eval=FALSE}
 wordcloud2(fav_water)
