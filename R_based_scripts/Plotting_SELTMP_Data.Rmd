@@ -22,7 +22,7 @@ In this example, we will produce three figures:
 3. Bar plot comparing the trust in science by fishers against their perception of climate change  
   
 
-## Loading libraries
+# Loading libraries
 
 ```{r libraries, results = "hide", message = F, warning = F}
 library(arrow)
@@ -31,7 +31,7 @@ library(janitor)
 library(wordcloud2)
 ```
 
-## Connecting to RIMReP collection and loading SELTMP dataset
+# Connecting to RIMReP collection and loading SELTMP dataset
 
 ```{r connect_abs_data}
 #Establishing connection
@@ -66,7 +66,7 @@ table <- read_parquet(table_bucket)
 head(table)
 ```
   
-### Extracting data about recreational activities
+## Extracting data about recreational activities
 We can now use our metadata table to find the variables of interest.  
   
 ```{r}
@@ -145,7 +145,7 @@ head(recreation)
 ```
   
 ### Plotting data about recreational activities
-Our data is now ready for us to make a plot. We will order our plot by the mean percentage of people reporting performing an activity. Higher proportions will be on the left and decrease to the right.  
+Our data is now ready for us to make a plot. We will order our plot by the mean percentage of people reporting performing an activity. Higher proportions will be at the bottom and decrease towards the top.  
   
 
 ```{r}
@@ -165,7 +165,7 @@ rec_plot <- recreation %>%
   lims(x = c(0, 90))+
   #Change base theme for plot
   theme_bw()+
-  #Additing labels, title and caption
+  #Adding labels, title and caption
   labs(x = "% respondents", title = "Waterway recreation activities performed \nby respondents", 
        caption = "*Numbers next to bars show the % of respondents for each activity")+
   #Formatting figure 
@@ -184,7 +184,7 @@ rec_plot
   
 The above figure can be saved locally with the following line: `ggsave("recreation_activities_plot.png", rec_plot, device = "png")`.  
 
-### Extracting data about waterway health
+## Extracting data about waterway health
 Using the metadata table we loaded towards the beginning of this notebook, we will find the survey questions that cover perceived waterway health.
   
 ```{r}
@@ -299,7 +299,7 @@ water_health_reg %>%
   scale_fill_brewer(type = "qual", palette = "Paired")+
   #Change base theme for plot
   theme_bw()+
-  #Additing labels, title and caption
+  #Adding labels, title and caption
   labs(x = "% respondents", title = "Rating of perceived waterway health \nby habitat in the Wet Tropics region",
        caption = "*Numbers inside bars show the % of respondents per rating")+
   #Formatting figure 
@@ -312,7 +312,7 @@ water_health_reg %>%
 
 ```
   
-### Extracting data about governance
+## Extracting data about governance
 Finally, we will replicate one of the plots about governance of waterways that is available in the SELTMP website, which we are including below. By now, you know that the first step is to look for the variables that contain the information we want to plot.  
   
 Since the plot does not include a keyword that is common for all variables, we will search for `science` since the first variable in the plot is about "trust in science about waterways".  
@@ -420,7 +420,7 @@ governance %>%
   lims(x = c(0, 8))+
   #Change base theme for plot
   theme_bw()+
-  #Additing labels, title and caption
+  #Adding labels, title and caption
   labs(x = "Mean agreeement", title = "Perceived fairness and trust by respondents \nin waterway governance", 
        caption = "*Numbers inside bars show the mean agreeement with each statement. Standard errors shown\nas black lines.")+
   #Formatting figure 
