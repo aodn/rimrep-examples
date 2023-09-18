@@ -771,7 +771,7 @@ fav_water <- fav_water %>%
   mutate(waterways = str_trim(str_to_lower(waterways), "both")) %>% 
   #Remove empty cells
   filter(waterways != "" & waterways != "s") %>% 
-  #Correcting multiple cases of GBR
+  #Correcting multiple cases of great barrier reef
   mutate(waterways = case_when(str_detect(waterways, "gbr") ~ "great barrier reef",
                                str_detect(waterways, "barrier reef") ~ "great barrier reef",
                                T ~ waterways)) %>%
@@ -781,7 +781,7 @@ fav_water <- fav_water %>%
   #Correcting multiple cases of creek
   mutate(waterways = case_when(waterways == "creeks" ~ "creek",
                                T ~ waterways)) %>%
-  #Correcting multiple cases of Whitsunday
+  #Correcting multiple cases of Whitsunday Islands
   mutate(waterways = case_when(str_detect(waterways, "whitsunday") ~ "whitsunday islands",
                                T ~ waterways)) %>%
   count(waterways) %>% 
