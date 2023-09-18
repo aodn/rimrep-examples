@@ -47,6 +47,8 @@ perception of climate change
 ``` r
 library(arrow)
 library(tidyverse)
+library(magrittr)
+library(tm)
 library(janitor)
 library(wordcloud2)
 ```
@@ -110,15 +112,14 @@ head(table)
 ```
 
     ## # A tibble: 6 × 3
-    ##   description                                                      new_n…¹ field
-    ##   <chr>                                                            <chr>   <chr>
-    ## 1 responseid                                                       ID      resp…
-    ## 2 REGION (1=WT, 2=TSV, 3=MWI, 4=FIT; 5=GH)                         REGION… REGI…
-    ## 3 Recruiting pathway (1 =  ORU panel, 2 = live link) (added by MC… Recrui… recr…
-    ## 4 Q1 - What is your current residential / home postcode?           q1 - h… q1   
-    ## 5 Q1a - Please select your City / Town (LGA):                      q1a - … q1a  
-    ## 6 Text value for q1a                                               <NA>    q1a-…
-    ## # … with abbreviated variable name ¹​new_name
+    ##   description                                                     new_name field
+    ##   <chr>                                                           <chr>    <chr>
+    ## 1 responseid                                                      ID       resp…
+    ## 2 REGION (1=WT, 2=TSV, 3=MWI, 4=FIT; 5=GH)                        REGION … REGI…
+    ## 3 Recruiting pathway (1 =  ORU panel, 2 = live link) (added by M… Recruit… recr…
+    ## 4 Q1 - What is your current residential / home postcode?          q1 - ho… q1   
+    ## 5 Q1a - Please select your City / Town (LGA):                     q1a - c… q1a  
+    ## 6 Text value for q1a                                              <NA>     q1a-…
 
 ## Extracting data about recreational activities
 
@@ -146,7 +147,7 @@ rec
     ##  8 W9_8 - Swimming                                                w9_8 - … w9_8 
     ##  9 W9_9 - Picnics and barbeques                                   w9_9 - … w9_9 
     ## 10 W9_10 - Exercising/hiking/biking/running                       w9_10 -… w9_10
-    ## # … with 55 more rows
+    ## # ℹ 55 more rows
 
 From the table above, we can see that question `9` contains data about
 recreational activities. We can also see that there are multiple options
@@ -162,8 +163,8 @@ regions.
 rec <- rec %>% 
   #Creating a new column for each activity
   separate(description, c("q_number", "activity"), sep = " - ") %>% 
-  #Extracting region from new_name column
-  mutate(region = str_trim(str_remove(str_match(new_name, " [[:upper:]].+ ONLY"), "ONLY"))) %>%
+  #Extracting region from new_name column (upper case letters between - and ONLY)
+  mutate(region = str_extract(new_name, "- (.+) ONLY -", group = 1)) %>% 
   #We will only keep columns that are useful for us
   select(activity, field, region)
 
@@ -184,7 +185,7 @@ rec
     ##  8 Swimming                                                w9_8  WET TROPICS
     ##  9 Picnics and barbeques                                   w9_9  WET TROPICS
     ## 10 Exercising/hiking/biking/running                        w9_10 WET TROPICS
-    ## # … with 55 more rows
+    ## # ℹ 55 more rows
 
 Now we have the necessary information to extract the questions from the
 complete SELTMP dataset that tell us about recreational activities in
@@ -245,15 +246,14 @@ head(recreation)
 
     ## # A tibble: 6 × 6
     ## # Groups:   activity [6]
-    ##   region  activity                               rec_act respo…¹ per_rec order…²
-    ##   <chr>   <chr>                                    <dbl>   <dbl>   <dbl>   <dbl>
-    ## 1 Fitzroy Boating or sailing                         136     453      30    31.8
-    ## 2 Fitzroy Camping                                    147     453      32    32.8
-    ## 3 Fitzroy Exercising/hiking/biking/running           188     453      42    49  
-    ## 4 Fitzroy Fishing                                    225     453      50    50.2
-    ## 5 Fitzroy Motor-powered water sports (e.g. wate…      45     453      10     8.4
-    ## 6 Fitzroy Other                                       39     453       9     7.2
-    ## # … with abbreviated variable names ¹​respondent, ²​order_plot
+    ##   region  activity                         rec_act respondent per_rec order_plot
+    ##   <chr>   <chr>                              <dbl>      <dbl>   <dbl>      <dbl>
+    ## 1 Fitzroy Boating or sailing                   136        453      30       31.8
+    ## 2 Fitzroy Camping                              147        453      32       32.8
+    ## 3 Fitzroy Exercising/hiking/biking/running     188        453      42       49  
+    ## 4 Fitzroy Fishing                              225        453      50       50.2
+    ## 5 Fitzroy Motor-powered water sports (e.g…      45        453      10        8.4
+    ## 6 Fitzroy Other                                 39        453       9        7.2
 
 ### Plotting data about recreational activities
 
@@ -328,7 +328,7 @@ health
     ##  8 W13_8 - Ocean and sea                                   w13_8 - WET TR… w13_8
     ##  9 T13_1 - Freshwater creeks and rivers                    t13_1 - TOWNSV… t13_1
     ## 10 T13_2 - Freshwater lakes, dams and wetlands             t13_2 - TOWNSV… t13_2
-    ## # … with 43 more rows
+    ## # ℹ 43 more rows
 
 The first thing we notice is that for some regions there are more
 questions about perceived health, which refer to areas that are not
@@ -360,7 +360,7 @@ health <- health %>%
   #Creating a new column for each activity
   separate(description, c("q_number", "area"), sep = " - ") %>% 
   #Extracting region from new_name column
-  mutate(region = str_trim(str_remove(str_match(new_name, " [[:upper:]].+ Perceived"), "Perceived"))) %>% 
+  mutate(region = str_extract(new_name, "- (.+) Perceived", group = 1)) %>% 
   #Removing Gladstone region
   filter(region != "GLADSTONE") %>% 
   #Adding -label suffix to field column
@@ -385,7 +385,7 @@ health
     ##  8 Ocean and sea                                   w13_8-label WET TROPICS
     ##  9 Freshwater creeks and rivers                    t13_1-label TOWNSVILLE 
     ## 10 Freshwater lakes, dams and wetlands             t13_2-label TOWNSVILLE 
-    ## # … with 20 more rows
+    ## # ℹ 20 more rows
 
 As we did with the previous plot, we will use the table above to extract
 the questions that contain data about perceptions of waterway health. In
@@ -446,21 +446,21 @@ head(water_health)
 ```
 
     ## # A tibble: 6 × 31
-    ##   `w13_1-label`  w13_2…¹ w13_3…² w13_4…³ w13_5…⁴ w13_6…⁵ w13_7…⁶ w13_8…⁷ t13_1…⁸
-    ##   <chr>          <chr>   <chr>   <chr>   <chr>   <chr>   <chr>   <chr>   <chr>  
-    ## 1 In good health In goo… In goo… In goo… In goo… In goo… In goo… In goo… <NA>   
-    ## 2 <NA>           <NA>    <NA>    <NA>    <NA>    <NA>    <NA>    <NA>    <NA>   
-    ## 3 <NA>           <NA>    <NA>    <NA>    <NA>    <NA>    <NA>    <NA>    <NA>   
-    ## 4 In fair health In fai… In fai… In goo… I don'… In fai… In fai… In fai… <NA>   
-    ## 5 Not applicabl… Not ap… Not ap… In fai… I don'… In poo… In poo… In poo… <NA>   
-    ## 6 In good health In goo… In goo… Not ap… In goo… Not ap… Not ap… In goo… <NA>   
-    ## # … with 22 more variables: `t13_2-label` <chr>, `t13_3-label` <chr>,
-    ## #   `t13_4-label` <chr>, `t13_5-label` <chr>, `t13_6-label` <chr>,
-    ## #   `t13_7-label` <chr>, `t13_8-label` <chr>, `m13_1-label` <chr>,
-    ## #   `m13_2-label` <chr>, `m13_3-label` <chr>, `m13_4-label` <chr>,
-    ## #   `m13_5-label` <chr>, `m13_6-label` <chr>, `m13_7-label` <chr>,
-    ## #   `m13_8-label` <chr>, `f13_1-label` <chr>, `f13_3-label` <chr>,
-    ## #   `f13_4-label` <chr>, `f13_5-label` <chr>, `f13_6-label` <chr>, …
+    ##   `w13_1-label`          `w13_2-label` `w13_3-label` `w13_4-label` `w13_5-label`
+    ##   <chr>                  <chr>         <chr>         <chr>         <chr>        
+    ## 1 In good health         In good heal… In good heal… In good heal… In good heal…
+    ## 2 <NA>                   <NA>          <NA>          <NA>          <NA>         
+    ## 3 <NA>                   <NA>          <NA>          <NA>          <NA>         
+    ## 4 In fair health         In fair heal… In fair heal… In good heal… I don't know 
+    ## 5 Not applicable (have … Not applicab… Not applicab… In fair heal… I don't know 
+    ## 6 In good health         In good heal… In good heal… Not applicab… In good heal…
+    ## # ℹ 26 more variables: `w13_6-label` <chr>, `w13_7-label` <chr>,
+    ## #   `w13_8-label` <chr>, `t13_1-label` <chr>, `t13_2-label` <chr>,
+    ## #   `t13_3-label` <chr>, `t13_4-label` <chr>, `t13_5-label` <chr>,
+    ## #   `t13_6-label` <chr>, `t13_7-label` <chr>, `t13_8-label` <chr>,
+    ## #   `m13_1-label` <chr>, `m13_2-label` <chr>, `m13_3-label` <chr>,
+    ## #   `m13_4-label` <chr>, `m13_5-label` <chr>, `m13_6-label` <chr>,
+    ## #   `m13_7-label` <chr>, `m13_8-label` <chr>, `f13_1-label` <chr>, …
 
 ### Plotting data about waterway health
 
@@ -488,7 +488,7 @@ water_health_reg %>%
        caption = "*Numbers inside bars show the % of respondents per rating")+
   #Formatting figure 
   theme(axis.title = element_blank(),
-        legend.position = "top", legend.margin = margin(l = -1.5, unit = "cm"),
+        legend.position = "top", legend.margin = margin(l = -2, unit = "cm"),
         legend.title = element_blank(),
         panel.grid = element_blank(),
         plot.title = element_text(hjust = 0.5), 
@@ -518,19 +518,18 @@ table %>%
 ```
 
     ## # A tibble: 10 × 3
-    ##    description                                                     new_n…¹ field
-    ##    <chr>                                                           <chr>   <chr>
-    ##  1 W18_12 - I trust the science about waterway health and managem… w18_12… w18_…
-    ##  2 W21_5 - Science and Education                                   w21_5 … w21_5
-    ##  3 T18_12 - I trust the science about waterway health and managem… t18_12… t18_…
-    ##  4 T21_5 - Science and Education                                   t21_5 … t21_5
-    ##  5 M18_12 - I trust the science about waterway health and managem… m18_12… m18_…
-    ##  6 M21_5 - Science and Education                                   m21_5 … m21_5
-    ##  7 F18_12 - I trust the science about waterway health and managem… f18_12… f18_…
-    ##  8 F21_5 - Science and Education                                   f21_5 … f21_5
-    ##  9 F18. Please rate your level of agreement with the following st… F18_12… F18_…
-    ## 10 F21. Which broad sector of waterway-dependent business or empl… F21_9 … F21_9
-    ## # … with abbreviated variable name ¹​new_name
+    ##    description                                                    new_name field
+    ##    <chr>                                                          <chr>    <chr>
+    ##  1 W18_12 - I trust the science about waterway health and manage… w18_12 … w18_…
+    ##  2 W21_5 - Science and Education                                  w21_5 -… w21_5
+    ##  3 T18_12 - I trust the science about waterway health and manage… t18_12 … t18_…
+    ##  4 T21_5 - Science and Education                                  t21_5 -… t21_5
+    ##  5 M18_12 - I trust the science about waterway health and manage… m18_12 … m18_…
+    ##  6 M21_5 - Science and Education                                  m21_5 -… m21_5
+    ##  7 F18_12 - I trust the science about waterway health and manage… f18_12 … f18_…
+    ##  8 F21_5 - Science and Education                                  f21_5 -… f21_5
+    ##  9 F18. Please rate your level of agreement with the following s… F18_12 … F18_…
+    ## 10 F21. Which broad sector of waterway-dependent business or emp… F21_9 -… F21_9
 
 We can see that trust in science falls under question `18`. We will do
 another query to our table and check that all variables needed for the
@@ -552,19 +551,19 @@ govern
 ```
 
     ## # A tibble: 30 × 3
-    ##    description                                                     new_n…¹ field
-    ##    <chr>                                                           <chr>   <chr>
-    ##  1 W18_7 - I think that decisions about managing local waterways … w18_7 … w18_7
-    ##  2 W18_8 - I do not have fair access to all the waterways in my r… w18_8 … w18_8
-    ##  3 W18_9 - I feel I personally have some influence over how local… w18_9 … w18_9
-    ##  4 W18_10 - I feel able to have input into the management of wate… w18_10… w18_…
-    ##  5 W18_11 - I trust the information I receive from institutions t… w18_11… w18_…
-    ##  6 W18_12 - I trust the science about waterway health and managem… w18_12… w18_…
-    ##  7 T18_7 - I think that decisions about managing local waterways … t18_7 … t18_7
-    ##  8 T18_8 - I do not have fair access to all the waterways in my r… t18_8 … t18_8
-    ##  9 T18_9 - I feel I personally have some influence over how local… t18_9 … t18_9
-    ## 10 T18_10 - I feel able to have input into the management of wate… t18_10… t18_…
-    ## # … with 20 more rows, and abbreviated variable name ¹​new_name
+    ##    description                                                    new_name field
+    ##    <chr>                                                          <chr>    <chr>
+    ##  1 W18_7 - I think that decisions about managing local waterways… w18_7 -… w18_7
+    ##  2 W18_8 - I do not have fair access to all the waterways in my … w18_8 -… w18_8
+    ##  3 W18_9 - I feel I personally have some influence over how loca… w18_9 -… w18_9
+    ##  4 W18_10 - I feel able to have input into the management of wat… w18_10 … w18_…
+    ##  5 W18_11 - I trust the information I receive from institutions … w18_11 … w18_…
+    ##  6 W18_12 - I trust the science about waterway health and manage… w18_12 … w18_…
+    ##  7 T18_7 - I think that decisions about managing local waterways… t18_7 -… t18_7
+    ##  8 T18_8 - I do not have fair access to all the waterways in my … t18_8 -… t18_8
+    ##  9 T18_9 - I feel I personally have some influence over how loca… t18_9 -… t18_9
+    ## 10 T18_10 - I feel able to have input into the management of wat… t18_10 … t18_…
+    ## # ℹ 20 more rows
 
 We have identified the fields containing the information we need to
 recreate the plot. We now need to tidy up our table as we have done
@@ -574,8 +573,10 @@ previously.
 govern <- govern %>%
   #Extracting region and label from new_name column 
   separate(new_name, c("q_number", "region", "question"), sep = " - ") %>% 
-  #Extracting region from new_name column
-  mutate(question = str_trim(gsub("[[:lower:]]|I |I\\'|&", "", str_remove(question, " \\(.*")))) %>% 
+  #Extracting region from new_name column - Remove apostrophes (')
+  mutate(question = str_replace(question, "\\'", ""),
+         #Get only words in upper case
+         question = str_extract(question, " (?:[A-Z ]+[A-Z]+)")) %>% 
   #We will only keep columns that are useful for us
   select(question, field, region)
 
@@ -584,19 +585,19 @@ govern
 ```
 
     ## # A tibble: 30 × 3
-    ##    question                     field  region     
-    ##    <chr>                        <chr>  <chr>      
-    ##  1 DECISIONS ARE MADE FAIRLY    w18_7  WET TROPICS
-    ##  2 DON'T HAVE FAIR ACCESS       w18_8  WET TROPICS
-    ##  3 SOME PERSONAL INFLUENCE      w18_9  WET TROPICS
-    ##  4 ABLE TO HAVE INPUT           w18_10 WET TROPICS
-    ##  5 TRUST INFO FROM INSTITUTIONS w18_11 WET TROPICS
-    ##  6 TRUST THE SCIENCE            w18_12 WET TROPICS
-    ##  7 DECISIONS ARE MADE FAIRLY    t18_7  TOWNSVILLE 
-    ##  8 DON'T HAVE FAIR ACCESS       t18_8  TOWNSVILLE 
-    ##  9 SOME PERSONAL INFLUENCE      t18_9  TOWNSVILLE 
-    ## 10 ABLE TO HAVE INPUT           t18_10 TOWNSVILLE 
-    ## # … with 20 more rows
+    ##    question                        field  region     
+    ##    <chr>                           <chr>  <chr>      
+    ##  1 " DECISIONS ARE MADE FAIRLY"    w18_7  WET TROPICS
+    ##  2 " DONT HAVE FAIR ACCESS"        w18_8  WET TROPICS
+    ##  3 " SOME PERSONAL INFLUENCE"      w18_9  WET TROPICS
+    ##  4 " ABLE TO HAVE INPUT"           w18_10 WET TROPICS
+    ##  5 " TRUST INFO FROM INSTITUTIONS" w18_11 WET TROPICS
+    ##  6 " TRUST THE SCIENCE"            w18_12 WET TROPICS
+    ##  7 " DECISIONS ARE MADE FAIRLY"    t18_7  TOWNSVILLE 
+    ##  8 " DONT HAVE FAIR ACCESS"        t18_8  TOWNSVILLE 
+    ##  9 " SOME PERSONAL INFLUENCE"      t18_9  TOWNSVILLE 
+    ## 10 " ABLE TO HAVE INPUT"           t18_10 TOWNSVILLE 
+    ## # ℹ 20 more rows
 
 Note that unlike the previous example, we will not use the `-label`
 columns because we are interested in the quantifying the level of
@@ -651,20 +652,19 @@ governance
 
     ## # A tibble: 30 × 7
     ## # Groups:   question [6]
-    ##    region    question                    agree…¹ agree…² respo…³ agree…⁴ order…⁵
-    ##    <chr>     <chr>                         <dbl>   <dbl>   <dbl>   <dbl>   <dbl>
-    ##  1 Fitzroy   ABLE TO HAVE INPUT             4.98    2.36     467  0.109     5.00
-    ##  2 Fitzroy   DECISIONS ARE MADE FAIRLY      5.55    2.16     467  0.0999    5.52
-    ##  3 Fitzroy   DON'T HAVE FAIR ACCESS         4.35    2.48     467  0.115     4.41
-    ##  4 Fitzroy   SOME PERSONAL INFLUENCE        4.29    2.34     467  0.108     4.27
-    ##  5 Fitzroy   TRUST INFO FROM INSTITUTIO…    5.94    2.30     467  0.107     6.02
-    ##  6 Fitzroy   TRUST THE SCIENCE              6.65    2.45     467  0.113     6.8 
-    ##  7 Gladstone ABLE TO HAVE INPUT             5.53    2.29     563  0.0967    5.00
-    ##  8 Gladstone DECISIONS ARE MADE FAIRLY      6.09    2.05     563  0.0863    5.52
-    ##  9 Gladstone DON'T HAVE FAIR ACCESS         4.02    2.39     563  0.101     4.41
-    ## 10 Gladstone SOME PERSONAL INFLUENCE        4.59    2.24     563  0.0945    4.27
-    ## # … with 20 more rows, and abbreviated variable names ¹​agree_mean, ²​agree_sd,
-    ## #   ³​respondent, ⁴​agree_se, ⁵​order_plot
+    ##    region    question         agree_mean agree_sd respondent agree_se order_plot
+    ##    <chr>     <chr>                 <dbl>    <dbl>      <dbl>    <dbl>      <dbl>
+    ##  1 Fitzroy   " ABLE TO HAVE …       4.98     2.36        467   0.109        5.00
+    ##  2 Fitzroy   " DECISIONS ARE…       5.55     2.16        467   0.0999       5.52
+    ##  3 Fitzroy   " DONT HAVE FAI…       4.35     2.48        467   0.115        4.41
+    ##  4 Fitzroy   " SOME PERSONAL…       4.29     2.34        467   0.108        4.27
+    ##  5 Fitzroy   " TRUST INFO FR…       5.94     2.30        467   0.107        6.02
+    ##  6 Fitzroy   " TRUST THE SCI…       6.65     2.45        467   0.113        6.8 
+    ##  7 Gladstone " ABLE TO HAVE …       5.53     2.29        563   0.0967       5.00
+    ##  8 Gladstone " DECISIONS ARE…       6.09     2.05        563   0.0863       5.52
+    ##  9 Gladstone " DONT HAVE FAI…       4.02     2.39        563   0.101        4.41
+    ## 10 Gladstone " SOME PERSONAL…       4.59     2.24        563   0.0945       4.27
+    ## # ℹ 20 more rows
 
 ### Plotting data about governance
 
@@ -692,7 +692,7 @@ governance %>%
   theme_bw()+
   #Adding labels, title and caption
   labs(x = "Mean agreeement", title = "Perceived fairness and trust by respondents \nin waterway governance", 
-       caption = "*Numbers inside bars show the mean agreeement with each statement. Standard errors shown\nas black lines.")+
+       caption = "*Numbers inside bars show the mean agreeement with each statement. Standard errors\n shown as black lines.")+
   #Formatting figure 
   theme(axis.text.x = element_text(angle = 90, hjust = 1),
         axis.title = element_blank(),
@@ -738,7 +738,7 @@ water
     ## 4 f10   FITZROY
 
 In this case, we will show global results, so we will ignore regions.
-However, by changing the grouping of the data, we can create wordclouds
+However, by changing the grouping of the data, we can create word clouds
 for each region.
 
 ``` r
@@ -751,22 +751,39 @@ fav_water <- data_df %>%
 
 #We need to do some additional clean up before plotting
 #Defining answers that are not informative
-not_accepted <- "do not|dont|none|not |no |know|ocean|\\?|car|fishing|all|any|;|beaches|boat|impossible|chair|unsure|^beach$|secret|swimming"
+not_accepted <- "do not|can[:punct:]|variety|havent|^na$|don[:punct:]|dont|none|not |no |wildlife|nil|idk|lovely|know|\\?|car|fishing|all|any|;|boat|impossible|chair|unsure|secret|swimming"
 
 #Cleaning data
 fav_water <- fav_water %>%
   #We will make the data frame longer as we did in the previous examples
   pivot_longer(cols = everything(), names_to = "field", values_to = "waterways") %>%
-  #We remove any rows with no data in the occupation column (i.e., a single respondent cannot be in multiple regions)
-  drop_na(waterways) %>% 
-  #Separate responses by commas
-  separate_longer_delim(waterways, delim = ", ") %>% 
-  separate_longer_delim(waterways, delim = " - ") %>% 
-  separate_longer_delim(waterways, delim = "- ") %>%
-  separate_longer_delim(waterways, delim = ". ") %>%
-  #Remove "do not know"
-  filter(!str_detect(str_to_lower(waterways), not_accepted)) %>% 
+  #Forcing everything to be lower case
+  mutate(waterways = str_to_lower(waterways)) %>% 
+  #Remove non-informative answers
+  filter(!str_detect(waterways, not_accepted)) %>% 
+  #Change all special characters to ; to separate things easier
+  mutate(waterways = str_to_lower(str_replace_all(waterways, "[:punct:]| and | or |the |  ", ";"))) %>%
+  #Separate responses by semicolon (;)
+  separate_longer_delim(waterways, delim = ";") %>% 
+  #Removing stop words
+  mutate(waterways = removeWords(waterways, stopwords("english"))) %>% 
+  #Remove blank spaces
   mutate(waterways = str_trim(str_to_lower(waterways), "both")) %>% 
+  #Remove empty cells
+  filter(waterways != "" & waterways != "s") %>% 
+  #Correcting multiple cases of GBR
+  mutate(waterways = case_when(str_detect(waterways, "gbr") ~ "great barrier reef",
+                               str_detect(waterways, "barrier reef") ~ "great barrier reef",
+                               T ~ waterways)) %>%
+  #Correcting multiple cases of beach
+  mutate(waterways = case_when(waterways == "beaches" ~ "beach",
+                               T ~ waterways)) %>%
+  #Correcting multiple cases of creek
+  mutate(waterways = case_when(waterways == "creeks" ~ "creek",
+                               T ~ waterways)) %>%
+  #Correcting multiple cases of Whitsunday
+  mutate(waterways = case_when(str_detect(waterways, "whitsunday") ~ "whitsunday islands",
+                               T ~ waterways)) %>%
   count(waterways) %>% 
   arrange(desc(n))
 
@@ -774,20 +791,20 @@ fav_water <- fav_water %>%
 fav_water
 ```
 
-    ## # A tibble: 1,024 × 2
-    ##    waterways           n
-    ##    <chr>           <int>
-    ##  1 ross river         91
-    ##  2 fitzroy river      70
-    ##  3 the strand         52
-    ##  4 crystal creek      45
-    ##  5 magnetic island    27
-    ##  6 strand             27
-    ##  7 pioneer river      24
-    ##  8 stoney creek       22
-    ##  9 barron river       19
-    ## 10 causeway lake      19
-    ## # … with 1,014 more rows
+    ## # A tibble: 957 × 2
+    ##    waterways              n
+    ##    <chr>              <int>
+    ##  1 ross river            93
+    ##  2 fitzroy river         83
+    ##  3 strand                81
+    ##  4 crystal creek         45
+    ##  5 beach                 43
+    ##  6 great barrier reef    28
+    ##  7 magnetic island       28
+    ##  8 pioneer river         27
+    ##  9 stoney creek          24
+    ## 10 causeway lake         22
+    ## # ℹ 947 more rows
 
 More work needs to be done in cleaning this dataset. However, since
 there are over 1,000 rows with responses, it is beyond the scope of this
