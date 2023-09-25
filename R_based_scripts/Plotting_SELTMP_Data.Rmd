@@ -27,6 +27,8 @@ In this example, we will produce three figures:
 ```{r libraries, results = "hide", message = F, warning = F}
 library(arrow)
 library(tidyverse)
+library(magrittr)
+library(tm)
 library(janitor)
 library(wordcloud2)
 ```
@@ -86,8 +88,8 @@ We will also keep the region column (`quotagroup-label`) because this contains t
 rec <- rec %>% 
   #Creating a new column for each activity
   separate(description, c("q_number", "activity"), sep = " - ") %>% 
-  #Extracting region from new_name column
-  mutate(region = str_trim(str_remove(str_match(new_name, " [[:upper:]].+ ONLY"), "ONLY"))) %>%
+  #Extracting region from new_name column (upper case letters between - and ONLY)
+  mutate(region = str_extract(new_name, "- (.+) ONLY -", group = 1)) %>% 
   #We will only keep columns that are useful for us
   select(activity, field, region)
 
@@ -214,7 +216,7 @@ health <- health %>%
   #Creating a new column for each activity
   separate(description, c("q_number", "area"), sep = " - ") %>% 
   #Extracting region from new_name column
-  mutate(region = str_trim(str_remove(str_match(new_name, " [[:upper:]].+ Perceived"), "Perceived"))) %>% 
+  mutate(region = str_extract(new_name, "- (.+) Perceived", group = 1)) %>% 
   #Removing Gladstone region
   filter(region != "GLADSTONE") %>% 
   #Adding -label suffix to field column
@@ -304,7 +306,7 @@ water_health_reg %>%
        caption = "*Numbers inside bars show the % of respondents per rating")+
   #Formatting figure 
   theme(axis.title = element_blank(),
-        legend.position = "top", legend.margin = margin(l = -1.5, unit = "cm"),
+        legend.position = "top", legend.margin = margin(l = -2, unit = "cm"),
         legend.title = element_blank(),
         panel.grid = element_blank(),
         plot.title = element_text(hjust = 0.5), 
@@ -348,8 +350,10 @@ We have identified the fields containing the information we need to recreate the
 govern <- govern %>%
   #Extracting region and label from new_name column 
   separate(new_name, c("q_number", "region", "question"), sep = " - ") %>% 
-  #Extracting region from new_name column
-  mutate(question = str_trim(gsub("[[:lower:]]|I |I\\'|&", "", str_remove(question, " \\(.*")))) %>% 
+  #Extracting region from new_name column - Remove apostrophes (')
+  mutate(question = str_replace(question, "\\'", ""),
+         #Get only words in upper case
+         question = str_extract(question, " (?:[A-Z ]+[A-Z]+)")) %>% 
   #We will only keep columns that are useful for us
   select(question, field, region)
 
@@ -422,7 +426,7 @@ governance %>%
   theme_bw()+
   #Adding labels, title and caption
   labs(x = "Mean agreeement", title = "Perceived fairness and trust by respondents \nin waterway governance", 
-       caption = "*Numbers inside bars show the mean agreeement with each statement. Standard errors shown\nas black lines.")+
+       caption = "*Numbers inside bars show the mean agreeement with each statement. Standard errors\n shown as black lines.")+
   #Formatting figure 
   theme(axis.text.x = element_text(angle = 90, hjust = 1),
         axis.title = element_blank(),
@@ -453,7 +457,7 @@ water <- table %>%
 water
 ```
   
-In this case, we will show global results, so we will ignore regions. However, by changing the grouping of the data, we can create wordclouds for each region.  
+In this case, we will show global results, so we will ignore regions. However, by changing the grouping of the data, we can create word clouds for each region.  
   
 ```{r}
 #Extracting waterway health perception questions
@@ -465,22 +469,39 @@ fav_water <- data_df %>%
 
 #We need to do some additional clean up before plotting
 #Defining answers that are not informative
-not_accepted <- "do not|dont|none|not |no |know|ocean|\\?|car|fishing|all|any|;|beaches|boat|impossible|chair|unsure|^beach$|secret|swimming"
+not_accepted <- "do not|can[:punct:]|variety|havent|^na$|don[:punct:]|dont|none|not |no |wildlife|nil|idk|lovely|know|\\?|car|fishing|all|any|;|boat|impossible|chair|unsure|secret|swimming"
 
 #Cleaning data
 fav_water <- fav_water %>%
   #We will make the data frame longer as we did in the previous examples
   pivot_longer(cols = everything(), names_to = "field", values_to = "waterways") %>%
-  #We remove any rows with no data in the occupation column (i.e., a single respondent cannot be in multiple regions)
-  drop_na(waterways) %>% 
-  #Separate responses by commas
-  separate_longer_delim(waterways, delim = ", ") %>% 
-  separate_longer_delim(waterways, delim = " - ") %>% 
-  separate_longer_delim(waterways, delim = "- ") %>%
-  separate_longer_delim(waterways, delim = ". ") %>%
-  #Remove "do not know"
-  filter(!str_detect(str_to_lower(waterways), not_accepted)) %>% 
+  #Forcing everything to be lower case
+  mutate(waterways = str_to_lower(waterways)) %>% 
+  #Remove non-informative answers
+  filter(!str_detect(waterways, not_accepted)) %>% 
+  #Change all special characters to ; to separate things easier
+  mutate(waterways = str_to_lower(str_replace_all(waterways, "[:punct:]| and | or |the |  ", ";"))) %>%
+  #Separate responses by semicolon (;)
+  separate_longer_delim(waterways, delim = ";") %>% 
+  #Removing stop words
+  mutate(waterways = removeWords(waterways, stopwords("english"))) %>% 
+  #Remove blank spaces
   mutate(waterways = str_trim(str_to_lower(waterways), "both")) %>% 
+  #Remove empty cells
+  filter(waterways != "" & waterways != "s") %>% 
+  #Correcting multiple cases of great barrier reef
+  mutate(waterways = case_when(str_detect(waterways, "gbr") ~ "great barrier reef",
+                               str_detect(waterways, "barrier reef") ~ "great barrier reef",
+                               T ~ waterways)) %>%
+  #Correcting multiple cases of beach
+  mutate(waterways = case_when(waterways == "beaches" ~ "beach",
+                               T ~ waterways)) %>%
+  #Correcting multiple cases of creek
+  mutate(waterways = case_when(waterways == "creeks" ~ "creek",
+                               T ~ waterways)) %>%
+  #Correcting multiple cases of Whitsunday Islands
+  mutate(waterways = case_when(str_detect(waterways, "whitsunday") ~ "whitsunday islands",
+                               T ~ waterways)) %>%
   count(waterways) %>% 
   arrange(desc(n))
 
