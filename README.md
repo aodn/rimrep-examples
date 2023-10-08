@@ -7,21 +7,18 @@ RIMReP DMS is an Open Geospatial Consortium (OGC) API service and analysis-ready
   
 In simple terms, RIMReP DMS is a data portal that aims to be a ‘one-stop-shop’ for all data related to the Great Barrier Reef World Heritage Area, which can be easily accessed by the Great Barrier Reef Marine Park Authority (GBRMPA) to support evidence-based management strategies. All datasets have a standard format regardless of their origin, which not only facilitates access to data, but also their analysis as it removes the need to quality control individual datasets. Additionally, we also have plans to make all datasets in the RIMReP DMS publicly available to researchers and other stakeholders.  
   
-## Code snippets {.tabset}
+## Code snippets
 
 In this section, you can find code snippets that will help you get started with the RIMReP DMS. These snippets are available in `R` and `Python`, simply select the language you want to use from the tabs below.
-
-### `R` users
-
-```r
+`````{tab-set}
+````{tab-item} R
 library(dplyr)
-```
+````
 
-### `Python` users
-
-```python
+````{tab-item} Python
 import pandas as pd
-```
+````
+`````
 
 ## Setting up your machine
 
