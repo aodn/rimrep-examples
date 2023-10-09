@@ -22,3 +22,5 @@ pandas==2.0.2
 numpy==1.24.3
 shapely==2.0.1
 requests==2.31.0
+python-wget==3.2
+wordcloud==1.9.2
