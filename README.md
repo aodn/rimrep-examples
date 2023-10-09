@@ -61,7 +61,7 @@ Full documentation about how to use the API can be found under the **API Definit
 In this section, we are including code snippets that will help you get started with the RIMReP DMS. These snippets are available in `R` and `Python`, simply select the language you want to use from the tabs below.  
   
 ### Connecting to S3 bucket {.tabset}
-To run this code in `R` or `Python`, you will need to have the S3 URL address for the dataset of your interest. For this example, we are using the *NOAA Coral Reef Watch Degree Heating Week* dataset, but you can simply replace the S3 URL address with the one for the dataset you want to access.   
+To run this code in `R` or `Python`, you will need to have the S3 URL address for the dataset of your interest. For this example, we are using the *AIMS Sea Surface Temperature Monitoring Program* dataset, but you can simply replace the S3 URL address with the one for the dataset you want to access.   
   
 You can get this URL following the instructions in the [Searching for datasets via STAC](#searching-for-datasets-via-stac) section above.  
   
@@ -70,7 +70,7 @@ You can get this URL following the instructions in the [Searching for datasets v
 # Loading arrow library to connect to S3 bucket
 library(arrow)
 # Providing S3 URL address for dataset of interest
-dataset_s3 <- "s3://rimrep-data-public/016-023-noaa-crw/dhw.zarr"
+dataset_s3 <- "s3://rimrep-data-public/091-aims-sst/test-50-64-spatialpart/"
 # Connecting to S3 bucket
 s3_conn <- s3_bucket(dataset_s3)
 # Accessing dataset
@@ -86,7 +86,7 @@ Note that if you do not have the `arrow` library installed in your machine, you 
 # Loading pyarrow library to connect to S3 bucket
 from pyarrow import parquet as pq
 # Providing S3 URL address for dataset of interest
-dataset_s3 = "s3://rimrep-data-public/016-023-noaa-crw/dhw.zarr"
+dataset_s3 = 's3://rimrep-data-public/091-aims-sst/test-50-64-spatialpart/'
 # Connecting to S3 bucket
 ds = pq.ParquetDataset(dataset_s3)
 ```
@@ -95,10 +95,72 @@ Remember that you can change the value of `dataset_s3` to the S3 URL address for
   
 Note that if you do not have the `pyarrow` package installed in your machine, you will not be able to run the code above. You can install it using a package manager such as `pip` or `conda`. Alternatively, you can run refer to the [Setting up your machine](#setting-up-your-machine) section below for instructions on how to install all packages used in this repository at once.  
   
+### Extracting data from S3 bucket {.tabset}
+Once you have connected to the S3 bucket, you do not have to download the entire dataset to your local machine to carry out your analysis. Instead, you can extract data from the dataset of interest based on one or more conditions. You can then load into memory only the relevant data needed to create summary tables, figures, or maps. We are including code snippets showing a simple data selection based on spatial and temporal conditions.    
+  
+#### `R` users
+Once you have connected to the S3 bucket, you can use [`dplyr` verbs](https://dplyr.tidyverse.org/) to extract a subset of the data based on one or more conditions. Here, we assume that a dataset connection has already been established following instructions in the [Connecting to S3 bucket](#connecting-to-s3-bucket) section above and this dataset is stored in the `ds` variable. We will assume that our dataset has `longitude`, `latitude`, and `time` columns, and we will use them to extract data based on spatial and temporal conditions.  
+  
+```r
+# Loading relevant libraries
+library(dplyr)
+
+# We will extract data for the year 2019 that includes Townsville and Cairns
+ds_subset <- ds %>% 
+  # First we apply a filter based on longitudes
+  filter(longitude > 145.6 & longitude < 146.9) %>%
+  # Then we apply a filter based on latitudes
+  filter(latitude > -19.3 & latitude < -16.8) %>%
+  # Finally, we apply a filter based on time
+  filter(time >= "2019-01-01" & time <= "2019-12-31") %>% 
+  # We could even select only the columns we need
+  # We will assume that the dataset also has a column called 'site' and we want to select it
+  select(longitude, latitude, time, site)
+
+# We can now load the data into memory
+ds_subset <- ds_subset %>% 
+  collect()
+```
+  
+You can change the values of the conditions above to extract data that is relevant for your needs. Other conditions may include extracting data based on a specific site, a specific depth range, or even a specific variable.  
+
+#### `Python` users
+Once you have connected to the S3 bucket, you can use the `dask_geopandas` package to connect to a dataset and extract a subset of the data based on one or more conditions. We will assume that our dataset has `longitude`, `latitude`, and `time` columns, and we will use them to extract data based on spatial and temporal conditions.  We will use the *AIMS Sea Surface Temperature Monitoring Program* dataset as an example, but you can replace the S3 URL address with the one for the dataset you want to access.  
+  
+```python
+# Loading relevant packages
+import dask_geopandas as dgp
+
+# We store the S3 URL address in a variable
+dataset_s3 = 's3://rimrep-data-public/091-aims-sst/test-50-64-spatialpart/'
+
+# We will define a variable our conditions to extract data for the year 2019 that includes Townsville and Cairns
+filter = [(lon > 145.6),
+          (lon < 146.9),
+          (lat > -19.3),
+          (lat < -16.8),
+          (time >= "2019-01-01"),
+          (time <= "2019-12-31")]
+
+# We will extract data for the year 2019 that includes Townsville and Cairns
+ds_subset = dgp.read_parquet(dataset_s3,
+                            # We can select the columns of our interest with the columns argument
+                             columns = ['lon', 'lat', 'time', 'site', 'qc_val'],
+                            # We can specify the column we want to use as index
+                             index = 'fid',
+                            # We can now apply our filters
+                             filters = filter,
+                            # We can connect anonimously because this is a public dataset
+                             storage_options = {'anon': True})
+
+# We can now load the data into memory
+ds_subset = ds_subset.compute()
+```
+  
 ## Running example notebooks in this repository
 You can either download or clone this repository to your local machine if you want to run the example notebooks included here. Below we include some instructions on how to set up you machine before you can successfully run the example notebooks.  
   
-### Setting up your machine
+### Setting up your machine {.tabset}
 
 After making this repository available locally by either cloning or downloading it from GitHub, you need to ensure all packages used in this repository are installed in your local machine before running any notebooks. If any packages are not installed in your machine, you will not be able to run the example notebooks.
   
