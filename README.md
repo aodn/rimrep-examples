@@ -8,8 +8,9 @@ This repository contains example notebooks in `R` and `Python` showing how to ac
   * [Searching for datasets via STAC](#searching-for-datasets-via-stac)
   * [Searching for datasets via Pygeoapi](#searching-for-datasets-via-pygeoapi)
 - [Code snippets](#code-snippets)
-  * [Connecting to S3 bucket](#connecting-to-s3-bucket)
-  * [Extracting data from S3 bucket](#extracting-data-from-s3-bucket)
+  * [Connecting to tabular dataset in S3 bucket](#connecting-to-tabular-dataset-in-s3-bucket)
+  * [Extracting tabular data from S3 bucket](#extracting-tabular-data-from-s3-bucket)
+  * [Extracting gridded data from S3 bucket](#extracting-gridded-data-from-s3-bucket)
 - [Running example notebooks in this repository](#running-example-notebooks-in-this-repository)
   * [Setting up your machine](#setting-up-your-machine)
 - [Description of example notebooks in repository](#description-of-example-notebooks-in-repository)
@@ -73,7 +74,7 @@ Full documentation about how to use the API can be found under the **API Definit
 ## Code snippets 
 In this section, we are including code snippets that will help you get started with the RIMReP DMS. These snippets are available in `R` and `Python`, simply select the language you want to use from the tabs below.  
   
-### Connecting to S3 bucket
+### Connecting to tabular dataset in S3 bucket
 To run this code in `R` or `Python`, you will need to have the S3 URL address for the dataset of your interest. For this example, we are using the *AIMS Sea Surface Temperature Monitoring Program* dataset, but you can simply replace the S3 URL address with the one for the dataset you want to access.   
   
 You can get this URL following the instructions in the [Searching for datasets via STAC](#searching-for-datasets-via-stac) section above.  
@@ -114,7 +115,7 @@ Remember that you can change the value of `dataset_s3` to the S3 URL address for
 Note that if you do not have the `pyarrow` package installed in your machine, you will not be able to run the code above. You can install it using a package manager such as `pip` or `conda`. Alternatively, you can run refer to the [Setting up your machine](#setting-up-your-machine) section below for instructions on how to install all packages used in this repository at once.  
 </details>
   
-### Extracting data from S3 bucket
+### Extracting tabular data from S3 bucket
 Once you have connected to the S3 bucket, you do not have to download the entire dataset to your local machine to carry out your analysis. Instead, you can extract data from the dataset of interest based on one or more conditions. You can then load into memory only the relevant data needed to create summary tables, figures, or maps. We are including code snippets showing a simple data selection based on spatial and temporal conditions.    
   
 <details>
@@ -179,6 +180,32 @@ ds_subset = dgp.read_parquet(dataset_s3,
 
 # We can now load the data into memory
 ds_subset = ds_subset.compute()
+```
+</details>
+  
+### Extracting gridded data from S3 bucket
+Gridded data is also available in the RIMReP DMS. This data is stored in [Zarr](https://zarr.readthedocs.io/en/stable/) format, which is a format that allows for efficient storage of array-based data. This data is also stored in S3 buckets, but the connection and extraction process is slightly different from the one described above for tabular data.
+  
+<details>
+<summary> Instructions for Python users </summary>
+
+Instead of using `dask_geopandas` to connect to the S3 bucket and extract tabular data, we will use the `s3fs` package to connect and extract gridded data. We will use the *NOAA Coral Reef Watch degree heating weeks* dataset as an example, but you can replace the S3 URL address with the one for the dataset you want to access.  
+  
+```python
+#Loading relavant packages
+#Connecting to S3 bucket
+import s3fs
+#Loading and manipulating gridded data
+import xarray as xr
+
+#Storing the S3 URL address in a variable
+coral_url = 's3://rimrep-data-public/016-023-noaa-crw/v1.zarr'
+
+#Connecting to public bucket - No credentials required
+s3_bucket = s3fs.S3FileSystem(anon = True)
+
+#Loading data into memory
+coral_ds = xr.open_dataset(s3fs.S3Map(root = coral_url, s3 = s3_bucket), engine = 'zarr')
 ```
 </details>
   
