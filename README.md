@@ -60,12 +60,13 @@ Full documentation about how to use the API can be found under the **API Definit
 ## Code snippets 
 In this section, we are including code snippets that will help you get started with the RIMReP DMS. These snippets are available in `R` and `Python`, simply select the language you want to use from the tabs below.  
   
-### Connecting to S3 bucket {.tabset}
+### Connecting to S3 bucket
 To run this code in `R` or `Python`, you will need to have the S3 URL address for the dataset of your interest. For this example, we are using the *AIMS Sea Surface Temperature Monitoring Program* dataset, but you can simply replace the S3 URL address with the one for the dataset you want to access.   
   
 You can get this URL following the instructions in the [Searching for datasets via STAC](#searching-for-datasets-via-stac) section above.  
   
-#### `R` users
+<details>
+<summary>Instructions for `R` users</summary>
 ```r
 # Loading arrow library to connect to S3 bucket
 library(arrow)
@@ -80,6 +81,7 @@ ds <- open_dataset(s3_conn)
 Remember that you can change the value of `dataset_s3` to the S3 URL address for the dataset you want to access.  
   
 Note that if you do not have the `arrow` library installed in your machine, you will need to install it before running the code above. You can do so by running the following line: `install.packages("arrow")`. Alternatively, you can run refer to the [Setting up your machine](#setting-up-your-machine) section below for instructions on how to install all packages used in this repository at once.  
+</details>
   
 #### `Python` users
 ```python
