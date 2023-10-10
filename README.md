@@ -1,6 +1,19 @@
 # Automated data access from the Reef 2050 Integrated Monitoring and Reporting Program Data Management System (RIMReP DMS)
 
 This repository contains example notebooks in `R` and `Python` showing how to access datasets available in the Reef 2050 Integrated Monitoring and Reporting Program Data Management System (RIMReP DMS).  These notebooks include suggested workflows on how to query datasets to create summary tables, figures, and maps.  
+
+## Table of contents
+- [What is RIMReP DMS?](#what-is-rimrep-dms)
+- [Searching for datasets in RIMReP DMS](#searching-for-datasets-in-rimrep-dms)
+  * [Searching for datasets via STAC](#searching-for-datasets-via-stac)
+  * [Searching for datasets via Pygeoapi](#searching-for-datasets-via-pygeoapi)
+- [Code snippets](#code-snippets)
+  * [Connecting to S3 bucket](#connecting-to-s3-bucket)
+  * [Extracting data from S3 bucket](#extracting-data-from-s3-bucket)
+- [Running example notebooks in this repository](#running-example-notebooks-in-this-repository)
+  * [Setting up your machine](#setting-up-your-machine)
+- [Description of example notebooks in repository](#description-of-example-notebooks-in-repository)
+- [Description of scripts in repository](#description-of-scripts-in-repository)
   
 ## What is RIMReP DMS?
 RIMReP DMS is an Open Geospatial Consortium (OGC) API service and analysis-ready, cloud-optimised (ARCO) repository for data and metadata relevant to the management of the Great Barrier Reef. RIMReP DMS offers services to allow the discovery of the data and the interaction with external RIMReP systems.  
@@ -20,7 +33,7 @@ Alternatively, we provide a link to the original source of the dataset to give u
 ### Searching for datasets via STAC
 The [STAC catalogue](https://stac.staging.reefdata.io/) is a web-based interface that allows users to search for datasets using a range of filters, such as dataset name, data provider, and date range. To search for datasets, you have the option of clicking on the **Search** button on the top right corner of the page, or you can use the search bar on the top left corner of the page. These two options are highlighted in red boxes in the image below.  
   
-![Screenshot of STAC catalogue home page showing the two search options mentioned in the previous paragraph](images/STAC_home.png)
+![Screenshot of STAC catalogue home page showing the two search options mentioned in the previous paragraph](images/stac_home.png)
   
 Datasets available via STAC are organised by **collections**, each containing one or multiple datasets or *items* that are related to each other. To illustrate this, we will use the [**AIMS Oceanography** collection](https://stac.staging.reefdata.io/browser/collections/aims-oceanography) as an example.  
   
@@ -85,7 +98,7 @@ Note that if you do not have the `arrow` library installed in your machine, you 
 </details>
   
 <details>
-<summary> **Instructions for Python users** </summary>
+<summary> Instructions for Python users </summary>
 
 ```python
 # Loading pyarrow library to connect to S3 bucket
@@ -101,10 +114,12 @@ Remember that you can change the value of `dataset_s3` to the S3 URL address for
 Note that if you do not have the `pyarrow` package installed in your machine, you will not be able to run the code above. You can install it using a package manager such as `pip` or `conda`. Alternatively, you can run refer to the [Setting up your machine](#setting-up-your-machine) section below for instructions on how to install all packages used in this repository at once.  
 </details>
   
-### Extracting data from S3 bucket {.tabset}
+### Extracting data from S3 bucket
 Once you have connected to the S3 bucket, you do not have to download the entire dataset to your local machine to carry out your analysis. Instead, you can extract data from the dataset of interest based on one or more conditions. You can then load into memory only the relevant data needed to create summary tables, figures, or maps. We are including code snippets showing a simple data selection based on spatial and temporal conditions.    
   
-#### `R` users
+<details>
+<summary> Instructions for R users </summary>
+
 Once you have connected to the S3 bucket, you can use [`dplyr` verbs](https://dplyr.tidyverse.org/) to extract a subset of the data based on one or more conditions. Here, we assume that a dataset connection has already been established following instructions in the [Connecting to S3 bucket](#connecting-to-s3-bucket) section above and this dataset is stored in the `ds` variable. We will assume that our dataset has `longitude`, `latitude`, and `time` columns, and we will use them to extract data based on spatial and temporal conditions.  
   
 ```r
@@ -129,8 +144,11 @@ ds_subset <- ds_subset %>%
 ```
   
 You can change the values of the conditions above to extract data that is relevant for your needs. Other conditions may include extracting data based on a specific site, a specific depth range, or even a specific variable.  
+</details>
 
-#### `Python` users
+<details>
+<summary> Instructions for Python users </summary>
+
 Once you have connected to the S3 bucket, you can use the `dask_geopandas` package to connect to a dataset and extract a subset of the data based on one or more conditions. We will assume that our dataset has `longitude`, `latitude`, and `time` columns, and we will use them to extract data based on spatial and temporal conditions.  We will use the *AIMS Sea Surface Temperature Monitoring Program* dataset as an example, but you can replace the S3 URL address with the one for the dataset you want to access.  
   
 ```python
@@ -162,11 +180,12 @@ ds_subset = dgp.read_parquet(dataset_s3,
 # We can now load the data into memory
 ds_subset = ds_subset.compute()
 ```
+</details>
   
 ## Running example notebooks in this repository
 You can either download or clone this repository to your local machine if you want to run the example notebooks included here. Below we include some instructions on how to set up you machine before you can successfully run the example notebooks.  
   
-### Setting up your machine {.tabset}
+### Setting up your machine
 
 After making this repository available locally by either cloning or downloading it from GitHub, you need to ensure all packages used in this repository are installed in your local machine before running any notebooks. If any packages are not installed in your machine, you will not be able to run the example notebooks.
   
@@ -174,15 +193,19 @@ The good news is that you will not need to go through every notebook checking th
 
 **Note:** You will only need to complete the set up steps once per machine. This should be done prior to running the notebooks for the first time. Also note that if you plan to use notebooks in one language, either `R` or `Python`, there is no need to follow the set up steps for the programming language that you do NOT need.
   
-### `R` users
+<details>
+<summary> Instructions for R users </summary>
+
 If you are using the `R` notebooks, run the following two lines in the `RStudio` console:  
 ```R
   source("R_based_scripts/Installing_R_libraries.R")  
   checking_libraries()
 ```  
 The lines above will run a function that automatically checks if any `R` libraries used in this repository are not installed in your machine. If any libraries are missing, it will install them automatically. Bear in mind that these notebooks were developed in `R` version 4.3.1, so you may need to upgrade your `R` version if you encounter any problems during package installation.
+</details>
 
-### `Python` users
+<details>
+<summary> Instructions for Python users </summary>
 We are also including an `requirements.txt` file under the `Python_based_scripts` folder, which contains all `Python` packages used in the notebooks above. You can use this file to create a [`conda` environment](https://docs.conda.io/projects/conda/en/latest/user-guide/concepts/environments.html) with all the required packages. To do so, run the following command in the Anaconda Prompt (Windows) or in your terminal (MacOS, Linux):  
   
 ```bash
@@ -203,7 +226,7 @@ conda activate rimrep
   
 When you are done running the notebooks, you can deactivate the environment by running `conda deactivate` in the terminal window.
 activate.  
-  
+</details>
 
 ## Description of example notebooks in repository
 All notebooks described in this section are available in `R` and `Python`, you will find them in the `R_based_scripts` and the `Python_based_scripts` folders, respectively. 
