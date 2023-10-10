@@ -66,7 +66,8 @@ To run this code in `R` or `Python`, you will need to have the S3 URL address fo
 You can get this URL following the instructions in the [Searching for datasets via STAC](#searching-for-datasets-via-stac) section above.  
   
 <details>
-<summary>Instructions for `R` users</summary>
+<summary>**Instructions for R users**</summary>
+
 ```r
 # Loading arrow library to connect to S3 bucket
 library(arrow)
@@ -83,7 +84,9 @@ Remember that you can change the value of `dataset_s3` to the S3 URL address for
 Note that if you do not have the `arrow` library installed in your machine, you will need to install it before running the code above. You can do so by running the following line: `install.packages("arrow")`. Alternatively, you can run refer to the [Setting up your machine](#setting-up-your-machine) section below for instructions on how to install all packages used in this repository at once.  
 </details>
   
-#### `Python` users
+<details>
+<summary>**Instructions for Python users**</summary>
+
 ```python
 # Loading pyarrow library to connect to S3 bucket
 from pyarrow import parquet as pq
@@ -96,6 +99,7 @@ ds = pq.ParquetDataset(dataset_s3)
 Remember that you can change the value of `dataset_s3` to the S3 URL address for the dataset you want to access.  
   
 Note that if you do not have the `pyarrow` package installed in your machine, you will not be able to run the code above. You can install it using a package manager such as `pip` or `conda`. Alternatively, you can run refer to the [Setting up your machine](#setting-up-your-machine) section below for instructions on how to install all packages used in this repository at once.  
+</details>
   
 ### Extracting data from S3 bucket {.tabset}
 Once you have connected to the S3 bucket, you do not have to download the entire dataset to your local machine to carry out your analysis. Instead, you can extract data from the dataset of interest based on one or more conditions. You can then load into memory only the relevant data needed to create summary tables, figures, or maps. We are including code snippets showing a simple data selection based on spatial and temporal conditions.    
