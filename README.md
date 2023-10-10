@@ -66,7 +66,7 @@ To run this code in `R` or `Python`, you will need to have the S3 URL address fo
 You can get this URL following the instructions in the [Searching for datasets via STAC](#searching-for-datasets-via-stac) section above.  
   
 <details>
-<summary>**Instructions for R users**</summary>
+<summary> Instructions for R users </summary>
 
 ```r
 # Loading arrow library to connect to S3 bucket
@@ -85,7 +85,7 @@ Note that if you do not have the `arrow` library installed in your machine, you 
 </details>
   
 <details>
-<summary>**Instructions for Python users**</summary>
+<summary> **Instructions for Python users** </summary>
 
 ```python
 # Loading pyarrow library to connect to S3 bucket
