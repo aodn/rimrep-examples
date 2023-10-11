@@ -26,13 +26,13 @@ Datasets that have an open licence are publically available in the RIMReP DMS, w
 ## Searching for datasets in RIMReP DMS
 There are two main ways to browse datasets available in the RIMReP DMS:  
   
-1. Via the SpatioTemporal Asset Catalogs (STAC). STAC provides a common language to describe a range of geospatial information, so that data can be indexed and easily discovered. Our STAC catalogue is available at [https://stac.staging.reefdata.io/](https://stac.staging.reefdata.io/).  
+1. Via the SpatioTemporal Asset Catalogs (STAC). STAC provides a common language to describe a range of geospatial information, so that data can be indexed and easily discovered. Our STAC catalogue is available at [https://stac.staging.reefdata.io/browser/](https://stac.staging.reefdata.io/browser/).  
 2. Via Pygeoapi, which provides API access to geospatial data that is compliant with OGC API standards. Our Pygeoapi service is available at [https://pygeoapi.staging.reefdata.io/](https://pygeoapi.staging.reefdata.io/).  
   
 Alternatively, we provide a link to the original source of the dataset to give users the option of accessing the data directly from the data provider.  
    
 ### Searching for datasets via STAC
-The [STAC catalogue](https://stac.staging.reefdata.io/) is a web-based interface that allows users to search for datasets using a range of filters, such as dataset name, data provider, and date range. To search for datasets, you have the option of clicking on the **Search** button on the top right corner of the page, or you can use the search bar on the top left corner of the page. These two options are highlighted in red boxes in the image below.  
+The [STAC catalogue](https://stac.staging.reefdata.io/browser/) is a web-based interface that allows users to search for datasets using a range of filters, such as dataset name, data provider, and date range. To search for datasets, you have the option of clicking on the **Search** button on the top right corner of the page, or you can use the search bar on the top left corner of the page. These two options are highlighted in red boxes in the image below.  
   
 ![Screenshot of STAC catalogue home page showing the two search options mentioned in the previous paragraph](images/stac_home.png)
   
