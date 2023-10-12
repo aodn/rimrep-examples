@@ -5,4 +5,4 @@ All datasets available through STAC are also available via Pygeoapi. The main di
   
 Full documentation about how to use the API can be found under the **API Definition** section of the Pygeoapi home page shown inside the red box in the image above. You can also click [here](https://pygeoapi.staging.reefdata.io/openapi?f=html) to access the documentation.  
     
-[Home](./README.md)
+[Home](../README.md)
