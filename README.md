@@ -4,13 +4,13 @@ This repository contains example notebooks in `R` and `Python` showing how to ac
 
 ## Table of contents
 - [What is RIMReP DMS?](#what-is-rimrep-dms)
-- [Searching for datasets in RIMReP DMS](#searching-for-datasets-in-rimrep-dms)
-  * [Searching for datasets via STAC](#searching-for-datasets-via-stac)
-  * [Searching for datasets via Pygeoapi](#searching-for-datasets-via-pygeoapi)
+- [Discovering for datasets in RIMReP DMS](#discovering-for-datasets-in-rimrep-dms)
+  * [Discovering for datasets via STAC](#discovering-for-datasets-via-stac)
 - [Code snippets](#code-snippets)
   * [Connecting to tabular dataset in S3 bucket](#connecting-to-tabular-dataset-in-s3-bucket)
   * [Extracting tabular data from S3 bucket](#extracting-tabular-data-from-s3-bucket)
   * [Extracting gridded data from S3 bucket](#extracting-gridded-data-from-s3-bucket)
+- [Using API to access RIMReP DMS datasets](docs/rimrep_api_access.md)
 - [Running example notebooks in this repository](#running-example-notebooks-in-this-repository)
   * [Setting up your machine](#setting-up-your-machine)
 - [Description of example notebooks in repository](#description-of-example-notebooks-in-repository)
@@ -23,7 +23,9 @@ In simple terms, RIMReP DMS is a data portal that aims to be a "one-stop-shop" f
 
 Datasets that have an open licence are publically available in the RIMReP DMS, while datasets that have a restricted licence are only available to users that have been granted access to them by the data provider.  
   
-## Searching for datasets in RIMReP DMS
+[Table of contents](#table-of-contents)
+  
+## Discovering for datasets in RIMReP DMS
 There are two main ways to browse datasets available in the RIMReP DMS:  
   
 1. Via the SpatioTemporal Asset Catalogs (STAC). STAC provides a common language to describe a range of geospatial information, so that data can be indexed and easily discovered. Our STAC catalogue is available at [https://stac.staging.reefdata.io/browser/](https://stac.staging.reefdata.io/browser/).  
@@ -31,7 +33,7 @@ There are two main ways to browse datasets available in the RIMReP DMS:
   
 Alternatively, we provide a link to the original source of the dataset to give users the option of accessing the data directly from the data provider.  
    
-### Searching for datasets via STAC
+### Discovering for datasets via STAC
 The [STAC catalogue](https://stac.staging.reefdata.io/browser/) is a web-based interface that allows users to search for datasets using a range of filters, such as dataset name, data provider, and date range. To search for datasets, you have the option of clicking on the **Search** button on the top right corner of the page, or you can use the search bar on the top left corner of the page. These two options are highlighted in red boxes in the image below.  
   
 ![Screenshot of STAC catalogue home page showing the two search options mentioned in the previous paragraph](images/stac_home.png)
@@ -64,13 +66,8 @@ The item level page includes the following information:
   
 The API and S3 links are highlighted in red boxes in the image above because these are the two methods shown in this repository to access datasets available in the RIMReP DMS.  
   
-### Searching for datasets via Pygeoapi
-![Screenshot of RIMReP DMS Pygeoapi home page highlighting in the red box where to access documentation](images/pygeoapi.png)  
+[Table of contents](#table-of-contents)
   
-All datasets available through STAC are also available via Pygeoapi. The main difference between the two is that Pygeoapi provides API access to the datasets, while STAC provides a web-based interface to search for datasets. A list of all datasets can be found at [https://pygeoapi.staging.reefdata.io/collections](https://pygeoapi.staging.reefdata.io/collections).  
-  
-Full documentation about how to use the API can be found under the **API Definition** section of the Pygeoapi home page shown inside the red box in the image above. You can also click [here](https://pygeoapi.staging.reefdata.io/openapi?f=html) to access the documentation.  
-    
 ## Code snippets 
 In this section, we are including code snippets that will help you get started with the RIMReP DMS. These snippets are available in `R` and `Python`, simply select the language you want to use from the tabs below.  
   
@@ -99,7 +96,7 @@ Note that if you do not have the `arrow` library installed in your machine, you 
 </details>
   
 <details>
-<summary> Instructions for Python users </summary>
+<summary><b> Instructions for Python users </b></summary>
 
 ```python
 # Loading pyarrow library to connect to S3 bucket
@@ -119,7 +116,7 @@ Note that if you do not have the `pyarrow` package installed in your machine, yo
 Once you have connected to the S3 bucket, you do not have to download the entire dataset to your local machine to carry out your analysis. Instead, you can extract data from the dataset of interest based on one or more conditions. You can then load into memory only the relevant data needed to create summary tables, figures, or maps. We are including code snippets showing a simple data selection based on spatial and temporal conditions.    
   
 <details>
-<summary> Instructions for R users </summary>
+<summary><b> Instructions for R users </b></summary>
 
 Once you have connected to the S3 bucket, you can use [`dplyr` verbs](https://dplyr.tidyverse.org/) to extract a subset of the data based on one or more conditions. Here, we assume that a dataset connection has already been established following instructions in the [Connecting to S3 bucket](#connecting-to-s3-bucket) section above and this dataset is stored in the `ds` variable. We will assume that our dataset has `longitude`, `latitude`, and `time` columns, and we will use them to extract data based on spatial and temporal conditions.  
   
@@ -148,7 +145,7 @@ You can change the values of the conditions above to extract data that is releva
 </details>
 
 <details>
-<summary> Instructions for Python users </summary>
+<summary><b> Instructions for Python users </b></summary>
 
 Once you have connected to the S3 bucket, you can use the `dask_geopandas` package to connect to a dataset and extract a subset of the data based on one or more conditions. We will assume that our dataset has `longitude`, `latitude`, and `time` columns, and we will use them to extract data based on spatial and temporal conditions.  We will use the *AIMS Sea Surface Temperature Monitoring Program* dataset as an example, but you can replace the S3 URL address with the one for the dataset you want to access.  
   
@@ -187,7 +184,7 @@ ds_subset = ds_subset.compute()
 Gridded data is also available in the RIMReP DMS. This data is stored in [Zarr](https://zarr.readthedocs.io/en/stable/) format, which is a format that allows for efficient storage of array-based data. This data is also stored in S3 buckets, but the connection and extraction process is slightly different from the one described above for tabular data.
   
 <details>
-<summary> Instructions for Python users </summary>
+<summary><b> Instructions for Python users </b></summary>
 
 Instead of using `dask_geopandas` to connect to the S3 bucket and extract tabular data, we will use the `s3fs` package to connect and extract gridded data. We will use the *NOAA Coral Reef Watch degree heating weeks* dataset as an example, but you can replace the S3 URL address with the one for the dataset you want to access.  
   
@@ -209,6 +206,8 @@ coral_ds = xr.open_dataset(s3fs.S3Map(root = coral_url, s3 = s3_bucket), engine 
 ```
 </details>
   
+[Table of contents](#table-of-contents)
+
 ## Running example notebooks in this repository
 You can either download or clone this repository to your local machine if you want to run the example notebooks included here. Below we include some instructions on how to set up you machine before you can successfully run the example notebooks.  
   
@@ -254,7 +253,9 @@ conda activate rimrep
 When you are done running the notebooks, you can deactivate the environment by running `conda deactivate` in the terminal window.
 activate.  
 </details>
-
+  
+[Table of contents](#table-of-contents)
+  
 ## Description of example notebooks in repository
 All notebooks described in this section are available in `R` and `Python`, you will find them in the `R_based_scripts` and the `Python_based_scripts` folders, respectively. 
 
@@ -271,6 +272,8 @@ Additionally, there are two more notebooks available exclusively for `Python` us
   
 **Note:** You will notice that there are two files with the same name, but two different extensions: `.md` and `.Rmd`. They contain the same information, but in different formats. The `.Rmd` file is the source code of the notebook, which you can open in RStudio and run. While the `.md` file is the output of the `.Rmd` file and they include the results of running the code. If you click on the notebook links above, it will take you to the `.md` files, which are nicely formatted for GitHub.
   
+[Table of contents](#table-of-contents)
+
 ## Description of scripts in repository
 All scripts described in this section are available in `R` and `Python`, you will find them in the `R_based_scripts` and the `Python_based_scripts` folders, respectively. 
 - **Useful Spatial Functions to extract data**: Available as an [`R` script](https://github.com/aodn/rimrep-examples/blob/main/R_based_scripts/useful_spatial_functions_data_extraction.R) and in [`Python`](https://github.com/aodn/rimrep-examples/blob/main/Python_based_scripts/useful_spatial_functions_data_extraction.py). This script includes a collection of functions that we will use to extract data available in the RIMReP collections using spatial data, such as polygons defining boundaries for the area of our interest.  
