@@ -18,6 +18,6 @@ Additionally, there are two more notebooks available exclusively for `Python` us
 
 ## Description of scripts in repository
 All scripts described in this section are available in `R` and `Python`, you will find them in the `R_based_scripts` and the `Python_based_scripts` folders, respectively. 
-- **Useful Spatial Functions to extract data**: Available as an [`R` script](https://github.com/aodn/rimrep-examples/blob/main/R_based_scripts/useful_spatial_functions_data_extraction.R) and in [`Python`](https://github.com/aodn/rimrep-examples/blob/main/Python_based_scripts/useful_spatial_functions_data_extraction.py). This script includes a collection of functions that we will use to extract data available in the RIMReP collections using spatial data, such as polygons defining boundaries for the area of our interest.  
+- **Useful Functions**: Available as an [`R` script](https://github.com/aodn/rimrep-examples/blob/main/R_based_scripts/useful_functions.R) and in [`Python`](https://github.com/aodn/rimrep-examples/blob/main/Python_based_scripts/useful_spatial_functions_data_extraction.py). This script includes a collection of functions that we will use to extract data available in the RIMReP collections using spatial data, such as polygons defining boundaries for the area of our interest.  
   
 [Home](../README.md)
