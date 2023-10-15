@@ -35,8 +35,8 @@ AIMS Sea Surface Temperature Monitoring Program available at RIMReP
 In addition to published `R` libraries, this notebook uses a set of
 functions especially created for manipulating RIMReP data collections.
 These functions are available in the
-`useful_spatial_functions_data_extraction.R` script, which **must**
-exist in the same directory where this notebook is located.
+`useful_functions.R` script, which **must** exist in the same directory
+where this notebook is located.
 
 # Loading libraries
 
@@ -55,7 +55,7 @@ library(leaflet)
 #Mapping
 library(sf)
 #Custom library
-source("useful_spatial_functions_data_extraction.R")
+source("useful_functions.R")
 ```
 
 # Connecting to RIMReP collection
