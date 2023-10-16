@@ -13,7 +13,9 @@ library(wkb)
 library(ggplot2)
 library(sf)
 library(lubridate)
-
+library(httr2)
+library(httr)
+library(terra)
 
 # Defining supporting functions -------------------------------------------
 #These functions are called by the gbr_features function to subset GBR features by name, ID or both
@@ -160,4 +162,130 @@ sites_of_interest <- function(sites_pts, area_polygons){
   crop_sites <- crop_sites[lengths(sites_index) > 0,]
   
   return(crop_sites)
+}
+
+
+## Defining functions to access RIMReP DMS via API
+# Getting token as user input ---------------------------------------------
+# Input from user will not be visible in screen
+# Script originally from https://www.magesblog.com/post/2014-07-15-simple-user-interface-in-r-to-get-login/
+access_dms <- function(){
+  require(tcltk)
+  
+  tt <- tktoplevel()
+  tkwm.title(tt, "Get login details")
+  Password <- tclVar("Password")
+  entry.Password <- tkentry(tt, width = "20", show = "*", 
+                            textvariable = Password)
+  tkgrid(tklabel(tt, text = "Please enter your login details."))
+  tkgrid(entry.Password)
+  
+  OnOK <- function()
+  { 
+    tkdestroy(tt) 
+  }
+  OK.but <-tkbutton(tt, text = " OK ", command = OnOK)
+  tkbind(entry.Password, "<Return>", OnOK)
+  tkgrid(OK.but)
+  tkfocus(tt)
+  tkwait.window(tt)
+  
+  invisible(tclvalue(Password))
+}
+
+
+# Accessing DMS using token provided as input -----------------------------
+connect_dms_dataset <- function(API_base_url, start_time = NULL, end_time = NULL){
+  #Parse API URL
+  url <-  parse_url(API_base_url)
+  #Add coverage to path ending - Ensure path does not end in "/"
+  url$path <- file.path(str_remove(url$path, "/$"), "coverage")
+  
+  #Initialising query list
+  query_list <- list()
+  
+  #Check if temporal limits were provided
+  #Start time - Ensure date was provided in correct format, otherwise print error
+  if(!is.null(start_time)){
+    start_time <- tryCatch(expr = (ymd(start_time, tz = NULL)),
+                           warning = function(w){
+                             message(paste("Start date is NOT in 'YYY-MM-DD' format"))
+                             message("Check date ('", start_time, "') and try again")}
+    )}else{start_time <- NULL}
+  #End time - Ensure date was provided in correct format, otherwise print error
+  if(!is.null(end_time)){
+    end_time <- tryCatch(ymd(end_time, tz = NULL),
+                         warning = function(w){
+                           message(paste("End date is NOT in 'YYY-MM-DD' format"))
+                           message("Check date ('", end_time, "') and try again")}
+    )}else{end_time <- NULL}
+  
+  #If only start time exists then use only one date as temporal range
+  if(!is.null(start_time) & is.null(end_time)){
+    dt_limits <- start_time
+    #If end time is given, bit no start time, then print message
+  }else if(is.null(start_time) & !is.null(end_time)){
+    stop("'start_time' not provided, cannot use 'end_time'")
+  }else if(!is.null(start_time) & !is.null(end_time)){
+    if(start_time < end_time){
+      dt_limits <- paste(start_time, end_time, sep = "/")
+    }else{
+      stop("'start_time' cannot be later than or equal to 'end_time'")}
+  }
+  
+  #If temporal limits provided, add to URL query
+  if(exists("dt_limits")){
+    query_list$datetime <- dt_limits
+    url$query <- query_list
+  }
+  
+  #Build URL
+  url <- build_url(url)
+  
+  #Ask for token - Do not show token
+  token <- access_dms()
+  
+  #Connect to API
+  ds_conn <- request(url) |>
+    req_headers("Authorization" = paste("Bearer", token),
+                Accept = "application/json") |>
+    req_perform()
+  
+  #Turn results to JSON
+  dd <- req |> 
+    resp_body_json()
+  
+  #Extract values
+  mm <- dd$ranges$degree_heating_week$values
+  # Replace NULL for NA in matrix
+  mm[sapply(mm, is.null)] <- NA
+  #Unlist into a single vector
+  mm <- (unlist(mm, use.names = FALSE))
+  
+  #Get dimensions information
+  lat_info <- dd$domain$axes$y
+  lon_info <- dd$domain$axes$x
+  time_info <- dd$domain$axes$time
+  
+  #Calculate dimensions of data for every time step
+  dim_2d <- lat_info$num*lon_info$num
+  
+  #Create empty array to save information
+  x <- array(dim = c(lat_info$num, lon_info$num, time_info$num))
+  #Initialise loop
+  s <- 1
+  e <- dim_2d
+  #Loop along time steps
+  for(i in seq_len(time_info$num)){
+    #Add step along Z dimension (time)
+    x[,,i] <- matrix(mm[s:e], nrow = lat_info$num, ncol = lon_info$num, byrow = T)
+    s <- s+dim_2d
+    e <- dim_2d*i
+  }
+  
+  #Convert array into multidimensional raster
+  brick_x <- rast(x)
+  
+  #Return raster
+  return(brick_x)
 }
