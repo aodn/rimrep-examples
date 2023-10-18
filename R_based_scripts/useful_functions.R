@@ -341,10 +341,12 @@ connect_dms_dataset <- function(API_base_url, variable_name, start_time = NULL,
   dim_2d <- lat_info$num*lon_info$num
   #If only a single value is return per time step 
   if(dim_2d == 1){
+    #Create empty array to save information
+    arr <- array(dim = c(lat_info$num, lon_info$num, time_info$num))
     #Loop along time steps
     for(i in seq_len(time_info$num)){
       #Add step along Z dimension (time)
-      arr[,,i] <- matrix(var_int[s:e], nrow = lat_info$num, ncol = lon_info$num, byrow = T)
+      arr[,,i] <- matrix(var_int[i], nrow = lat_info$num, ncol = lon_info$num, byrow = T)
     }#If there are multiple values for each time step
   }else{
     #Create empty array to save information
@@ -357,7 +359,7 @@ connect_dms_dataset <- function(API_base_url, variable_name, start_time = NULL,
       #Add step along Z dimension (time)
       arr[,,i] <- matrix(var_int[s:e], nrow = lat_info$num, ncol = lon_info$num, byrow = T)
       s <- s+dim_2d
-      e <- dim_2d*i
+      e <- dim_2d*(i+1)
     }}
   
   #Convert array into multidimensional raster
@@ -366,3 +368,8 @@ connect_dms_dataset <- function(API_base_url, variable_name, start_time = NULL,
   #Return raster
   return(brick)
 }
+
+
+x <- "https://pygeoapi.staging.reefdata.io/collections/noaa-crw-dhw/coverage?datetime=2023-01-01/2023-01-03&subset=lon(145.30:146.90),lat(-17:-16.30)"
+
+
