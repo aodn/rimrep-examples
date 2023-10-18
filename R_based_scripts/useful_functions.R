@@ -195,7 +195,32 @@ access_dms <- function(){
 
 
 # Accessing DMS using token provided as input -----------------------------
-connect_dms_dataset <- function(API_base_url, start_time = NULL, end_time = NULL){
+connect_dms_dataset <- function(API_base_url, variable_name, start_time = NULL, 
+                                end_time = NULL, lon_limits = NULL, 
+                                lat_limits = NULL){
+  #########
+  #This function connects to RIMReP API to extract gridded data. It can extract
+  #data using spatial and temporal limits
+  #
+  #Inputs:
+  #API_base_url (character): URL to pygeoAPI collection of interest
+  #variable_name (character): Name of variable that will be returned by function
+  #(Optional)
+  #start_time (character/date): First date for which data is extracted. If no
+  #end_time is provided, then a single date will be returned. Date format must be
+  #YYYY-MM-DD
+  #end_time (character/date): Last date for which data is extracted. Date must be
+  #provided as YYYY-MM-DD. If no start_time is given, an error will be raised.
+  #lon_limits (numeric vector): minimum and maximum longitudes from where data
+  #should be extracted.
+  #lat_limits (numeric vector): minimum and maximum latitudes from where data
+  #should be extracted.
+  #
+  #Outputs:
+  #raster (terra SpatRaster): Raster including data for the variable of choice. 
+  #If provided, spatio-temporal boundaries are applied to returned data
+  #########
+  
   #Parse API URL
   url <-  parse_url(API_base_url)
   #Add coverage to path ending - Ensure path does not end in "/"
@@ -239,6 +264,45 @@ connect_dms_dataset <- function(API_base_url, start_time = NULL, end_time = NULL
     url$query <- query_list
   }
   
+  #Check if spatial limits were provided
+  #Longitudinal limits
+  if(!is.null(lon_limits)){
+    #Ensure vector provided is numeric, otherwise print error
+    if(is.numeric(lon_limits) == F){
+      lon_limits <- tryCatch(expr = as.numeric(lon_limits),
+                             warning = function(w){
+                               stop("Longitudinal limits provided are not numbers")})
+      if(sum(is.na(lon_limits)) > 0){
+        stop("Longitudinal limits provided are not numbers")}
+    }
+    lon_query <- paste0("lon(", paste0(sort(lon_limits), collapse = ":"), ")")
+  }
+  
+  #Latitudinal limits
+  if(!is.null(lat_limits)){
+    #Ensure vector provided is numeric, otherwise print error
+    if(is.numeric(lat_limits) == F){
+      lat_limits <- tryCatch(expr = as.numeric(lat_limits),
+                             warning = function(w){
+                               stop("Latitudinal limits provided are not numbers")})
+      if(sum(is.na(lat_limits)) > 0){
+        stop("Latitudinal limits provided are not numbers")}
+    }
+    lat_query <- paste0("lat(", paste0(sort(lat_limits), collapse = ":"), ")")
+  }
+  
+  #If temporal limits provided, add to URL query
+  if(exists("lon_query") & exists("lat_query")){
+    query_list$subset <- paste(lon_query, lat_query, sep = ",")
+    url$query <- query_list
+  }else if(exists("lon_query") & !exists("lat_query")){
+    query_list$subset <- lon_query
+    url$query <- query_list
+  }else if(!exists("lon_query") & exists("lat_query")){
+    query_list$subset <- lat_query
+    url$query <- query_list
+  }
+  
   #Build URL
   url <- build_url(url)
   
@@ -252,40 +316,53 @@ connect_dms_dataset <- function(API_base_url, start_time = NULL, end_time = NULL
     req_perform()
   
   #Turn results to JSON
-  dd <- req |> 
+  res_json <- ds_conn |> 
     resp_body_json()
   
-  #Extract values
-  mm <- dd$ranges$degree_heating_week$values
+  #Extract values for variable of interest
+  var_int <- res_json[["ranges"]][[variable_name]][["values"]]
+  #If nothing is returned, return an error
+  if(is.null(var_int)){
+    message(paste0("'", variable_name, "' does not exist in dataset"))
+    stop("Check variable name and try again")
+  }
+  
   # Replace NULL for NA in matrix
-  mm[sapply(mm, is.null)] <- NA
+  var_int[sapply(var_int, is.null)] <- NA
   #Unlist into a single vector
-  mm <- (unlist(mm, use.names = FALSE))
+  var_int <- (unlist(var_int, use.names = FALSE))
   
   #Get dimensions information
-  lat_info <- dd$domain$axes$y
-  lon_info <- dd$domain$axes$x
-  time_info <- dd$domain$axes$time
+  lat_info <- res_json$domain$axes$y
+  lon_info <- res_json$domain$axes$x
+  time_info <- res_json$domain$axes$time
   
   #Calculate dimensions of data for every time step
   dim_2d <- lat_info$num*lon_info$num
-  
-  #Create empty array to save information
-  x <- array(dim = c(lat_info$num, lon_info$num, time_info$num))
-  #Initialise loop
-  s <- 1
-  e <- dim_2d
-  #Loop along time steps
-  for(i in seq_len(time_info$num)){
-    #Add step along Z dimension (time)
-    x[,,i] <- matrix(mm[s:e], nrow = lat_info$num, ncol = lon_info$num, byrow = T)
-    s <- s+dim_2d
-    e <- dim_2d*i
-  }
+  #If only a single value is return per time step 
+  if(dim_2d == 1){
+    #Loop along time steps
+    for(i in seq_len(time_info$num)){
+      #Add step along Z dimension (time)
+      arr[,,i] <- matrix(var_int[s:e], nrow = lat_info$num, ncol = lon_info$num, byrow = T)
+    }#If there are multiple values for each time step
+  }else{
+    #Create empty array to save information
+    arr <- array(dim = c(lat_info$num, lon_info$num, time_info$num))
+    #Set up variables before initialising loop
+    s <- 1
+    e <- dim_2d
+    #Loop along time steps
+    for(i in seq_len(time_info$num)){
+      #Add step along Z dimension (time)
+      arr[,,i] <- matrix(var_int[s:e], nrow = lat_info$num, ncol = lon_info$num, byrow = T)
+      s <- s+dim_2d
+      e <- dim_2d*i
+    }}
   
   #Convert array into multidimensional raster
-  brick_x <- rast(x)
+  brick <- rast(arr)
   
   #Return raster
-  return(brick_x)
+  return(brick)
 }
