@@ -186,12 +186,44 @@ ds_subset = ds_subset.compute()
 Gridded data is also available in the RIMReP DMS. This data is stored in [Zarr](https://zarr.readthedocs.io/en/stable/) format, which is a format that allows for efficient storage of array-based data. This data is also stored in S3 buckets, but the connection and extraction process is slightly different from the one described above for tabular data.
   
 <details>
+<summary><b> Instructions for R users </b></summary>
+
+To make access of gridded data in `R` as easy as possible for users, we created a function called `connect_dms_dataset`, which you can find in the `useful_functions.R` script. This function takes the API address for the dataset of interest, the variable name of interest as arguments and returns a `SpatRaster` object. Additionally, you can provide spatial and temporal boundaries to extract data. We will use the *NOAA Coral Reef Watch degree heating weeks* dataset as an example, but you can replace the API address with the one for the dataset you want to access.  
+  
+Note that you will need to head over to our dashboard: [https://dashboard.staging.reefdata.io/](https://dashboard.staging.reefdata.io/) to get a token before you can access the data. When you use the `connect_dms_dataset` function, you will be prompted to enter your token. If you do not have an account, you can contact us at [info-rimrep@utas.edu.au](mailto:info-rimrep@utas.edu.au).  
+  
+```r
+#Loading useful_functions script
+source("R_based_scripts/useful_functions.R")
+#Loading and manipulating gridded data
+library(terra)
+
+#Defining API URL (obtained from STAC catalogue)
+base_url <- "https://pygeoapi.staging.reefdata.io/collections/noaa-crw-dhw/"
+
+#Defining variable of interest (obtained from STAC catalogue)
+variable_name <- "degree_heating_week"
+
+#Connecting to DMS to extract data
+ras_dhw <- connect_dms_dataset(base_url, variable_name,
+                           #Temporal limits
+                           start_time = "2023-01-01", end_time = "2023-01-07", 
+                           #Spatial limits
+                           lon_limits = c(145.30, 146.90),
+                           lat_limits = c(-17, -16.30))
+
+#You can plot the raster to check that the data was extracted correctly
+plot(ras_dhw)
+```
+</details>
+  
+<details>
 <summary><b> Instructions for Python users </b></summary>
 
 Instead of using `dask_geopandas` to connect to the S3 bucket and extract tabular data, we will use the `s3fs` package to connect and extract gridded data. We will use the *NOAA Coral Reef Watch degree heating weeks* dataset as an example, but you can replace the S3 URL address with the one for the dataset you want to access.  
   
 ```python
-#Loading relavant packages
+#Loading relevant packages
 #Connecting to S3 bucket
 import s3fs
 #Loading and manipulating gridded data

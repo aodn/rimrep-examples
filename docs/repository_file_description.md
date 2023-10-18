@@ -11,6 +11,8 @@ All notebooks described in this section are available in `R` and `Python`, you w
 Additionally, there are two more notebooks available exclusively for `Python` users:  
 - [**Geoparquet example (using AIMS Temperature Loggers data)**](https://github.com/aodn/rimrep-examples/blob/main/Python_based_scripts/geoparquet.ipynb)  
 - [**Zarr example (using NOAA Coral Reef Watch degree heating weeks data)**](https://github.com/aodn/rimrep-examples/blob/main/Python_based_scripts/zarr.ipynb) 
+And one notebook available exclusively for `R` users:
+- [**NOAA Degree Heating Weeks (DHW) data**](https://github.com/lidefi87/rimrep-examples/blob/main/R_based_scripts/NOAA_Degree_Heating_Week.md). This notebooks gets the DHW gridded data from NOAA Coral Reef Watch via the RIMReP API and plots it. 
   
 **Note:** You will notice that there are two files with the same name, but two different extensions: `.md` and `.Rmd`. They contain the same information, but in different formats. The `.Rmd` file is the source code of the notebook, which you can open in RStudio and run. While the `.md` file is the output of the `.Rmd` file and they include the results of running the code. If you click on the notebook links above, it will take you to the `.md` files, which are nicely formatted for GitHub.
   
