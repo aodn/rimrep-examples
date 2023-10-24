@@ -21,21 +21,18 @@ This repository contains example notebooks in `R` and `Python` showing how to ac
 ## What is RIMReP DMS?
 RIMReP DMS is an Open Geospatial Consortium (OGC) API service and analysis-ready, cloud-optimised (ARCO) repository for data and metadata relevant to the management of the Great Barrier Reef. RIMReP DMS offers services to allow the discovery of the data and the interaction with external RIMReP systems.  
   
-In simple terms, RIMReP DMS is a data portal that aims to be a "one-stop-shop" for all data related to the Great Barrier Reef World Heritage Area, which can be easily accessed by the Great Barrier Reef Marine Park Authority (GBRMPA) to support evidence-based management strategies. All datasets have a standard format regardless of their origin, which not only facilitates access to data, but also their analysis as it removes the need to quality control individual datasets.  
-
+In simple terms, RIMReP DMS is a data portal that aims to be a "one-stop-shop" for all data related to the Great Barrier Reef World Heritage Area, which can be easily accessed by the Great Barrier Reef Marine Park Authority (GBRMPA) to support evidence-based management strategies. All datasets have a standard format regardless of their origin, which not only facilitates access to data, but also their analysis as it removes the need to understand and parse different data formats.  
+  
 Datasets that have an open licence are publically available in the RIMReP DMS, while datasets that have a restricted licence are only available to users that have been granted access to them by the data provider.  
   
 [Table of contents](#table-of-contents)
   
-## Discovering for datasets in RIMReP DMS
-There are two main ways to browse datasets available in the RIMReP DMS:  
-  
-1. Via the SpatioTemporal Asset Catalogs (STAC). STAC provides a common language to describe a range of geospatial information, so that data can be indexed and easily discovered. Our STAC catalogue is available at [https://stac.staging.reefdata.io/browser/](https://stac.staging.reefdata.io/browser/).  
-2. Via Pygeoapi, which provides API access to geospatial data that is compliant with OGC API standards. Our Pygeoapi service is available at [https://pygeoapi.staging.reefdata.io/](https://pygeoapi.staging.reefdata.io/).  
+## Discovering datasets in RIMReP DMS
+To browse datasets available in the RIMReP DMS you can use the SpatioTemporal Asset Catalogs (STAC). STAC provides a common language to describe a range of geospatial information, so that data can be indexed and easily discovered. Our STAC catalogue is available at [https://stac.staging.reefdata.io/browser/](https://stac.staging.reefdata.io/browser/).    
   
 Alternatively, we provide a link to the original source of the dataset to give users the option of accessing the data directly from the data provider.  
    
-### Discovering for datasets via STAC
+### Discovering datasets via STAC
 The [STAC catalogue](https://stac.staging.reefdata.io/browser/) is a web-based interface that allows users to search for datasets using a range of filters, such as dataset name, data provider, and date range. To search for datasets, you have the option of clicking on the **Search** button on the top right corner of the page, or you can use the search bar on the top left corner of the page. These two options are highlighted in red boxes in the image below.  
   
 ![Screenshot of STAC catalogue home page showing the two search options mentioned in the previous paragraph](images/stac_home.png)
