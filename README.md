@@ -2,7 +2,7 @@
 
 This repository contains example notebooks in `R` and `Python` showing how to access datasets available in the Reef 2050 Integrated Monitoring and Reporting Program Data Management System (RIMReP DMS). These notebooks include suggested workflows on how to query datasets to create summary tables, figures, and maps.
 
-## Table of contents {#table-of-contents}
+## Table of contents{#table-of-contents}
 
 -   [What is RIMReP DMS?](#what-is-rimrep-dms)
 -   [Discovering for datasets in RIMReP DMS](#discovering-for-datasets-in-rimrep-dms)
