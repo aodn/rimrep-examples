@@ -2,15 +2,15 @@
 
 This repository contains example notebooks in `R` and `Python` showing how to access datasets available in the Reef 2050 Integrated Monitoring and Reporting Program Data Management System (RIMReP DMS). These notebooks include suggested workflows on how to query datasets to create summary tables, figures, and maps.
 
-## Table of contents{#table-of-contents}
+## Table of contents 
 
--   [What is RIMReP DMS?](#what-is-rimrep-dms)
--   [Discovering for datasets in RIMReP DMS](#discovering-for-datasets-in-rimrep-dms)
-    -   [Discovering for datasets via STAC](#discovering-for-datasets-via-stac)
--   [Code snippets](#code-snippets)
-    -   [Connecting to tabular dataset in S3 bucket](#connecting-to-tabular-dataset-in-s3-bucket)
-    -   [Extracting tabular data from S3 bucket](#extracting-tabular-data-from-s3-bucket)
-    -   [Extracting gridded data from S3 bucket](#extracting-gridded-data-from-s3-bucket)
+-   [What is RIMReP DMS?](#What-is-RIMReP-DMS?)
+-   [Discovering for datasets in RIMReP DMS](#Discovering-datasets-in-RIMReP-DMS)
+    -   [Discovering for datasets via STAC](#Discovering-datasets-via-STAC)
+-   [Code snippets](#Code-snippets)
+    -   [Connecting to tabular dataset in S3 bucket](#Connecting-to-tabular-dataset-in-S3-bucket)
+    -   [Extracting tabular data from S3 bucket](#Extracting-tabular-data-from-s3-bucket)
+    -   [Extracting gridded data from S3 bucket](#Extracting-gridded-data-from-S3-bucket)
 
 ## More information
 
@@ -20,13 +20,13 @@ This repository contains example notebooks in `R` and `Python` showing how to ac
 -   [Description of example notebooks in repository](docs/repository_file_description.md/#description-of-example-notebooks-in-repository)\
 -   [Description of scripts in repository](docs/repository_file_description.md/#description-of-scripts-in-repository)
 
-## What is RIMReP DMS? {#what-is-rimrep-dms}
+## What is RIMReP DMS?
 
 RIMReP DMS is an Open Geospatial Consortium (OGC) API service and analysis-ready, cloud-optimised (ARCO) repository for data and metadata relevant to the management of the Great Barrier Reef. RIMReP DMS offers services to allow the discovery of the data and the interaction with external RIMReP systems.
 
 In simple terms, RIMReP DMS is a data portal that aims to be a "one-stop-shop" for all data related to the Great Barrier Reef World Heritage Area, which can be easily accessed by the Great Barrier Reef Marine Park Authority (GBRMPA) to support evidence-based management strategies. All datasets have a standard format regardless of their origin, which not only facilitates access to data, but also their analysis as it removes the need to understand and parse different data formats.
 
-Datasets that have an open licence are publically available in the RIMReP DMS, while datasets that have a restricted licence are only available to users that have been granted access to them by the data provider.
+Datasets that have an open licence are publicly available in the RIMReP DMS, while datasets that have a restricted licence are only available to users that have been granted access to them by the data provider.
 
 [Table of contents](#table-of-contents)
 
@@ -72,11 +72,11 @@ The API and S3 links are highlighted in red boxes in the image above because the
 
 [Table of contents](#table-of-contents)
 
-## Code snippets {#code-snippets}
+## Code snippets
 
 In this section, we are including code snippets that will help you get started with the GBR DMS. These snippets are available in `R` and `Python`, simply select the language you want to use from the tabs below.
 
-### Connecting to tabular dataset in S3 bucket {#connecting-to-tabular-dataset-in-s3-bucket}
+### Connecting to tabular dataset in S3 bucket
 
 To run this code in `R` or `Python`, you will need to have the S3 URL address for the dataset of your interest. For this example, we are using the *AIMS Sea Surface Temperature Monitoring Program* dataset, but you can simply replace the S3 URL address with the one for the dataset you want to access.
 
@@ -122,7 +122,7 @@ Note that if you do not have the `pyarrow` package installed in your machine, yo
 
 </details>
 
-### Extracting tabular data from S3 bucket {#extracting-tabular-data-from-s3-bucket}
+### Extracting tabular data from S3 bucket
 
 Once you have connected to the S3 bucket, you do not have to download the entire dataset to your local machine to carry out your analysis. Instead, you can extract data from the dataset of interest based on one or more conditions. You can then load into memory only the relevant data needed to create summary tables, figures, or maps. We are including code snippets showing a simple data selection based on spatial and temporal conditions.
 
@@ -195,7 +195,7 @@ ds_subset = ds_subset.compute()
 
 </details>
 
-### Extracting gridded data from S3 bucket {#extracting-gridded-data-from-s3-bucket}
+### Extracting gridded data from S3 bucket
 
 Gridded data is also available in the RIMReP DMS. This data is stored in [Zarr](https://zarr.readthedocs.io/en/stable/) format, which is a format that allows for efficient storage of array-based data. This data is also stored in S3 buckets, but the connection and extraction process is slightly different from the one described above for tabular data.
 
