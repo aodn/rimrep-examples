@@ -9,12 +9,10 @@ library(arrow)
 library(dplyr)
 library(magrittr)
 library(stringr)
-library(wkb)
 library(ggplot2)
 library(sf)
 library(lubridate)
 library(httr2)
-library(httr)
 library(terra)
 
 # Defining supporting functions -------------------------------------------
@@ -52,7 +50,7 @@ sub_site <- function(site_name, sites){
   warning = function(cond){
     message("Here's the original error message:")
     message(cond)
-    },
+  },
   #Printing message of sites included in subsetting of GBR features
   finally = message("Subsetting GBR features by ", paste(true_site, collapse = ",")))
   return(out_site)
@@ -77,7 +75,7 @@ sub_ID <- function(site_ID, sites){
   #which will NOT be processed
   if(length(site_ID) != length(true_ID)){
     not_ID <- site_ID[!site_ID %in% unique_ID]
-  warning(paste("One or more site IDs do not seem to exist. Check site IDs:", paste(not_ID, collapse = ",")))
+    warning(paste("One or more site IDs do not seem to exist. Check site IDs:", paste(not_ID, collapse = ",")))
   }
   #Matching of site IDs
   out_ID <- tryCatch({
@@ -101,33 +99,21 @@ sub_ID <- function(site_ID, sites){
 ## Getting shapefile with Great Barrier Reef features ---------------------
 gbr_features <- function(site_name = NULL, site_ID = NULL){
   #Establishing connection
-  data_bucket <- s3_bucket("s3://rimrep-data-public/gbrmpa-complete-gbr-features")
+  data_bucket <- s3_bucket("s3://gbr-dms-data-public/gbrmpa-complete-gbr-features/data.parquet")
   #Accessing dataset
   data_df <- open_dataset(data_bucket)
   
   #Extract sites
   sites_all <- data_df %>% 
-  #Selecting unique sites included in the dataset
-  distinct(UNIQUE_ID, GBR_NAME, LOC_NAME_S, geometry) %>%
-  #This will load them into memory
-  collect()
+    #Selecting unique sites included in the dataset
+    distinct(UNIQUE_ID, GBR_NAME, LOC_NAME_S, geometry) %>%
+    #This will load them into memory
+    collect()
   
   #Cleaning up data
   sites_all <- sites_all %>% 
-    #Adding column with spatial information in degrees
-    mutate(coords_deg = readWKB(geometry) %>% st_as_sf())
-  
-  #Clean up sites information transforming into shapefile
-  sites_all <- sites_all %>%
-    #Removing original geometry column
-    select(!geometry) %>% 
-    #Renaming coordinate degrees column
-    mutate(coords_deg = coords_deg$geometry) %>% 
-    rename("geometry" = "coords_deg") %>% 
-    #Transforming into shapefile
-    st_as_sf() %>% 
-    #Assigning reference systems: WGS84 (EPSG: 4326)
-    st_set_crs(4326)
+    #Turning into sf object and assigning reference system: GDA94 (EPSG: 4283)
+    st_as_sf(crs = 4283)
   
   #Ensuring simple feature has valid geometries
   sites_all <- st_make_valid(sites_all)
@@ -165,39 +151,45 @@ sites_of_interest <- function(sites_pts, area_polygons){
 }
 
 
-## Defining functions to access RIMReP DMS via API
-# Getting token as user input ---------------------------------------------
-# Input from user will not be visible in screen
-# Script originally from https://www.magesblog.com/post/2014-07-15-simple-user-interface-in-r-to-get-login/
-access_dms <- function(){
-  require(tcltk)
+# Getting access token for DMS API access
+dms_token <- function(client_id, client_secret){
+  #########
+  #This function connects to the Keycloak system are request an access token 
+  #using unique user credentials: client_id and client_secret
+  #
+  #Inputs:
+  #client_id (character): CLIENT_ID provided by DMS team. 
+  #client_secret (character): CLIENT_SECRET provided by DMS team. 
   
-  tt <- tktoplevel()
-  tkwm.title(tt, "Get login details")
-  Password <- tclVar("Password")
-  entry.Password <- tkentry(tt, width = "20", show = "*", 
-                            textvariable = Password)
-  tkgrid(tklabel(tt, text = "Please enter your login details."))
-  tkgrid(entry.Password)
+  # Define base keycloak URL
+  url <- "https://keycloak.reefdata.io/realms/rimrep-production/protocol/openid-connect/token"
   
-  OnOK <- function()
-  { 
-    tkdestroy(tt) 
+  # Send request to keycloak
+  resp <- url |>
+    request() |> 
+    #Authenticate access via client ID and secret
+    req_auth_basic(client_id, client_secret) |> 
+    #Request access token
+    req_body_form(grant_type = "client_credentials") |> 
+    #Send request
+    req_perform()
+  
+  #If request is successful
+  if(resp$status_code == 200){
+    # Extract the access token from the response and store as environmental variable
+    return(resp_body_json(resp)$access_token)
+  }else{
+    #Print error if request is unsuccessful
+    stop("'Error retrieving access token. Check your CLIENT_ID and CLIENT_SECRET are correct and try again.'")
   }
-  OK.but <-tkbutton(tt, text = " OK ", command = OnOK)
-  tkbind(entry.Password, "<Return>", OnOK)
-  tkgrid(OK.but)
-  tkfocus(tt)
-  tkwait.window(tt)
-  
-  invisible(tclvalue(Password))
 }
 
 
-# Accessing DMS using token provided as input -----------------------------
+# Accessing DMS API using credentials provided as input ------------------------
 connect_dms_dataset <- function(API_base_url, variable_name, start_time = NULL, 
-                                end_time = NULL, lon_limits = NULL, 
-                                lat_limits = NULL){
+                                end_time = NULL, bounding_shape = NULL, lon_limits = NULL, 
+                                lat_limits = NULL, access_token = NULL,
+                                client_id = NULL, client_secret = NULL){
   #########
   #This function connects to RIMReP API to extract gridded data. It can extract
   #data using spatial and temporal limits
@@ -211,23 +203,58 @@ connect_dms_dataset <- function(API_base_url, variable_name, start_time = NULL,
   #YYYY-MM-DD
   #end_time (character/date): Last date for which data is extracted. Date must be
   #provided as YYYY-MM-DD. If no start_time is given, an error will be raised.
+  #bounding_shape (sf vector file): This input will be used to calculate a bounding box
+  #for raster data extraction. If this is provided, lon_limits and lat_limits will
+  #be ignored.
   #lon_limits (numeric vector): minimum and maximum longitudes from where data
   #should be extracted.
   #lat_limits (numeric vector): minimum and maximum latitudes from where data
   #should be extracted.
+  #access_token (character): DMS access token generated
+  #client_id (character): CLIENT_ID provided by DMS team. 
+  #client_secret (character): CLIENT_SECRET provided by DMS team. By default, the
+  #function looks for this information in the "CLIENT_SECRET" environmental variable.
   #
   #Outputs:
   #raster (terra SpatRaster): Raster including data for the variable of choice. 
   #If provided, spatio-temporal boundaries are applied to returned data
   #########
   
-  #Parse API URL
-  url <-  parse_url(API_base_url)
-  #Add coverage to path ending - Ensure path does not end in "/"
-  url$path <- file.path(str_remove(url$path, "/$"), "coverage")
+  #If access token does not exist, check if client_id and client_secret exist
+  if(missing(access_token)){
+    #If client_id does not exist, check environmental variable
+    if(missing(client_id)){
+      message("Warning: No 'access_token' and no user credentials were provided as input.")
+      message("Checking if 'CLIENT_ID' variable exists.")
+      #If environmental variable exists, assign to client_id
+      if(tryCatch(expr = !is.na(Sys.getenv("CLIENT_ID", unset = NA)))){
+        client_id <- Sys.getenv("CLIENT_ID")
+      }else{
+        #If CLIENT_ID variable does not exist, stop function
+        stop("'CLIENT_ID' does not exist. Provide 'client_id' parameter and try again.")
+      }}
+    #If client_secret does not exist, check environmental variable
+    if(missing(client_secret)){
+      message("Warning: No 'access_token' and user credentials were provided as input.")
+      message("Checking if 'CLIENT_SECRET' variable exists.")
+      #If environmental variable exists, assign to client_secret
+      if(tryCatch(expr = !is.na(Sys.getenv("CLIENT_SECRET", unset = NA)))){
+        client_secret <- Sys.getenv("CLIENT_SECRET")
+      }else{
+        #If CLIENT_SECRET variable does not exist, stop function
+        stop("'CLIENT_SECRET' does not exist. Provide 'client_secret' parameter and try again.")
+      }}
+    #Once we have credentials ready, get token
+    access_token <- dms_token(client_id, client_secret)
+  }
+  
+  #Checking URL ending is correct
+  if(str_detect(API_base_url, "coverage$", negate = T)){
+    url <- str_replace(API_base_url, "/$", "") |> 
+      str_c("/coverage?")}
   
   #Initialising query list
-  query_list <- list()
+  query_list <- NULL
   
   #Check if temporal limits were provided
   #Start time - Ensure date was provided in correct format, otherwise print error
@@ -257,119 +284,116 @@ connect_dms_dataset <- function(API_base_url, variable_name, start_time = NULL,
     }else{
       stop("'start_time' cannot be later than or equal to 'end_time'")}
   }
-  
   #If temporal limits provided, add to URL query
   if(exists("dt_limits")){
-    query_list$datetime <- dt_limits
-    url$query <- query_list
+    query_list <- str_c("datetime=", dt_limits)
   }
   
-  #Check if spatial limits were provided
-  #Longitudinal limits
-  if(!is.null(lon_limits)){
-    #Ensure vector provided is numeric, otherwise print error
-    if(is.numeric(lon_limits) == F){
-      lon_limits <- tryCatch(expr = as.numeric(lon_limits),
-                             warning = function(w){
-                               stop("Longitudinal limits provided are not numbers")})
-      if(sum(is.na(lon_limits)) > 0){
-        stop("Longitudinal limits provided are not numbers")}
+  #Check if shapefile was provided
+  if(!missing(bounding_shape)){
+    #Checking that bounding box is in the correct EPSG
+    if(st_crs(bounding_shape) != st_crs(4326)){
+      bounding_shape <- st_transform(bounding_shape, 4326)
     }
-    lon_query <- paste0("lon(", paste0(sort(lon_limits), collapse = ":"), ")")
-  }
-  
-  #Latitudinal limits
-  if(!is.null(lat_limits)){
-    #Ensure vector provided is numeric, otherwise print error
-    if(is.numeric(lat_limits) == F){
-      lat_limits <- tryCatch(expr = as.numeric(lat_limits),
-                             warning = function(w){
-                               stop("Latitudinal limits provided are not numbers")})
-      if(sum(is.na(lat_limits)) > 0){
-        stop("Latitudinal limits provided are not numbers")}
+    
+    box_lims <- bounding_shape |> 
+      #Get bounding box
+      st_bbox() |> 
+      #Transform to vector
+      as.vector() |> 
+      #Rounding coordinates to 2 decimal places
+      round(2) |> 
+      #Format data for query
+      paste(collapse = ",")
+    
+    #Add limits to query
+    if(is.null(query_list)){
+      query_list <- str_c("bbox=", box_lims)
+    }else{
+      query_list <- str_c(query_list, "&bbox=", box_lims)
     }
-    lat_query <- paste0("lat(", paste0(sort(lat_limits), collapse = ":"), ")")
-  }
-  
-  #If temporal limits provided, add to URL query
-  if(exists("lon_query") & exists("lat_query")){
-    query_list$subset <- paste(lon_query, lat_query, sep = ",")
-    url$query <- query_list
-  }else if(exists("lon_query") & !exists("lat_query")){
-    query_list$subset <- lon_query
-    url$query <- query_list
-  }else if(!exists("lon_query") & exists("lat_query")){
-    query_list$subset <- lat_query
-    url$query <- query_list
-  }
-  
-  #Build URL
-  url <- build_url(url)
-  
-  #Ask for token - Do not show token
-  token <- access_dms()
-  
-  #Connect to API
-  ds_conn <- request(url) |>
-    req_headers("Authorization" = paste("Bearer", token),
-                Accept = "application/json") |>
-    req_perform()
-  
-  #Turn results to JSON
-  res_json <- ds_conn |> 
-    resp_body_json()
-  
-  #Extract values for variable of interest
-  var_int <- res_json[["ranges"]][[variable_name]][["values"]]
-  #If nothing is returned, return an error
-  if(is.null(var_int)){
-    message(paste0("'", variable_name, "' does not exist in dataset"))
-    stop("Check variable name and try again")
-  }
-  
-  # Replace NULL for NA in matrix
-  var_int[sapply(var_int, is.null)] <- NA
-  #Unlist into a single vector
-  var_int <- (unlist(var_int, use.names = FALSE))
-  
-  #Get dimensions information
-  lat_info <- res_json$domain$axes$y
-  lon_info <- res_json$domain$axes$x
-  time_info <- res_json$domain$axes$time
-  
-  #Calculate dimensions of data for every time step
-  dim_2d <- lat_info$num*lon_info$num
-  #If only a single value is return per time step 
-  if(dim_2d == 1){
-    #Create empty array to save information
-    arr <- array(dim = c(lat_info$num, lon_info$num, time_info$num))
-    #Loop along time steps
-    for(i in seq_len(time_info$num)){
-      #Add step along Z dimension (time)
-      arr[,,i] <- matrix(var_int[i], nrow = lat_info$num, ncol = lon_info$num, byrow = T)
-    }#If there are multiple values for each time step
   }else{
-    #Create empty array to save information
-    arr <- array(dim = c(lat_info$num, lon_info$num, time_info$num))
-    #Set up variables before initialising loop
-    s <- 1
-    e <- dim_2d
-    #Loop along time steps
-    for(i in seq_len(time_info$num)){
-      #Add step along Z dimension (time)
-      arr[,,i] <- matrix(var_int[s:e], nrow = lat_info$num, ncol = lon_info$num, byrow = T)
-      s <- s+dim_2d
-      e <- dim_2d*(i+1)
+    #Check if spatial limits were provided
+    #Longitudinal limits
+    if(!is.null(lon_limits)){
+      #Ensure vector provided is numeric, otherwise print error
+      if(is.numeric(lon_limits) == F){
+        lon_limits <- tryCatch(expr = as.numeric(lon_limits),
+                               warning = function(w){
+                                 stop("Longitudinal limits provided are not numbers")})
+        if(sum(is.na(lon_limits)) > 0){
+          stop("Longitudinal limits provided are not numbers")}
+      }
+      lon_query <- sort(lon_limits)
+    }
+    
+    #Latitudinal limits
+    if(!is.null(lat_limits)){
+      #Ensure vector provided is numeric, otherwise print error
+      if(is.numeric(lat_limits) == F){
+        lat_limits <- tryCatch(expr = as.numeric(lat_limits),
+                               warning = function(w){
+                                 stop("Latitudinal limits provided are not numbers")})
+        if(sum(is.na(lat_limits)) > 0){
+          stop("Latitudinal limits provided are not numbers")}
+      }
+      lat_query <- sort(lat_limits)
+    }
+    
+    #If temporal limits provided, add to URL query
+    if(exists("lon_query") & exists("lat_query")){
+      box_lims <- paste(lon_query[1], lat_query[1], 
+                        lon_query[2], lat_query[2], sep = ",")
+      if(is.null(query_list)){
+        query_list <- str_c("bbox=", box_lims)
+      }else{
+        query_list <- str_c(query_list, "&bbox=", box_lims)
+      }
+    }else if(exists("lon_query") & !exists("lat_query")){
+      print("Latitudinal limits not provided, cannot apply a bounding box.")
+    }else if(!exists("lon_query") & exists("lat_query")){
+      print("Longitudinal limits not provided, cannot apply a bounding box.")
     }}
   
-  #Convert array into multidimensional raster
-  brick <- rast(arr)
+  #Add format
+  if(is.null(query_list)){
+    query_list <- str_c("f=netcdf")
+  }else{
+    query_list <- str_c(query_list, "&f=netcdf")
+  }
   
-  #Return raster
-  return(brick)
+  #Get URL ready
+  url <- str_c(url, query_list) 
+  
+  #Get temporary file
+  t_file <- tempfile("raster_dms_", fileext = ".nc")
+  
+  #Download data as temporary file
+  con <- request(url) |>
+    #Pass access token
+    req_auth_bearer_token(access_token) |>
+    #Download as temporary file
+    req_perform()
+  
+  request(url) |>
+    #Pass access token
+    req_auth_bearer_token(access_token) |> 
+    #Download as temporary file
+    req_perform(path = t_file)
+  
+  #Load temporary file as spat raster
+  brick <- rast(t_file)
+  
+  #Checking layers for variable of interest
+  lyrs <- str_subset(names(brick), variable_name)
+  if(length(lyrs) == 0){
+    print(paste0("Variable ", variable_name, " does not exist. Returning all data."))
+    #Return raster
+    return(brick)
+  }else{
+    #Subsetting raster
+    brick <- brick[[lyrs]]
+    #Return raster
+    return(brick)
+  }
 }
-
-
-x <- "https://pygeoapi.staging.reefdata.io/collections/noaa-crw-dhw/coverage?datetime=2023-01-01/2023-01-03&subset=lon(145.30:146.90),lat(-17:-16.30)"
-
-
