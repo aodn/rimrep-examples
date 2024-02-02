@@ -38,7 +38,7 @@ sub_site <- function(site_name, sites){
     }}
   #Fuzzy matching of site names
   out_site <- tryCatch({
-    sites <- sites %>% 
+    sites <- sites |> 
       filter(str_detect(str_to_lower(LOC_NAME_S), str_to_lower(paste(site_name, collapse = "|"))))
   },
   error = function(cond){
@@ -79,7 +79,7 @@ sub_ID <- function(site_ID, sites){
   }
   #Matching of site IDs
   out_ID <- tryCatch({
-    sites <- sites %>% 
+    sites <- sites |> 
       filter(UNIQUE_ID %in% true_ID)
   },
   error = function(cond){
@@ -104,14 +104,14 @@ gbr_features <- function(site_name = NULL, site_ID = NULL){
   data_df <- open_dataset(data_bucket)
   
   #Extract sites
-  sites_all <- data_df %>% 
+  sites_all <- data_df |> 
     #Selecting unique sites included in the dataset
-    distinct(UNIQUE_ID, GBR_NAME, LOC_NAME_S, geometry) %>%
+    distinct(UNIQUE_ID, GBR_NAME, LOC_NAME_S, geometry) |>
     #This will load them into memory
     collect()
   
   #Cleaning up data
-  sites_all <- sites_all %>% 
+  sites_all <- sites_all |> 
     #Turning into sf object and assigning reference system: GDA94 (EPSG: 4283)
     st_as_sf(crs = 4283)
   

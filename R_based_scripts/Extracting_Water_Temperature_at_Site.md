@@ -151,9 +151,9 @@ We can extract location (coordinates) from the AIMS dataset by using
 `dplyr` verbs as shown below.
 
 ``` r
-sites <- data_df %>% 
+sites <- data_df |> 
   #We select unique sites included in the dataset
-  distinct(site, subsite, geometry) %>%
+  distinct(site, subsite, geometry) |>
   #This will load them into memory
   collect()
 
@@ -175,7 +175,7 @@ structure](#exploring-dataset-structure). If no condition is met, then
 we will label the row as *other*.
 
 ``` r
-sites <- sites %>% 
+sites <- sites |> 
   #Adding new column - Given categories based on a condition
   mutate(deployment_location =  case_when(str_detect(subsite, "FL[0-9]{1}") ~ "reef flat",
                                           str_detect(subsite, "SL[0-9]{1}") ~ "reef slope",
@@ -204,17 +204,17 @@ library to transform the `geometry` and then we will convert it to an
 ### Transforming `geometry` format
 
 ``` r
-sites <- sites %>% 
+sites <- sites |> 
   #Adding column with coordinate pairs in degrees
-  mutate(coords_deg = readWKB(geometry) %>% st_as_sf()) %>% 
+  mutate(coords_deg = readWKB(geometry) |> st_as_sf()) |> 
   #Separating coordinate pairs into latitude and longitude columns
   mutate(lon = st_coordinates(coords_deg)[,"X"],
          lat = st_coordinates(coords_deg)[,"Y"])
 
 #Checking results - We will exclude the geometry column
-sites %>% 
-  select(!geometry) %>% 
-  arrange(site) %>% 
+sites |> 
+  select(!geometry) |> 
+  arrange(site) |> 
   head()
 ```
 
@@ -237,12 +237,12 @@ longitude values in decimal degrees. We could also use these fields to
 extract coordinates as shown in the block below.
 
 ``` r
-data_df %>% 
+data_df |> 
   #We select unique sites included in the dataset together with lat and lon values
-  distinct(site, subsite, lon, lat) %>% 
+  distinct(site, subsite, lon, lat) |> 
   #Selecting the first rows for comparison with option#1
-  arrange(site) %>% 
-  head() %>% 
+  arrange(site) |> 
+  head() |> 
   #We load them into memory
   collect()
 ```
@@ -276,7 +276,7 @@ oce_asia <- ne_countries(continent = c("oceania", "asia"),
 
 #Creating map with all sites included in dataset
 #First we plot the basemap with the countries in Oceania and Asia
-oce_asia %>% 
+oce_asia |> 
   ggplot()+
   geom_sf()+
   #Plotting monitoring sites
@@ -304,9 +304,9 @@ we can plot time series that will show us how temperature has changed
 over time.
 
 ``` r
-sites_coords <- sites %>% 
+sites_coords <- sites |> 
   #Using random site as example
-  filter(site %in% c("Hayman Island", "Heron Island")) %>% 
+  filter(site %in% c("Hayman Island", "Heron Island")) |> 
   #Extracting latitude and longitude coordinates
   select(site, lon, lat, deployment_location)
 
@@ -335,9 +335,9 @@ Note that `qc_val` is the variable containing quality-controlled
 temperature data in this dataset.
 
 ``` r
-sites_temp <- data_df %>% 
+sites_temp <- data_df |> 
   #We will only keep data for the sites of our interest
-  inner_join(sites_coords, by = c("site", "lon", "lat")) %>% 
+  inner_join(sites_coords, by = c("site", "lon", "lat")) |> 
   #Turning results into data frame
   collect()
 ```
@@ -346,16 +346,16 @@ We will now calculate the monthly temperature means at each site and
 deployment location (i.e., reef flat, reef slope, other).
 
 ``` r
-sites_temp <- sites_temp %>% 
+sites_temp <- sites_temp |> 
   #We will two new columns: year and month to calculate monthly means
   mutate(year = year(time),
-         month = month(time)) %>%
+         month = month(time)) |>
   #We will now group data by month, year and site
-  group_by(year, month, site, deployment_location) %>%
+  group_by(year, month, site, deployment_location) |>
   #Calculating monthly means for temperature at each site
   summarise(temp_monthly_mean = round(mean(qc_val, na.rm = TRUE), 2),
             #Total number of observations used in monthly mean calculations
-            tot_obs = n()) %>%
+            tot_obs = n()) |>
   #Arranging in chronological order
   arrange(site, deployment_location, year, month)
 ```
@@ -386,9 +386,9 @@ changed over time. We will save the plot as a variable so we can save it
 to our local machine later.
 
 ``` r
-temp_plot <- sites_temp %>% 
+temp_plot <- sites_temp |> 
   #Combining year and month columns into one
-  mutate(date = ym(paste0(year, "-", month))) %>% 
+  mutate(date = ym(paste0(year, "-", month))) |> 
   #Plotting temperature of y axis and time on x axis. Color data by site.
   ggplot(aes(x = date, y = temp_monthly_mean, color = site))+
   #Plot data as points and lines

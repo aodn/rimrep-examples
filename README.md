@@ -137,19 +137,19 @@ Once you have connected to the S3 bucket, you can use [`dplyr` verbs](https://dp
 library(dplyr)
 
 # We will extract data for the year 2019 that includes Townsville and Cairns
-ds_subset <- ds %>% 
+ds_subset <- ds |> 
   # First we apply a filter based on longitudes
-  filter(longitude > 145.6 & longitude < 146.9) %>%
+  filter(longitude > 145.6 & longitude < 146.9) |>
   # Then we apply a filter based on latitudes
-  filter(latitude > -19.3 & latitude < -16.8) %>%
+  filter(latitude > -19.3 & latitude < -16.8) |>
   # Finally, we apply a filter based on time
-  filter(time >= "2019-01-01" & time <= "2019-12-31") %>% 
+  filter(time >= "2019-01-01" & time <= "2019-12-31") |> 
   # We could even select only the columns we need
   # We will assume that the dataset also has a column called 'site' and we want to select it
   select(longitude, latitude, time, site)
 
 # We can now load the data into memory
-ds_subset <- ds_subset %>% 
+ds_subset <- ds_subset |> 
   collect()
 ```
 

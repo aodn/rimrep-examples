@@ -74,19 +74,19 @@ data_df <- open_dataset(data_bucket)
 # Extracting monitoring sites and their coordinates
 
 ``` r
-sites_shp <- data_df %>% 
+sites_shp <- data_df |> 
   #We select unique sites included in the dataset
-  distinct(site, subsite, lon, lat) %>%
+  distinct(site, subsite, lon, lat) |>
   #This will load them into memory
   collect()
 
 #Creating shapefile of unique locations
-sites_shp <- sites_shp %>% 
+sites_shp <- sites_shp |> 
   #Creating column to identify deployment location
   mutate(deployment_location =  case_when(str_detect(subsite, "FL[0-9]{1}") ~ "reef flat",
                                           str_detect(subsite, "SL[0-9]{1}") ~ "reef slope",
                                           #If no condition is met, classify as "other"
-                                          T ~ "other")) %>%
+                                          T ~ "other")) |>
   #Turning into sf object
   st_as_sf(coords = c("lon", "lat"), crs = 4326)
 
@@ -182,7 +182,7 @@ site_list <- sites_of_interest(sites_shp, un_reefs)
 ``` r
 #Plotting results
 #AIMS monitoring sites
-sites_shp %>% 
+sites_shp |> 
   ggplot()+
   geom_sf()+
   #Polygon of interest
@@ -201,13 +201,13 @@ and out as they need.
 
 ``` r
 #Starting interactive map
-leaflet() %>% 
+leaflet() |> 
   #Adding a basemap from Open Street Map
-  addTiles() %>% 
+  addTiles() |> 
   #Adding polygons of the unnamed (U/N) reefs
-  addPolygons(data = un_reefs, weight = 1) %>% 
+  addPolygons(data = un_reefs, weight = 1) |> 
   #Adding all sites in black
-  addCircleMarkers(data = sites_shp, radius = 1.5, color = "black") %>% 
+  addCircleMarkers(data = sites_shp, radius = 1.5, color = "black") |> 
   #Adding sites within U/N reefs in pink
   addCircleMarkers(data = site_list, radius = 3, color = "pink")
 ```
@@ -224,9 +224,9 @@ the GBR feature of our interest.
 
 ``` r
 #Extracting data points within U/N reefs from the cloud
-temp_area_int <- data_df %>%
-  select(site, subsite, time, qc_val) %>% 
-  inner_join(st_drop_geometry(site_list), by = c("site", "subsite")) %>% 
+temp_area_int <- data_df |>
+  select(site, subsite, time, qc_val) |> 
+  inner_join(st_drop_geometry(site_list), by = c("site", "subsite")) |> 
   collect()
 ```
 
@@ -236,12 +236,12 @@ within the U/N reefs were only deployed in reef flats, or reef slopes.
 There were no deployments in an unknown deployment location.
 
 ``` r
-temp_area_int <- temp_area_int %>% 
+temp_area_int <- temp_area_int |> 
   #Adding year and month columns
   mutate(year = year(time),
-         month = month(time)) %>%
+         month = month(time)) |>
   #Group by month, year and deployment location
-  group_by(year, month, deployment_location) %>%
+  group_by(year, month, deployment_location) |>
   #Calculating means for groups
   summarise(temp_monthly_mean = round(mean(qc_val, na.rm = TRUE), 2))
 ```
@@ -272,9 +272,9 @@ changed over time. We will save the plot as a variable so we can save it
 to our local machine later.
 
 ``` r
-temp_plot <- temp_area_int %>% 
+temp_plot <- temp_area_int |> 
   #Combining year and month columns into one
-  mutate(date = ym(paste0(year, "-", month))) %>% 
+  mutate(date = ym(paste0(year, "-", month))) |> 
   #Plotting temperature of y axis and time on x axis. Color data by site.
   ggplot(aes(x = date, y = temp_monthly_mean))+
   #Plot data as points and lines

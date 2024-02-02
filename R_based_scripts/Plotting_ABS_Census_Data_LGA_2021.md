@@ -100,8 +100,8 @@ to extract the data we need.
 
 ``` r
 #Selecting LGAs for QLD only
-qld_lgas <- data_df %>% 
-  filter(REGION_CODE >= 30000 & REGION_CODE <= 39999) %>% 
+qld_lgas <- data_df |> 
+  filter(REGION_CODE >= 30000 & REGION_CODE <= 39999) |> 
   collect()
 
 #Check dimensions
@@ -186,7 +186,7 @@ be set to lower case to avoid missing any rows where the keyword may be
 capitalised.
 
 ``` r
-table %>% 
+table |> 
   filter(str_detect(str_to_lower(DESCRIPTION), "overseas"))
 ```
 
@@ -213,7 +213,7 @@ LGAs where it was collected (`REGION_CODE` and `REGION_NAME`), and the
 `geometry` because this column will allow us to create maps later.
 
 ``` r
-qld_lgas_sub <- qld_lgas %>% 
+qld_lgas_sub <- qld_lgas |> 
   select(TIME_PERIOD, REGION_CODE, REGION_NAME, ERP_17, ERP_23, ERP_P_20,
          EQUIV_2, starts_with("ERP_F_") | starts_with("ERP_M_"), geometry)
 
@@ -249,15 +249,15 @@ population percentage by gender, median age, percentage of working
 population and median household income.
 
 ``` r
-qld_2021 <- qld_lgas_sub %>% 
+qld_2021 <- qld_lgas_sub |> 
   #Selecting data for 2021
-  filter(TIME_PERIOD == 2021) %>% 
+  filter(TIME_PERIOD == 2021) |> 
   #Calculating percentage of population per gender
   mutate(female_per = round((ERP_F_20/ERP_P_20)*100, 2),
-         male_per = round((ERP_M_20/ERP_P_20)*100, 2)) %>% 
+         male_per = round((ERP_M_20/ERP_P_20)*100, 2)) |> 
   #Renaming columns so data can be easily identified
   rename("tot_population" = "ERP_P_20", "working_age_per" = "ERP_17", 
-         "med_house_inc_AUD" = "EQUIV_2") %>% 
+         "med_house_inc_AUD" = "EQUIV_2") |> 
   #Select columns of interest
   select(REGION_NAME, REGION_CODE, tot_population, female_per, male_per, 
          working_age_per, med_house_inc_AUD)
@@ -295,7 +295,7 @@ median house income is above \$1,000, and percentage of people of
 working age is 75% or more.
 
 ``` r
-qld_2021 %>% 
+qld_2021 |> 
   filter(med_house_inc_AUD > 1000 & working_age_per >= 75)
 ```
 
@@ -324,29 +324,29 @@ in each class is the same across all genders.
 
 ``` r
 #Getting information about age classes
-age_groups <- table %>% 
+age_groups <- table |> 
   #Select column names starting with ERP_F except ERP_F_20 because it contains 
   #total number of people. We will also include only columns with number of people 
   #and not percentages
-  filter(str_starts(CODE, "ERP_F") & UNIT == "Persons" & CODE != "ERP_F_20") %>% 
+  filter(str_starts(CODE, "ERP_F") & UNIT == "Persons" & CODE != "ERP_F_20") |> 
   #Getting the age group numbers and age range for each age class
   mutate(age_group = str_extract(CODE, "[0-9]{1,2}"), 
-         age_class = str_remove(DESCRIPTION, "Females aged ")) %>% 
+         age_class = str_remove(DESCRIPTION, "Females aged ")) |> 
   select(age_group, age_class)
 
 #Extracting data for Townsville (2016 and 2021 only)
-townsville <- qld_lgas %>% 
-  filter(REGION_NAME == "Townsville" & (TIME_PERIOD == 2016 | TIME_PERIOD == 2021)) %>% 
+townsville <- qld_lgas |> 
+  filter(REGION_NAME == "Townsville" & (TIME_PERIOD == 2016 | TIME_PERIOD == 2021)) |> 
   #Select relevant columns 
-  select(TIME_PERIOD, starts_with("ERP_F") | starts_with("ERP_M")) %>% 
+  select(TIME_PERIOD, starts_with("ERP_F") | starts_with("ERP_M")) |> 
   #Reduce number of columns
   pivot_longer(!TIME_PERIOD, names_to = c("gender", "age_group"), 
-               names_pattern = ("ERP_(.*)_(.*)"), values_to = "number_ind") %>% 
+               names_pattern = ("ERP_(.*)_(.*)"), values_to = "number_ind") |> 
   #Keeping only information about relevant age groups
-  right_join(age_groups, by = "age_group") %>% 
+  right_join(age_groups, by = "age_group") |> 
   #Adding a column for year
   mutate(year = TIME_PERIOD,
-         age_group = as.numeric(age_group)) %>% 
+         age_group = as.numeric(age_group)) |> 
   #Ordering data by age groups
   arrange(age_group) 
 
@@ -373,15 +373,15 @@ townsville
 
 ``` r
 #Fix order of groups - Select the unique age classes
-age_class_ord <- townsville %>% 
-  distinct(age_class) %>% 
+age_class_ord <- townsville |> 
+  distinct(age_class) |> 
   pull()
 #This will give us the age classes in order.
 
 #Creating plot
-towns_age <- townsville %>%
+towns_age <- townsville |>
   #We will turn the age class into an ordered factor. We use the class in order from above
-  mutate(age_class = factor(age_class, levels = age_class_ord, ordered = T)) %>% 
+  mutate(age_class = factor(age_class, levels = age_class_ord, ordered = T)) |> 
   #Showing age class on x axis and color by gender
   ggplot(aes(age_class, number_ind, fill = gender))+
   #Showing gender columns next to each other 
@@ -428,20 +428,20 @@ longitude) before we create our map.
 
 ``` r
 #Selecting population data from 2021
-qld_pop_2021 <- qld_lgas_sub %>% 
+qld_pop_2021 <- qld_lgas_sub |> 
   #Selecting data for 2021
-  filter(TIME_PERIOD == 2021) %>% 
+  filter(TIME_PERIOD == 2021) |> 
   #Keeping only columns of interest
-  select(REGION_CODE, REGION_NAME, ERP_P_20, geometry) %>% 
+  select(REGION_CODE, REGION_NAME, ERP_P_20, geometry) |> 
   #Adding column with spatial information in degrees
-  mutate(coords_deg = readWKB(geometry) %>% st_as_sf()) %>%
+  mutate(coords_deg = readWKB(geometry) |> st_as_sf()) |>
   #Removing original geometry column
-  select(!geometry) %>% 
+  select(!geometry) |> 
   #Renaming coordinate degrees column
-  mutate(coords_deg = coords_deg$geometry) %>% 
-  rename("geometry" = "coords_deg") %>% 
+  mutate(coords_deg = coords_deg$geometry) |> 
+  rename("geometry" = "coords_deg") |> 
   #Transforming into simple feature
-  st_as_sf() %>% 
+  st_as_sf() |> 
   #Assigning reference systems: WGS84 (EPSG: 4326)
   st_set_crs(4326)
 ```
@@ -456,7 +456,7 @@ australia <- ne_countries(country = "Australia", returnclass = "sf")
 options(scipen = 999)
 
 #Plotting Australia as base map
-australia %>% 
+australia |> 
   ggplot()+
   geom_sf()+
   #Plotting QLD population data
