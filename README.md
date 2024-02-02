@@ -14,11 +14,11 @@ This repository contains example notebooks in `R` and `Python` showing how to ac
 
 ## More information
 
--   [Using API to access RIMReP DMS datasets](docs/rimrep_api_access.md)\
--   [Running example notebooks in this repository](docs/running_notebooks.md)
-    -   [Setting up your machine](docs/running_notebooks.md/#setting-up-your-machine)\
--   [Description of example notebooks in repository](docs/repository_file_description.md/#description-of-example-notebooks-in-repository)\
--   [Description of scripts in repository](docs/repository_file_description.md/#description-of-scripts-in-repository)
+-   [Using API to access RIMReP DMS datasets](docs/rimrep_api_access.md)  
+-   [Running example notebooks in this repository](docs/running_notebooks.md)  
+    -   [Setting up your machine](docs/running_notebooks.md/#setting-up-your-machine)  
+-   [Description of example notebooks in repository](docs/repository_file_description.md/#description-of-example-notebooks-in-repository)  
+-   [Description of scripts in repository](docs/repository_file_description.md/#description-of-scripts-in-repository)  
 
 ## What is RIMReP DMS?
 
@@ -48,12 +48,12 @@ Datasets available via STAC are organised by **collections**, each containing on
 
 The collection level page includes the following information:
 
--   A description of the collection, which is a brief summary of the datasets available in the collection.\
--   The items or datasets available in the collection. In this case, we can see that there is a single item available in the collection.\
--   The license under which the datasets are available.\
--   The temporal coverage of the datasets.\
--   A map showing the spatial coverage of the datasets.\
--   Information about the data provider
+-   A description of the collection, which is a brief summary of the datasets available in the collection.  
+-   The items or datasets available in the collection. In this case, we can see that there is a single item available in the collection.  
+-   The license under which the datasets are available.  
+-   The temporal coverage of the datasets.  
+-   A map showing the spatial coverage of the datasets.  
+-   Information about the data provider . 
 
 If you click on the item name (in this case, [*AIMS Sea Water Temperature Observing System*](https://stac.reefdata.io/browser/collections/aims-temp/items/aims-temp-loggers)), you will be taken to the item level page.
 
@@ -61,13 +61,13 @@ If you click on the item name (in this case, [*AIMS Sea Water Temperature Observ
 
 The item level page includes the following information:
 
--   A map showing the spatial coverage of the dataset.\
--   A description of the dataset.\
--   A link to the collection level page.\
--   A link to the dataset available in a RIMReP DMS S3 bucket under the **Assets** section.\
--   Under the **Additional Resources** section, there will be a link to the data API under and to the original source of the dataset.\
--   Metadata about the dataset, including the projection system, preferred citation and the names of the columns in the dataset.
-
+-   A map showing the spatial coverage of the dataset.  
+-   A description of the dataset.  
+-   A link to the collection level page.  
+-   A link to the dataset available in a RIMReP DMS S3 bucket under the **Assets** section.  
+-   Under the **Additional Resources** section, there will be a link to the data API under and to the original source of the dataset.  
+-   Metadata about the dataset, including the projection system, preferred citation and the names of the columns in the dataset.  
+  
 The API and S3 links are highlighted in red boxes in the image above because these are the two methods shown in this repository to access datasets available in the RIMReP DMS.
 
 [Table of contents](#table-of-contents)
