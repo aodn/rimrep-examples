@@ -1,11 +1,18 @@
-# AIMS temp data: map of sites
+# AIMS temperature data: Creating a map of sites
 E. Klein, D. Fierro Arcos
+
+- [Goal](#goal)
+- [Loading libraries](#loading-libraries)
+- [Connect to S3 parquet directory](#connect-to-s3-parquet-directory)
+- [Exploring the dataset](#exploring-the-dataset)
+- [Analysing the data](#analysing-the-data)
+- [Mapping sites](#mapping-sites)
 
 # Goal
 
-This notebook demonstrates how to interact with the RIMReP `geoparquet`
-collection. Here, we will call the AIMS water temperature logger data to
-make a map of all sites where loggers have been deployed.
+This notebook demonstrates how to interact with the RIMReP DMS
+`geoparquet` collection. Here, we will call the AIMS water temperature
+logger data to make a map of all sites where loggers have been deployed.
 
 This dataset includes sea temperature data since 1980 for tropical and
 subtropical coral reefs around Australia, including sites at the Great
@@ -18,7 +25,6 @@ Barrier Reef.
 library(arrow)
 #Data manipulation
 library(dplyr)
-library(DT)
 #Plotting maps
 library(leaflet)
 #Measuring time - it checks how long our code takes to run
@@ -37,7 +43,7 @@ tic("Total time") ## This is the full run timer
 tic("S3")
 
 #Establishing connection to S3 bucket
-tempBucket <- s3_bucket(bucket = 's3://rimrep-data-public/091-aims-sst/test-50-64-spatialpart')
+tempBucket <- s3_bucket(bucket = "s3://gbr-dms-data-public/aims-temp-loggers/data.parquet")
 
 #Accessing dataset
 df <- open_dataset(tempBucket)
@@ -46,7 +52,7 @@ df <- open_dataset(tempBucket)
 toc(log = TRUE)
 ```
 
-    S3: 32.65 sec elapsed
+    S3: 32.53 sec elapsed
 
 In case you want to check the type of object the `df` variable is, you
 can run the code below.
@@ -80,7 +86,7 @@ tic("Metadata")
 print(paste0("Number of files in the parquet directory: ", length(df$files)))
 ```
 
-    [1] "Number of files in the parquet directory: 50"
+    [1] "Number of files in the parquet directory: 32"
 
 ``` r
 #Checking dataset structure
@@ -88,7 +94,6 @@ print(df$schema)
 ```
 
     Schema
-    fid: int64
     deployment_id: int64
     site: string
     site_id: int64
@@ -104,13 +109,13 @@ print(df$schema)
     lon: double
     gbrmpa_reef_id: string
     metadata_uuid: string
-    sites_with_climatology_available: double
+    sites_with_climatology_available: int64
     time: timestamp[us, tz=UTC]
     cal_val: double
     qc_val: double
-    qc_flag: double
+    qc_flag: int64
     geometry: binary
-    hilbert_distance: uint64
+    fid: string
 
     See $metadata for additional Schema metadata
 
@@ -119,13 +124,13 @@ print(df$schema)
 toc(log = TRUE)
 ```
 
-    Metadata: 0.01 sec elapsed
+    Metadata: 0.02 sec elapsed
 
 Above, we can see that this dataset contains 50 files, and there are a
 number of columns available. You can refer to the [link to the original
 metadata](https://apps.aims.gov.au/metadata/view/4a12a8c0-c573-11dc-b99b-00008a07204e)
 provided in the [STAC record for the AIMS temperature
-data](https://stac.staging.reefdata.io/browser/collections/aims-oceanography/items/aims-sst)
+data](https://stac.reefdata.io/browser/collections/aims-temp/items/aims-temp-loggers?.asset=asset-data)
 to check for the meaning of each column.
 
 # Analysing the data
@@ -167,7 +172,7 @@ dfSites <- df |>
 toc(log = TRUE)
 ```
 
-    Summarise: 24.39 sec elapsed
+    Summarise: 36.09 sec elapsed
 
 Let’s look at the resulting table:
 
@@ -178,12 +183,12 @@ head(dfSites)
     # A tibble: 6 × 7
       site  tempMean lonMean latMean dateMin             dateMax             nPoints
       <chr>    <dbl>   <dbl>   <dbl> <dttm>              <dttm>                <int>
-    1 Vann…     29.7    150.   -5.30 2004-03-25 14:00:00 2019-05-28 13:50:00 2312251
-    2 Kimb…     29.8    150.   -5.20 2005-04-23 14:00:00 2019-05-29 13:50:00 2207082
-    3 Sand…     26.8    144.  -13.4  1996-12-07 14:00:00 2021-10-22 13:50:00  987662
-    4 Wilk…     27.6    144.  -13.8  2004-10-19 14:00:00 2013-10-20 13:52:43  485516
-    5 Tyde…     26.6    145.  -14.0  1996-12-07 14:00:00 2021-10-10 13:57:30 1416762
-    6 Cart…     27      146.  -14.5  2016-09-03 14:00:00 2018-12-11 13:50:00  119376
+    1 Geof…     25.8    147.   -19.2 1991-11-20 14:00:00 2022-02-06 13:50:00 2675313
+    2 Pion…     26.0    146.   -18.6 1992-03-08 14:00:00 2011-07-06 13:53:42  293626
+    3 Catt…     26.1    146.   -18.6 1993-02-11 14:00:00 2021-05-13 13:50:00 1880434
+    4 Pelo…     26.1    146.   -18.5 1993-08-07 14:00:00 2022-02-07 13:50:00 1434371
+    5 Myrm…     26.6    147.   -18.3 1995-04-13 14:00:00 2021-03-27 13:56:00 2022959
+    6 Hero…     24.5    152.   -23.4 1995-11-24 14:00:00 2021-06-28 13:59:38 2057311
 
 # Mapping sites
 
@@ -202,9 +207,9 @@ scaleFactor <- 2e-6
 
 #Creating our map based on our summary table
 m <- leaflet(dfSites) |> 
-  #Adiing a basemap - Default is Open Street Map
+  #Adding a basemap - Default is Open Street Map
   addTiles() |> 
-  #Add circlres for markers
+  #Add circles for markers
   addCircleMarkers(lat = ~latMean, lng = ~lonMean, 
                    #Radius of marker to change based on number of observations
                    radius = ~nPoints*scaleFactor, 
@@ -219,7 +224,7 @@ m
 **Note**: Due to the size of the interactive map, we chose not to
 display it in the GitHub markdown (file ending in `.md`), however, you
 will be able to see it and interact with it when you run the code above
-in `RStudio` using the file ending in `.qmd`.
+in RStudio using the file ending in `.qmd`.
 
 We are done! We can check the total execution time for this notebook
 below.
@@ -229,7 +234,7 @@ below.
 toc(log = TRUE)
 ```
 
-    Total time: 57.38 sec elapsed
+    Total time: 68.95 sec elapsed
 
 ``` r
 #Printing time for all timers
@@ -237,13 +242,13 @@ tic.log(format = TRUE)
 ```
 
     [[1]]
-    [1] "S3: 32.65 sec elapsed"
+    [1] "S3: 32.53 sec elapsed"
 
     [[2]]
-    [1] "Metadata: 0.01 sec elapsed"
+    [1] "Metadata: 0.02 sec elapsed"
 
     [[3]]
-    [1] "Summarise: 24.39 sec elapsed"
+    [1] "Summarise: 36.09 sec elapsed"
 
     [[4]]
-    [1] "Total time: 57.38 sec elapsed"
+    [1] "Total time: 68.95 sec elapsed"
