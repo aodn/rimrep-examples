@@ -1,20 +1,18 @@
-Extracting spatial data for Great Barrier Reef features
-================
+# Extracting spatial data for Great Barrier Reef features
 Denisse Fierro Arcos
 2023-06-05
 
 - [Goal of this notebook](#goal-of-this-notebook)
 - [Workflow to be followed in this
   notebook](#workflow-to-be-followed-in-this-notebook)
-  - [Loading libraries](#loading-libraries)
-  - [Connecting to RIMReP collection](#connecting-to-rimrep-collection)
+- [Glosary](#glosary)
+- [Loading libraries](#loading-libraries)
+- [Connecting to RIMReP collection](#connecting-to-rimrep-collection)
   - [Exploring dataset structure](#exploring-dataset-structure)
-  - [Extracting sites and coordinates from
-    dataset](#extracting-sites-and-coordinates-from-dataset)
-    - [Transforming `geometry` format](#transforming-geometry-format)
-  - [Plotting all features](#plotting-all-features)
-  - [Saving GBR features as
-    shapefile](#saving-gbr-features-as-shapefile)
+- [Extracting sites and coordinates from
+  dataset](#extracting-sites-and-coordinates-from-dataset)
+- [Plotting all features](#plotting-all-features)
+- [Saving GBR features as shapefile](#saving-gbr-features-as-shapefile)
 
 # Goal of this notebook
 
@@ -30,46 +28,46 @@ biological information for sites of our interest.
 
 # Workflow to be followed in this notebook
 
-1.  Connect to RIMReP_DMS to access and explore it the GBR features data
-    collection
+1.  Connect to RIMReP DMS to access and explore it the GBR features data
+    collection  
 2.  Get GBR features geometries to extract information from biological
-    or environmental dataset within an area of interest
-3.  Convert WKB geometries into Simple Feature (sf) objects.
+    or environmental dataset within an area of interest  
+3.  Convert WKB geometries into Simple Feature (`sf`) objects.
 4.  Export polygons as shapefiles
 
-**Glosary:**  
-- WKB stands for [well-known
-binary](https://loc.gov/preservation/digital/formats/fdd/fdd000549.shtml),
-which is one way to represent geometries (i.e., spatial compondng of a
-feature).  
-- A simple feature refers to the two-dimensional representation of an
-object in the real world (e.g., a tree, a reef, island, country, etc.).
-Here we use the `sf` package to deal with simple features. If you would
-like more information on simple features, you can refer to the [\`sf
-website](https://r-spatial.github.io/sf/articles/sf1.html#what-is-a-feature).
+# Glosary
 
-## Loading libraries
+- WKB stands for [well-known
+  binary](https://loc.gov/preservation/digital/formats/fdd/fdd000549.shtml),
+  which is one way to represent geometries (i.e., spatial compounding of
+  a feature).  
+- A simple feature refers to the two-dimensional representation of an
+  object in the real world (e.g., a tree, a reef, island, country,
+  etc.). Here we use the `sf` package to deal with simple features. If
+  you would like more information on simple features, you can refer to
+  the [`sf`
+  website](https://r-spatial.github.io/sf/articles/sf1.html#what-is-a-feature).
+
+# Loading libraries
 
 ``` r
 library(arrow)
 library(dplyr)
-library(magrittr)
 library(stringr)
-library(wkb)
 library(ggplot2)
 library(sf)
 library(lubridate)
 library(rnaturalearth)
 ```
 
-## Connecting to RIMReP collection
+# Connecting to RIMReP collection
 
-Connecting to the Great Barrier Reef Feature dataset. This can take a
-minute or so.
+Connecting to the Great Barrier Reef Complete Features dataset. This can
+take a minute or so.
 
 ``` r
 #Establishing connection
-data_bucket <- s3_bucket("s3://rimrep-data-public/gbrmpa-complete-gbr-features")
+data_bucket <- s3_bucket("s3://gbr-dms-data-public/gbrmpa-complete-gbr-features/data.parquet")
 
 #Accessing dataset
 data_df <- open_dataset(data_bucket)
@@ -85,50 +83,50 @@ identify the fields that are relevant to us.
 data_df$schema
 ```
 
-    ## Schema
-    ## TARGET_FID: int64
-    ## DATASET: string
-    ## LOC_NAME_S: string
-    ## GBR_NAME: string
-    ## CHART_NAME: string
-    ## TRAD_NAME: string
-    ## UN_FEATURE: string
-    ## LABEL_ID: string
-    ## SORT_GBR_I: int64
-    ## FEAT_NAME: string
-    ## LEVEL_1: string
-    ## LEVEL_2: string
-    ## LEVEL_3: string
-    ## CLASS_CONF: string
-    ## CLASS_SRC: string
-    ## POLY_ORIG: string
-    ## IMG_SRC: string
-    ## SUB_NO: int64
-    ## CODE: string
-    ## FEATURE_C: int64
-    ## QLD_NAME: string
-    ## X_LABEL: string
-    ## GBR_ID: string
-    ## LOC_NAME_L: string
-    ## X_COORD: double
-    ## Y_COORD: double
-    ## SHAPE_AREA: double
-    ## SHAPE_LEN: double
-    ## Checked: string
-    ## RegionID: int64
-    ## LatitudeID: int64
-    ## GroupID: int64
-    ## PriorityLb: string
-    ## Country: string
-    ## UNIQUE_ID: string
-    ## geometry: binary
-    ## minx: double
-    ## miny: double
-    ## maxx: double
-    ## maxy: double
-    ## fid: int64
-    ## 
-    ## See $metadata for additional Schema metadata
+    Schema
+    TARGET_FID: int64
+    DATASET: string
+    LOC_NAME_S: string
+    GBR_NAME: string
+    CHART_NAME: string
+    TRAD_NAME: string
+    UN_FEATURE: string
+    LABEL_ID: string
+    SORT_GBR_I: int64
+    FEAT_NAME: string
+    LEVEL_1: string
+    LEVEL_2: string
+    LEVEL_3: string
+    CLASS_CONF: string
+    CLASS_SRC: string
+    POLY_ORIG: string
+    IMG_SRC: string
+    SUB_NO: int64
+    CODE: string
+    FEATURE_C: int64
+    QLD_NAME: string
+    X_LABEL: string
+    GBR_ID: string
+    LOC_NAME_L: string
+    X_COORD: double
+    Y_COORD: double
+    SHAPE_AREA: double
+    SHAPE_LEN: double
+    Checked: string
+    RegionID: int64
+    LatitudeID: int64
+    GroupID: int64
+    PriorityLb: string
+    Country: string
+    UNIQUE_ID: string
+    geometry: binary
+    minx: double
+    miny: double
+    maxx: double
+    maxy: double
+    fid: int64
+
+    See $metadata for additional Schema metadata
 
 We can see that there are a number of variables available in this
 dataset. We will need to access four variables to create a list of all
@@ -138,27 +136,24 @@ area above water
 - `GBR_NAME`, which includes the name of each location above water  
 - `LOC_NAME_S`, combination between feature name and unique ID  
 - `geometry`, which includes latitude and longitude coordinates in WKB
-format.
+format. The `sf` library immediately recognises this column as the
+coordinates of an `sf` object.
 
-We will transform the information in the `geometry` field into
-coordinate pairs (i.e., latitude and longitude in degrees for each node
-along its boundary).
+**Note:** One location (given in the `GBR_NAME` column) may contain
+multiple values under the `UNIQUE_ID` column. This is because when
+looking at the water surface, structures may not appear connected, but
+they may be part of a larger structure and are connected under water.
 
-**Note:** One location (`GBR_NAME`) may contain multiple values under
-the `UNIQUE_ID` column. This is because above water structures may not
-appear connected when looking at the surface, but they are part of the
-same structure and thus are connected under water.
-
-## Extracting sites and coordinates from dataset
+# Extracting sites and coordinates from dataset
 
 We can extract data from the GBR features dataset by using `dplyr` verbs
 as shown below. This could take from a few seconds up to a minute
 depending on the speed of your Internet connection.
 
 ``` r
-sites <- data_df %>% 
+sites <- data_df |> 
   #We select unique sites included in the dataset
-  distinct(UNIQUE_ID, GBR_NAME, LOC_NAME_S, geometry) %>%
+  distinct(UNIQUE_ID, GBR_NAME, LOC_NAME_S, geometry) |>
   #This will load them into memory
   collect()
 
@@ -166,56 +161,40 @@ sites <- data_df %>%
 glimpse(sites)
 ```
 
-    ## Rows: 9,612
-    ## Columns: 4
-    ## $ UNIQUE_ID  <chr> "09347110101", "09347110100", "09355110126", "09355110127",…
-    ## $ GBR_NAME   <chr> "U/N Sand Bank", "U/N Sand Bank", "U/N Sand Bank", "U/N San…
-    ## $ LOC_NAME_S <chr> "U/N Sand Bank (09-347a)", "U/N Sand Bank (09-347)", "U/N S…
-    ## $ geometry   <arrw_bnr> <01, 03, 00, 00, 00, 01, 00, 00, 00, 57, 00, 00, 00, 9…
+    Rows: 9,612
+    Columns: 4
+    $ UNIQUE_ID  <chr> "09347110101", "09347110100", "09355110126", "09355110127",…
+    $ GBR_NAME   <chr> "U/N Sand Bank", "U/N Sand Bank", "U/N Sand Bank", "U/N San…
+    $ LOC_NAME_S <chr> "U/N Sand Bank (09-347a)", "U/N Sand Bank (09-347)", "U/N S…
+    $ geometry   <arrw_bnr> <01, 03, 00, 00, 00, 01, 00, 00, 00, 57, 00, 00, 00, 9…
 
-As explained above, the `geometry` field is in WKB format, which we will
-transform into degree coordinates in the next step. Here, we will use
-the `readWKB` function from the `WKB` package to transform the
-`geometry` and then we will convert it to an `sf` object for easy data
-manipulation.
-
-### Transforming `geometry` format
+As explained above, we will use the `geometry` field as the source of
+coordinates for our `sf` object.
 
 ``` r
-sites <- sites %>% 
-  #Adding column with spatial information in degrees
-  mutate(coords_deg = readWKB(geometry) %>% st_as_sf())
-
 #Clean up sites information transforming into shapefile
-sites <- sites %>%
-  #Removing original geometry column
-  select(!geometry) %>% 
-  #Renaming coordinate degrees column
-  mutate(coords_deg = coords_deg$geometry) %>% 
-  rename("geometry" = "coords_deg") %>% 
-  #Transforming into shapefile
-  st_as_sf() %>% 
-  #Assigning reference systems: WGS84 (EPSG: 4326)
-  st_set_crs(4326)
+sites <- sites |>
+  #Transforming into shapefile with reference system: WGS84 (EPSG: 4326)
+  st_as_sf(crs = 4326)
 
 #Checking results - We will exclude the geometry column
 head(sites)
 ```
 
-    ## Simple feature collection with 6 features and 3 fields
-    ## Geometry type: POLYGON
-    ## Dimension:     XY
-    ## Bounding box:  xmin: 143.0087 ymin: -9.399422 xmax: 143.1298 ymax: -9.266528
-    ## Geodetic CRS:  WGS 84
-    ## # A tibble: 6 × 4
-    ##   UNIQUE_ID   GBR_NAME      LOC_NAME_S                                  geometry
-    ##   <chr>       <chr>         <chr>                                  <POLYGON [°]>
-    ## 1 09347110101 U/N Sand Bank U/N Sand Bank (09-347a)  ((143.0851 -9.26657, 143.0…
-    ## 2 09347110100 U/N Sand Bank U/N Sand Bank (09-347)   ((143.0549 -9.293396, 143.…
-    ## 3 09355110126 U/N Sand Bank U/N Sand Bank (09-355z)  ((143.1056 -9.3908, 143.10…
-    ## 4 09355110127 U/N Sand Bank U/N Sand Bank (09-355a0) ((143.0985 -9.390079, 143.…
-    ## 5 09355110128 U/N Sand Bank U/N Sand Bank (09-355a1) ((143.0939 -9.391464, 143.…
-    ## 6 09355110122 U/N Sand Bank U/N Sand Bank (09-355v)  ((143.1298 -9.36866, 143.1…
+    Simple feature collection with 6 features and 3 fields
+    Geometry type: POLYGON
+    Dimension:     XY
+    Bounding box:  xmin: 143.0087 ymin: -9.399422 xmax: 143.1298 ymax: -9.266528
+    Geodetic CRS:  WGS 84
+    # A tibble: 6 × 4
+      UNIQUE_ID   GBR_NAME      LOC_NAME_S                                  geometry
+      <chr>       <chr>         <chr>                                  <POLYGON [°]>
+    1 09347110101 U/N Sand Bank U/N Sand Bank (09-347a)  ((143.0851 -9.26657, 143.0…
+    2 09347110100 U/N Sand Bank U/N Sand Bank (09-347)   ((143.0549 -9.293396, 143.…
+    3 09355110126 U/N Sand Bank U/N Sand Bank (09-355z)  ((143.1056 -9.3908, 143.10…
+    4 09355110127 U/N Sand Bank U/N Sand Bank (09-355a0) ((143.0985 -9.390079, 143.…
+    5 09355110128 U/N Sand Bank U/N Sand Bank (09-355a1) ((143.0939 -9.391464, 143.…
+    6 09355110122 U/N Sand Bank U/N Sand Bank (09-355v)  ((143.1298 -9.36866, 143.1…
 
 When [exploring the GBR features dataset](#exploring-dataset-structure),
 you may have noticed other fields besides `geometry` that contain
@@ -236,7 +215,7 @@ have coarsen the resolution of a feature.
 ![A feature shown in light blue and the extent shown in dark
 blue](../images/extent_geom.jpeg).
 
-## Plotting all features
+# Plotting all features
 
 We will make a map of all features included within the Great Barrier
 Reef Marine Protected Area in green so they are easily recognised. Note
@@ -249,12 +228,12 @@ red.
 australia <- ne_countries(country = "Australia", returnclass = "sf")
 
 #Extracting mainland Australia for plotting
-mainland_aus <- sites %>% 
+mainland_aus <- sites |> 
   filter(str_detect(LOC_NAME_S, "Mainland"))
 
 #Creating map with all features included in GBR dataset
 #Plotting basemap of Australia
-australia %>% 
+australia |> 
   ggplot()+
   geom_sf()+
   #Adding all GBR features in green
@@ -267,9 +246,9 @@ australia %>%
   theme_bw()
 ```
 
-![](Extracting_Spatial_Data_GBR_Features_files/figure-gfm/map_sites-1.png)<!-- -->
+![](Extracting_Spatial_Data_GBR_Features_files/figure-commonmark/map_sites-1.png)
 
-## Saving GBR features as shapefile
+# Saving GBR features as shapefile
 
 We will need to provide a path to the folder where we want to save our
 shapefile containing the limits of all features within the GBR Marine
