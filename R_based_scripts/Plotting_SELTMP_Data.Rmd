@@ -73,7 +73,7 @@ We can now use our metadata table to find the variables of interest.
   
 ```{r}
 #Searching for matches
-rec <- table %>% 
+rec <- table |> 
   filter(str_detect(str_to_lower(new_name), "waterway rec"))
 
 #Checking results
@@ -85,11 +85,11 @@ From the table above, we can see that question `9` contains data about recreatio
 We will also keep the region column (`quotagroup-label`) because this contains the regions where respondents were located and we want to create a bar plot that shows the differences in responses across regions.      
   
 ```{r}
-rec <- rec %>% 
+rec <- rec |> 
   #Creating a new column for each activity
-  separate(description, c("q_number", "activity"), sep = " - ") %>% 
+  separate(description, c("q_number", "activity"), sep = " - ") |> 
   #Extracting region from new_name column (upper case letters between - and ONLY)
-  mutate(region = str_extract(new_name, "- (.+) ONLY -", group = 1)) %>% 
+  mutate(region = str_extract(new_name, "- (.+) ONLY -", group = 1)) |> 
   #We will only keep columns that are useful for us
   select(activity, field, region)
 
@@ -101,25 +101,25 @@ Now we have the necessary information to extract the questions from the complete
     
 ```{r subset_occ}
 #Extracting recreational activities questions
-recreation <- data_df %>% 
+recreation <- data_df |> 
   #Selecting columns of interest - We use the field column in the above data frame
-  select(all_of(rec$field)) %>% 
+  select(all_of(rec$field)) |> 
   #Removing columns ending in  "_OTHER" as this provides a description of what other activities were carried out
-  select(!ends_with("_OTHER")) %>% 
+  select(!ends_with("_OTHER")) |> 
   #Loading data into memory for further processing
   collect()
 
 #We need to do some additional clean up before plotting
-recreation <- recreation %>% 
+recreation <- recreation |> 
   #We will make the data frame longer. This means that instead of having multiple columns for each region/activity, 
   #we will have single column containing information about the activities/region linked to that observation
-  pivot_longer(cols = everything(), names_to = "field", values_to = "rec_act") %>%
+  pivot_longer(cols = everything(), names_to = "field", values_to = "rec_act") |>
   #We remove any rows with no data in the occupation column (i.e., a single respondent cannot be in multiple regions)
-  drop_na(rec_act) %>% 
+  drop_na(rec_act) |> 
   #Join with metadata table
-  left_join(rec, by = "field") %>% 
+  left_join(rec, by = "field") |> 
   #Summarise data by region and activity
-  group_by(region, activity) %>% 
+  group_by(region, activity) |> 
   #Calculate number of respondents per region - This is a simple count of observations per region
   mutate(respondent = n(),
          #Removing additional information in the "Other" category for activities
@@ -127,19 +127,19 @@ recreation <- recreation %>%
                               T ~ activity),
          #Change from upper case in region to only first letter as uppercase
          region = case_when(region != "MWI" ~ str_to_title(region),
-                            T ~ region)) %>% 
+                            T ~ region)) |> 
   #Correcting spelling mistake in one of the regions
   mutate(region = case_when(region == "Glastone" ~ "Gladstone",
-                            T ~ region)) %>% 
+                            T ~ region)) |> 
   #Calculate percentage of respondents performing an activity
   #We add the number of people who reported that they performed an activity
   summarise(rec_act = sum(rec_act, na.rm = T),
             #We get the total respondents per region (Otherwise this column would be lost)
             respondent = mean(respondent, na.rm = T),
             #We calculate the percentage - No decimals needed
-            per_rec = round((rec_act/respondent)*100, 0)) %>% 
+            per_rec = round((rec_act/respondent)*100, 0)) |> 
   #Calculate mean % by activity to order data in plot
-  group_by(activity) %>% 
+  group_by(activity) |> 
   mutate(order_plot = mean(per_rec))
 
 #Checking result
@@ -152,7 +152,7 @@ Our data is now ready for us to make a plot. We will order our plot by the mean 
 
 ```{r}
 #Creating plot and assign it to a variable
-rec_plot <- recreation %>% 
+rec_plot <- recreation |> 
   #We use activity on y axis and ordering by order_plot in descending order
   ggplot(aes(y = reorder(activity, -order_plot), x = per_rec, fill = activity))+
   #Plot as bars and add a black border
@@ -191,7 +191,7 @@ Using the metadata table we loaded towards the beginning of this notebook, we wi
   
 ```{r}
 #Searching for matches
-health <- table %>%
+health <- table |>
   filter(str_detect(str_to_lower(new_name), "perceived health"))
 
 #Checking results
@@ -210,17 +210,17 @@ Since we do not have information to interpret the Gladstone region (and to maint
 Finally, we will add the `-label` suffix to the `field` column because we would like to access the actual labels of the responses instead of the numerical categories.  
   
 ```{r}
-health <- health %>% 
+health <- health |> 
   #Selecting questions 13_1 to 13_8
-  filter(str_detect(field, ".*_[1-8]{1}$")) %>% 
+  filter(str_detect(field, ".*_[1-8]{1}$")) |> 
   #Creating a new column for each activity
-  separate(description, c("q_number", "area"), sep = " - ") %>% 
+  separate(description, c("q_number", "area"), sep = " - ") |> 
   #Extracting region from new_name column
-  mutate(region = str_extract(new_name, "- (.+) Perceived", group = 1)) %>% 
+  mutate(region = str_extract(new_name, "- (.+) Perceived", group = 1)) |> 
   #Removing Gladstone region
-  filter(region != "GLADSTONE") %>% 
+  filter(region != "GLADSTONE") |> 
   #Adding -label suffix to field column
-  mutate(field = str_c(field, "-label")) %>%
+  mutate(field = str_c(field, "-label")) |>
   #We will only keep columns that are useful for us
   select(area, field, region)
 
@@ -232,50 +232,50 @@ As we did with the previous plot, we will use the table above to extract the que
     
 ```{r}
 #Extracting waterway health perception questions
-water_health <- data_df %>%
+water_health <- data_df |>
   #Selecting columns of interest - We use the field column in the above data frame
-  select(all_of(health$field), "w13_1") %>% 
+  select(all_of(health$field), "w13_1") |> 
   #Loading data into memory for further processing
   collect()
 
 #We will select data for the w13_1 columns to order ratings
-labels_water <- water_health %>% 
-  select(starts_with("w13_1")) %>% 
+labels_water <- water_health |> 
+  select(starts_with("w13_1")) |> 
   #Removing NA rows
-  drop_na() %>% 
+  drop_na() |> 
   #Keeping unique values
-  distinct() %>% 
+  distinct() |> 
   #Arranging by numeric value
-  arrange(w13_1) %>% 
+  arrange(w13_1) |> 
   #Cleaning up column names
   clean_names()
 
 #We need to do some additional clean up before plotting
-water_health_reg <- water_health %>% 
-  select(!w13_1) %>% 
+water_health_reg <- water_health |> 
+  select(!w13_1) |> 
   #We will make the data frame longer. This means that instead of having multiple columns for each region/area, 
   #we will have single column containing information about the region/area linked to that observation
-  pivot_longer(cols = everything(), names_to = "field", values_to = "rating") %>%
+  pivot_longer(cols = everything(), names_to = "field", values_to = "rating") |>
   #We remove any rows with no data in the rating column (i.e., a single respondent cannot be in multiple regions)
-  drop_na(rating) %>% 
+  drop_na(rating) |> 
   #Join with metadata table
-  left_join(health, by = "field") %>% 
+  left_join(health, by = "field") |> 
   #Summarise data by region and area
-  group_by(region, area) %>% 
+  group_by(region, area) |> 
   #Calculate number of respondents per region - This is a simple count of observations per region
   mutate(respondent = n(),
          #Change from upper case in region to only first letter as uppercase
          region = case_when(region != "MWI" ~ str_to_title(region),
-                            T ~ region)) %>% 
+                            T ~ region)) |> 
   #Calculate percentage by rating, so we add rating to the grouping
-  group_by(region, area, rating) %>%
+  group_by(region, area, rating) |>
   #We count the amount of responses under each rating
   mutate(rate_count = n(),
-         rate_per = round((rate_count/respondent)*100, 0)) %>% 
+         rate_per = round((rate_count/respondent)*100, 0)) |> 
   #Keep unique values only
-  distinct() %>% 
+  distinct() |> 
   #Change rating column to ordered factor
-  mutate(rating = factor(rating, levels = labels_water$w13_1_label, ordered = T)) %>%
+  mutate(rating = factor(rating, levels = labels_water$w13_1_label, ordered = T)) |>
   #Convert Not applicable level to NA 
   mutate(rating = fct_recode(rating, NULL = "Not applicable (have not visited)"))
 
@@ -288,8 +288,8 @@ We will show results for a single region as it is difficult to show all regions 
   
 ```{r}
 #Creating plot and assign it to a variable
-water_health_reg %>% 
-  filter(region == "Wet Tropics") %>% 
+water_health_reg |> 
+  filter(region == "Wet Tropics") |> 
   #We use activity on y axis and ordering by order_plot in descending order
   ggplot(aes(y = area, x = rate_per, fill = rating))+
   #Plot as bars and add a black border
@@ -323,7 +323,7 @@ Since the plot does not include a keyword that is common for all variables, we w
   
 ```{r}
 #Searching for matches - We will use "science" as a keyword
-table %>%
+table |>
   filter(str_detect(str_to_lower(description), "science"))
 ```
   
@@ -333,9 +333,9 @@ We can see that trust in science falls under question `18`. We will do another q
 #Keywords representing questions of interest
 keys <- paste("science", "institutions", "management", "access", "fair", "influence", sep = "|",collapse = "|")
 
-govern <- table %>%
+govern <- table |>
   #Searching for matches - We will use "18_" as a keyword
-  filter(str_detect(field, "18_")) %>% 
+  filter(str_detect(field, "18_")) |> 
   #Second filter with keywords
   filter(str_detect(description, keys))
 
@@ -347,13 +347,13 @@ We have identified the fields containing the information we need to recreate the
   
   
 ```{r}
-govern <- govern %>%
+govern <- govern |>
   #Extracting region and label from new_name column 
-  separate(new_name, c("q_number", "region", "question"), sep = " - ") %>% 
+  separate(new_name, c("q_number", "region", "question"), sep = " - ") |> 
   #Extracting region from new_name column - Remove apostrophes (')
   mutate(question = str_replace(question, "\\'", ""),
          #Get only words in upper case
-         question = str_extract(question, " (?:[A-Z ]+[A-Z]+)")) %>% 
+         question = str_extract(question, " (?:[A-Z ]+[A-Z]+)")) |> 
   #We will only keep columns that are useful for us
   select(question, field, region)
 
@@ -367,36 +367,36 @@ We will now use the table above to load the questions about governance to our se
     
 ```{r}
 #Extracting waterway health perception questions
-governance <- data_df %>%
+governance <- data_df |>
   #Selecting columns of interest - We use the field column in the above data frame
-  select(all_of(govern$field)) %>% 
+  select(all_of(govern$field)) |> 
   #Loading data into memory for further processing
   collect()
 
 #We need to do some additional clean up before plotting
-governance <- governance %>%
+governance <- governance |>
   #We will make the data frame longer as we did in the previous examples
-  pivot_longer(cols = everything(), names_to = "field", values_to = "agreement") %>%
+  pivot_longer(cols = everything(), names_to = "field", values_to = "agreement") |>
   #We remove any rows with no data in the occupation column (i.e., a single respondent cannot be in multiple regions)
-  drop_na(agreement) %>% 
+  drop_na(agreement) |> 
   #Join with metadata table
-  left_join(govern, by = "field") %>% 
+  left_join(govern, by = "field") |> 
   #Summarise data by region and activity
-  group_by(region, question) %>% 
+  group_by(region, question) |> 
   #Calculate number of respondents per region - This is a simple count of observations per region
   mutate(respondent = n(),
          #Change from upper case in region to only first letter as uppercase
          region = case_when(region != "MWI" ~ str_to_title(region),
-                            T ~ region)) %>% 
+                            T ~ region)) |> 
   #Calculate mean agreement and standard error
   summarise(agree_mean = round(mean(agreement, na.rm = T), 2),
             agree_sd = sd(agreement, na.rm = T),
             #We get the total respondents per region (Otherwise this column would be lost)
             respondent = mean(respondent, na.rm = T),
             #We calculate the percentage - No decimals needed
-            agree_se = (agree_sd/sqrt(respondent))) %>% 
+            agree_se = (agree_sd/sqrt(respondent))) |> 
   #Calculate mean % by activity to order data in plot
-  group_by(question) %>% 
+  group_by(question) |> 
   mutate(order_plot = mean(agree_mean))
 
 #Checking results
@@ -408,7 +408,7 @@ Our data is now ready for us to make a plot. We will order our plot by the mean 
 
 ```{r}
 #Creating plot and assign it to a variable
-governance %>% 
+governance |> 
   #We use activity on y axis and ordering by order_plot in descending order
   ggplot(aes(y = reorder(question, -order_plot), x = agree_mean, fill = region))+
   #Plot as bars and add a black border
@@ -445,11 +445,11 @@ We will search for the relevant questions in our table of variables, and prepare
 
 ```{r}
 #Searching for matches
-water <- table %>%
-  filter(str_detect(str_to_lower(new_name), "favourite.*waterway")) %>%
-  separate(new_name, c("q_number", "region"), sep = " - ") %>%
+water <- table |>
+  filter(str_detect(str_to_lower(new_name), "favourite.*waterway")) |>
+  separate(new_name, c("q_number", "region"), sep = " - ") |>
   #Extracting region from new_name column
-  mutate(region = str_remove(region, " ONLY")) %>%
+  mutate(region = str_remove(region, " ONLY")) |>
   #We will only keep columns that are useful for us
   select(field, region)
 
@@ -461,9 +461,9 @@ In this case, we will show global results, so we will ignore regions. However, b
   
 ```{r}
 #Extracting waterway health perception questions
-fav_water <- data_df %>%
+fav_water <- data_df |>
   #Selecting columns of interest - We use the field column in the above data frame
-  select(all_of(water$field)) %>% 
+  select(all_of(water$field)) |> 
   #Loading data into memory for further processing
   collect()
 
@@ -472,37 +472,37 @@ fav_water <- data_df %>%
 not_accepted <- "do not|can[:punct:]|variety|havent|^na$|don[:punct:]|dont|none|not |no |wildlife|nil|idk|lovely|know|\\?|car|fishing|all|any|;|boat|impossible|chair|unsure|secret|swimming"
 
 #Cleaning data
-fav_water <- fav_water %>%
+fav_water <- fav_water |>
   #We will make the data frame longer as we did in the previous examples
-  pivot_longer(cols = everything(), names_to = "field", values_to = "waterways") %>%
+  pivot_longer(cols = everything(), names_to = "field", values_to = "waterways") |>
   #Forcing everything to be lower case
-  mutate(waterways = str_to_lower(waterways)) %>% 
+  mutate(waterways = str_to_lower(waterways)) |> 
   #Remove non-informative answers
-  filter(!str_detect(waterways, not_accepted)) %>% 
+  filter(!str_detect(waterways, not_accepted)) |> 
   #Change all special characters to ; to separate things easier
-  mutate(waterways = str_to_lower(str_replace_all(waterways, "[:punct:]| and | or |the |  ", ";"))) %>%
+  mutate(waterways = str_to_lower(str_replace_all(waterways, "[:punct:]| and | or |the |  ", ";"))) |>
   #Separate responses by semicolon (;)
-  separate_longer_delim(waterways, delim = ";") %>% 
+  separate_longer_delim(waterways, delim = ";") |> 
   #Removing stop words
-  mutate(waterways = removeWords(waterways, stopwords("english"))) %>% 
+  mutate(waterways = removeWords(waterways, stopwords("english"))) |> 
   #Remove blank spaces
-  mutate(waterways = str_trim(str_to_lower(waterways), "both")) %>% 
+  mutate(waterways = str_trim(str_to_lower(waterways), "both")) |> 
   #Remove empty cells
-  filter(waterways != "" & waterways != "s") %>% 
+  filter(waterways != "" & waterways != "s") |> 
   #Correcting multiple cases of great barrier reef
   mutate(waterways = case_when(str_detect(waterways, "gbr") ~ "great barrier reef",
                                str_detect(waterways, "barrier reef") ~ "great barrier reef",
-                               T ~ waterways)) %>%
+                               T ~ waterways)) |>
   #Correcting multiple cases of beach
   mutate(waterways = case_when(waterways == "beaches" ~ "beach",
-                               T ~ waterways)) %>%
+                               T ~ waterways)) |>
   #Correcting multiple cases of creek
   mutate(waterways = case_when(waterways == "creeks" ~ "creek",
-                               T ~ waterways)) %>%
+                               T ~ waterways)) |>
   #Correcting multiple cases of Whitsunday Islands
   mutate(waterways = case_when(str_detect(waterways, "whitsunday") ~ "whitsunday islands",
-                               T ~ waterways)) %>%
-  count(waterways) %>% 
+                               T ~ waterways)) |>
+  count(waterways) |> 
   arrange(desc(n))
 
 #Checking results

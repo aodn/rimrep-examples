@@ -14,11 +14,11 @@ This repository contains example notebooks in `R` and `Python` showing how to ac
 
 ## More information
 
--   [Using API to access RIMReP DMS datasets](docs/rimrep_api_access.md)\
--   [Running example notebooks in this repository](docs/running_notebooks.md)
-    -   [Setting up your machine](docs/running_notebooks.md/#setting-up-your-machine)\
--   [Description of example notebooks in repository](docs/repository_file_description.md/#description-of-example-notebooks-in-repository)\
--   [Description of scripts in repository](docs/repository_file_description.md/#description-of-scripts-in-repository)
+-   [Using API to access RIMReP DMS datasets](docs/rimrep_api_access.md)  
+-   [Running example notebooks in this repository](docs/running_notebooks.md)  
+    -   [Setting up your machine](docs/running_notebooks.md/#setting-up-your-machine)  
+-   [Description of example notebooks in repository](docs/repository_file_description.md/#description-of-example-notebooks-in-repository)  
+-   [Description of scripts in repository](docs/repository_file_description.md/#description-of-scripts-in-repository)  
 
 ## What is RIMReP DMS?
 
@@ -48,12 +48,12 @@ Datasets available via STAC are organised by **collections**, each containing on
 
 The collection level page includes the following information:
 
--   A description of the collection, which is a brief summary of the datasets available in the collection.\
--   The items or datasets available in the collection. In this case, we can see that there is a single item available in the collection.\
--   The license under which the datasets are available.\
--   The temporal coverage of the datasets.\
--   A map showing the spatial coverage of the datasets.\
--   Information about the data provider
+-   A description of the collection, which is a brief summary of the datasets available in the collection.  
+-   The items or datasets available in the collection. In this case, we can see that there is a single item available in the collection.  
+-   The license under which the datasets are available.  
+-   The temporal coverage of the datasets.  
+-   A map showing the spatial coverage of the datasets.  
+-   Information about the data provider . 
 
 If you click on the item name (in this case, [*AIMS Sea Water Temperature Observing System*](https://stac.reefdata.io/browser/collections/aims-temp/items/aims-temp-loggers)), you will be taken to the item level page.
 
@@ -61,13 +61,13 @@ If you click on the item name (in this case, [*AIMS Sea Water Temperature Observ
 
 The item level page includes the following information:
 
--   A map showing the spatial coverage of the dataset.\
--   A description of the dataset.\
--   A link to the collection level page.\
--   A link to the dataset available in a RIMReP DMS S3 bucket under the **Assets** section.\
--   Under the **Additional Resources** section, there will be a link to the data API under and to the original source of the dataset.\
--   Metadata about the dataset, including the projection system, preferred citation and the names of the columns in the dataset.
-
+-   A map showing the spatial coverage of the dataset.  
+-   A description of the dataset.  
+-   A link to the collection level page.  
+-   A link to the dataset available in a RIMReP DMS S3 bucket under the **Assets** section.  
+-   Under the **Additional Resources** section, there will be a link to the data API under and to the original source of the dataset.  
+-   Metadata about the dataset, including the projection system, preferred citation and the names of the columns in the dataset.  
+  
 The API and S3 links are highlighted in red boxes in the image above because these are the two methods shown in this repository to access datasets available in the RIMReP DMS.
 
 [Table of contents](#table-of-contents)
@@ -137,19 +137,19 @@ Once you have connected to the S3 bucket, you can use [`dplyr` verbs](https://dp
 library(dplyr)
 
 # We will extract data for the year 2019 that includes Townsville and Cairns
-ds_subset <- ds %>% 
+ds_subset <- ds |> 
   # First we apply a filter based on longitudes
-  filter(longitude > 145.6 & longitude < 146.9) %>%
+  filter(longitude > 145.6 & longitude < 146.9) |>
   # Then we apply a filter based on latitudes
-  filter(latitude > -19.3 & latitude < -16.8) %>%
+  filter(latitude > -19.3 & latitude < -16.8) |>
   # Finally, we apply a filter based on time
-  filter(time >= "2019-01-01" & time <= "2019-12-31") %>% 
+  filter(time >= "2019-01-01" & time <= "2019-12-31") |> 
   # We could even select only the columns we need
   # We will assume that the dataset also has a column called 'site' and we want to select it
   select(longitude, latitude, time, site)
 
 # We can now load the data into memory
-ds_subset <- ds_subset %>% 
+ds_subset <- ds_subset |> 
   collect()
 ```
 

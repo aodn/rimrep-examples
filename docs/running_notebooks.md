@@ -11,7 +11,7 @@ The good news is that you will not need to go through every notebook checking th
   
 <details>
 <summary><b> Instructions for R users </b></summary>
-
+  
 If you are using the `R` notebooks, run the following two lines in the `RStudio` console:  
 ```R
   source("R_based_scripts/Installing_R_libraries.R")  
@@ -22,6 +22,7 @@ The lines above will run a function that automatically checks if any `R` librari
 
 <details>
 <summary><b> Instructions for Python users </b></summary>
+  
 We are also including an `requirements.txt` file under the `Python_based_scripts` folder, which contains all `Python` packages used in the notebooks above. You can use this file to create a [`conda` environment](https://docs.conda.io/projects/conda/en/latest/user-guide/concepts/environments.html) with all the required packages. To do so, run the following command in the Anaconda Prompt (Windows) or in your terminal (MacOS, Linux):  
   
 ```bash
