@@ -190,8 +190,9 @@ st_crs(whi_reefs)$input == st_crs(salt_gbr)$input
 
 We can now extract the data from the raster to the polygon. For
 simplicity, we will extract data for layers that have `-0.5` included in
-their name. In the second notebook, we will expand on the reasoning
-behind this choice.
+their name. In the [eReef timeseries
+notebook](https://github.com/aodn/rimrep-examples/blob/main/R_based_scripts/eReef_maps_timeseries.qmd),
+we will expand on the reasoning behind this choice.
 
 ``` r
 #Selecting layers
