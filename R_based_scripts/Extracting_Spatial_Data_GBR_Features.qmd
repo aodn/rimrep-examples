@@ -38,7 +38,7 @@ library(lubridate)
 library(rnaturalearth)
 ```
 
-# Connecting to RIMReP collection
+# Connecting to Great Barrier Reef (GBR) Feature collection
 
 Connecting to the Great Barrier Reef Complete Features dataset. This can take a minute or so.
 
