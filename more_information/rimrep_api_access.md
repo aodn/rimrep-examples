@@ -14,7 +14,7 @@ Once you have your `CLIENT_ID` and `CLIENT_SECRET`, you will need to create an *
 ## Using the data API: How to get an access token
 **Option 1:** Login into the DMS system accessing the [login dashboard](https://dashboard.reefdata.io). From this page you will need to copy the access token. You can now store the token as a variable in your code, we recommend that you store it as an environment variable to avoid sharing it accidentally.  
   
-![](images/clipboard-2491887232.png)
+![](../images/clipboard-2491887232.png)
   
 **Option 2:** If you are planning to use a Machine-to-Machine workflow (i.e., download data via script in your computer), you can request an access token via the command line or inside your `Python` or `R` script. You can click on the options below for more details on how to do this. Note that the **access token** is only valid for one hour, so it is possible that you need to request a new token for each API call you make.  
     
