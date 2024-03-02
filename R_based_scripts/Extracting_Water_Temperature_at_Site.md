@@ -1,23 +1,20 @@
-Extracting temperature at specific reefs
-================
+# Extracting_Water_Temperature_GBR_Features
 Denisse Fierro Arcos
 2023-06-05
 
 - [Goal of this notebook](#goal-of-this-notebook)
 - [Loading libraries](#loading-libraries)
-- [Connecting to RIMReP collection](#connecting-to-rimrep-collection)
+- [Connecting to AIMS Sea Surface Temperature Monitoring Program
+  collection](#connecting-to-aims-sea-surface-temperature-monitoring-program-collection)
   - [Exploring dataset structure](#exploring-dataset-structure)
 - [Extracting variables of our interest from
   dataset](#extracting-variables-of-our-interest-from-dataset)
   - [Creating `deployment_location`
     column](#creating-deployment_location-column)
-  - [Extracting latitude and longitude values (Option
-    \#1)](#extracting-latitude-and-longitude-values-option-1)
-    - [Transforming `geometry` format](#transforming-geometry-format)
-  - [Extracting sites and coordinates from dataset (Option
-    \#2)](#extracting-sites-and-coordinates-from-dataset-option-2)
-- [Plotting map of sampled sites in this
-  dataset](#plotting-map-of-sampled-sites-in-this-dataset)
+- [Extracting sites and coordinates from
+  dataset](#extracting-sites-and-coordinates-from-dataset)
+- [Plotting map of sampled sites in the AIMS
+  dataset](#plotting-map-of-sampled-sites-in-the-aims-dataset)
 - [Extracting data for sites of
   interest](#extracting-data-for-sites-of-interest)
   - [Plotting timeseries](#plotting-timeseries)
@@ -25,16 +22,17 @@ Denisse Fierro Arcos
 
 # Goal of this notebook
 
-This notebook will demonstrate how to access the RIMReP `geoparquet`
-collection for AIMS Sea Surface Temperature Monitoring Program. This
-dataset includes sea temperature data since 1980 for tropical and
+This notebook will demonstrate how to access the `geoparquet` collection
+for the [AIMS Sea Surface Temperature Monitoring
+Program](https://stac.reefdata.io/browser/collections/aims-temp). This
+dataset includes sea temperature data from 1980 for tropical and
 subtropical coral reefs around Australia, including sites at the Great
 Barrier Reef.
 
-We will also extract the coordinates for all sites sampled in this
-monitoring program. This way we can extract data for the site of our
-choice using the name of the site of our interest, without the need to
-know their coordinates.
+We will extract the coordinates for all sites sampled in this monitoring
+program. This way we can extract data for the site of our choice using
+the name of the site of our interest1, without the need to know their
+coordinates.
 
 # Loading libraries
 
@@ -43,7 +41,6 @@ know their coordinates.
 library(arrow)
 #Data manipulation
 library(dplyr)
-library(magrittr)
 library(stringr)
 #Managing dates
 library(lubridate)
@@ -52,13 +49,12 @@ library(ggplot2)
 library(rnaturalearth)
 #Managing spatial data
 library(sf)
-library(wkb)
 ```
 
-# Connecting to RIMReP collection
+# Connecting to AIMS Sea Surface Temperature Monitoring Program collection
 
-As mentioned above, we will connect to the AIMS Sea Surface Temperature
-Monitoring Program. This can take a minute or so.
+Connecting to this dataset can take a minute or so, please be patient
+while this happens.
 
 ``` r
 #Establishing connection
@@ -78,32 +74,32 @@ identify the fields that are relevant to us.
 data_df$schema
 ```
 
-    ## Schema
-    ## fid: int64
-    ## deployment_id: int64
-    ## site: string
-    ## site_id: int64
-    ## subsite: string
-    ## subsite_id: int64
-    ## from_date: timestamp[us]
-    ## thru_date: timestamp[us]
-    ## depth: double
-    ## parameter: string
-    ## instrument_type: string
-    ## serial_num: string
-    ## lat: double
-    ## lon: double
-    ## gbrmpa_reef_id: string
-    ## metadata_uuid: string
-    ## sites_with_climatology_available: double
-    ## time: timestamp[us, tz=UTC]
-    ## cal_val: double
-    ## qc_val: double
-    ## qc_flag: double
-    ## geometry: binary
-    ## hilbert_distance: uint64
-    ## 
-    ## See $metadata for additional Schema metadata
+    Schema
+    fid: int64
+    deployment_id: int64
+    site: string
+    site_id: int64
+    subsite: string
+    subsite_id: int64
+    from_date: timestamp[us]
+    thru_date: timestamp[us]
+    depth: double
+    parameter: string
+    instrument_type: string
+    serial_num: string
+    lat: double
+    lon: double
+    gbrmpa_reef_id: string
+    metadata_uuid: string
+    sites_with_climatology_available: double
+    time: timestamp[us, tz=UTC]
+    cal_val: double
+    qc_val: double
+    qc_flag: double
+    geometry: binary
+    hilbert_distance: uint64
+
+    See $metadata for additional Schema metadata
 
 We can see that there are a number of variables available in this
 dataset. We will need to access three variables to create a list of all
@@ -131,20 +127,6 @@ Next, we will transform the information contained in the `geometry`
 field into coordinate pairs (i.e., latitude and longitude in decimal
 degrees).
 
-**Note** that you can get additional information about the AIMS dataset
-by exploring its metadata as shown below.
-
-``` r
-#Checking metadata
-data_df$metadata
-```
-
-    ## $pandas
-    ## [1] "{\"index_columns\": [\"hilbert_distance\"], \"column_indexes\": [{\"name\": null, \"field_name\": null, \"pandas_type\": \"unicode\", \"numpy_type\": \"object\", \"metadata\": {\"encoding\": \"UTF-8\"}}], \"columns\": [{\"name\": \"fid\", \"field_name\": \"fid\", \"pandas_type\": \"int64\", \"numpy_type\": \"int64\", \"metadata\": null}, {\"name\": \"deployment_id\", \"field_name\": \"deployment_id\", \"pandas_type\": \"int64\", \"numpy_type\": \"int64\", \"metadata\": null}, {\"name\": \"site\", \"field_name\": \"site\", \"pandas_type\": \"unicode\", \"numpy_type\": \"object\", \"metadata\": null}, {\"name\": \"site_id\", \"field_name\": \"site_id\", \"pandas_type\": \"int64\", \"numpy_type\": \"int64\", \"metadata\": null}, {\"name\": \"subsite\", \"field_name\": \"subsite\", \"pandas_type\": \"unicode\", \"numpy_type\": \"object\", \"metadata\": null}, {\"name\": \"subsite_id\", \"field_name\": \"subsite_id\", \"pandas_type\": \"int64\", \"numpy_type\": \"int64\", \"metadata\": null}, {\"name\": \"from_date\", \"field_name\": \"from_date\", \"pandas_type\": \"datetime\", \"numpy_type\": \"datetime64[ns]\", \"metadata\": null}, {\"name\": \"thru_date\", \"field_name\": \"thru_date\", \"pandas_type\": \"datetime\", \"numpy_type\": \"datetime64[ns]\", \"metadata\": null}, {\"name\": \"depth\", \"field_name\": \"depth\", \"pandas_type\": \"float64\", \"numpy_type\": \"float64\", \"metadata\": null}, {\"name\": \"parameter\", \"field_name\": \"parameter\", \"pandas_type\": \"unicode\", \"numpy_type\": \"object\", \"metadata\": null}, {\"name\": \"instrument_type\", \"field_name\": \"instrument_type\", \"pandas_type\": \"unicode\", \"numpy_type\": \"object\", \"metadata\": null}, {\"name\": \"serial_num\", \"field_name\": \"serial_num\", \"pandas_type\": \"unicode\", \"numpy_type\": \"object\", \"metadata\": null}, {\"name\": \"lat\", \"field_name\": \"lat\", \"pandas_type\": \"float64\", \"numpy_type\": \"float64\", \"metadata\": null}, {\"name\": \"lon\", \"field_name\": \"lon\", \"pandas_type\": \"float64\", \"numpy_type\": \"float64\", \"metadata\": null}, {\"name\": \"gbrmpa_reef_id\", \"field_name\": \"gbrmpa_reef_id\", \"pandas_type\": \"empty\", \"numpy_type\": \"object\", \"metadata\": null}, {\"name\": \"metadata_uuid\", \"field_name\": \"metadata_uuid\", \"pandas_type\": \"unicode\", \"numpy_type\": \"object\", \"metadata\": null}, {\"name\": \"sites_with_climatology_available\", \"field_name\": \"sites_with_climatology_available\", \"pandas_type\": \"float64\", \"numpy_type\": \"float64\", \"metadata\": null}, {\"name\": \"time\", \"field_name\": \"time\", \"pandas_type\": \"datetimetz\", \"numpy_type\": \"datetime64[ns]\", \"metadata\": {\"timezone\": \"UTC\"}}, {\"name\": \"cal_val\", \"field_name\": \"cal_val\", \"pandas_type\": \"float64\", \"numpy_type\": \"float64\", \"metadata\": null}, {\"name\": \"qc_val\", \"field_name\": \"qc_val\", \"pandas_type\": \"float64\", \"numpy_type\": \"float64\", \"metadata\": null}, {\"name\": \"qc_flag\", \"field_name\": \"qc_flag\", \"pandas_type\": \"float64\", \"numpy_type\": \"float64\", \"metadata\": null}, {\"name\": \"geometry\", \"field_name\": \"geometry\", \"pandas_type\": \"bytes\", \"numpy_type\": \"object\", \"metadata\": null}, {\"name\": \"hilbert_distance\", \"field_name\": \"hilbert_distance\", \"pandas_type\": \"uint64\", \"numpy_type\": \"uint64\", \"metadata\": null}], \"creator\": {\"library\": \"pyarrow\", \"version\": \"10.0.1\"}, \"pandas_version\": \"1.5.1\"}"
-    ## 
-    ## $geo
-    ## [1] "{\"primary_column\": \"geometry\", \"columns\": {\"geometry\": {\"encoding\": \"WKB\", \"crs\": null, \"geometry_type\": \"Point\", \"bbox\": [112.9866, -34.3725, 115.7104, -22.495]}}, \"version\": \"0.4.0\", \"creator\": {\"library\": \"geopandas\", \"version\": \"0.12.2\"}}"
-
 # Extracting variables of our interest from dataset
 
 We can extract location (coordinates) from the AIMS dataset by using
@@ -161,11 +143,11 @@ sites <- data_df |>
 glimpse(sites)
 ```
 
-    ## Rows: 589
-    ## Columns: 3
-    ## $ site     <chr> "Hamelin Bay", "Flinders Bay", "Geographe Bay", "Cowaramup Ba…
-    ## $ subsite  <chr> "HAMBAYFL1", "FLINDERSBAY1", "GEOBAYFL1", "COWBAYFL1", "CANAL…
-    ## $ geometry <arrw_bnr> <01, 01, 00, 00, 00, 19, e2, 58, 17, b7, c1, 5c, 40, b1,…
+    Rows: 589
+    Columns: 3
+    $ site     <chr> "Hamelin Bay", "Flinders Bay", "Geographe Bay", "Cowaramup Ba…
+    $ subsite  <chr> "HAMBAYFL1", "FLINDERSBAY1", "GEOBAYFL1", "COWBAYFL1", "CANAL…
+    $ geometry <arrw_bnr> <01, 01, 00, 00, 00, 19, e2, 58, 17, b7, c1, 5c, 40, b1,…
 
 ## Creating `deployment_location` column
 
@@ -177,8 +159,12 @@ we will label the row as *other*.
 ``` r
 sites <- sites |> 
   #Adding new column - Given categories based on a condition
-  mutate(deployment_location =  case_when(str_detect(subsite, "FL[0-9]{1}") ~ "reef flat",
-                                          str_detect(subsite, "SL[0-9]{1}") ~ "reef slope",
+  mutate(deployment_location =  case_when(str_detect(subsite, 
+                                                     "FL[0-9]{1}") ~ 
+                                            "reef flat",
+                                          str_detect(subsite, 
+                                                     "SL[0-9]{1}") ~ 
+                                            "reef slope",
                                           #If no condition is met, return other
                                           T ~ "other"))
 
@@ -186,82 +172,37 @@ sites <- sites |>
 glimpse(sites)
 ```
 
-    ## Rows: 589
-    ## Columns: 4
-    ## $ site                <chr> "Hamelin Bay", "Flinders Bay", "Geographe Bay", "C…
-    ## $ subsite             <chr> "HAMBAYFL1", "FLINDERSBAY1", "GEOBAYFL1", "COWBAYF…
-    ## $ geometry            <arrw_bnr> <01, 01, 00, 00, 00, 19, e2, 58, 17, b7, c1, …
-    ## $ deployment_location <chr> "reef flat", "other", "reef flat", "reef flat", "r…
+    Rows: 589
+    Columns: 4
+    $ site                <chr> "Hamelin Bay", "Flinders Bay", "Geographe Bay", "C…
+    $ subsite             <chr> "HAMBAYFL1", "FLINDERSBAY1", "GEOBAYFL1", "COWBAYF…
+    $ geometry            <arrw_bnr> <01, 01, 00, 00, 00, 19, e2, 58, 17, b7, c1, …
+    $ deployment_location <chr> "reef flat", "other", "reef flat", "reef flat", "r…
 
-## Extracting latitude and longitude values (Option \#1)
+# Extracting sites and coordinates from dataset
 
-As explained [above](#exploring-dataset-structure), the `geometry` field
-is in WKB format, which we will transform into degree coordinates in the
-next step. Here, we will use the `readWKB` function from the `WKB`
-library to transform the `geometry` and then we will convert it to an
-`sf` object for easy data manipulation.
-
-### Transforming `geometry` format
+Since we store the `geometry` column in the variable above, which
+contains spatial data in binary format, we can use the `sf` library to
+turn this data frame into a shapefile. Note that we need to use a
+reference system for the shapefile to show correctly. This information
+can be found in the STAC catalogue for each dataset.
 
 ``` r
 sites <- sites |> 
-  #Adding column with coordinate pairs in degrees
-  mutate(coords_deg = readWKB(geometry) |> st_as_sf()) |> 
-  #Separating coordinate pairs into latitude and longitude columns
-  mutate(lon = st_coordinates(coords_deg)[,"X"],
-         lat = st_coordinates(coords_deg)[,"Y"])
+  st_as_sf(crs = 4326)
 
-#Checking results - We will exclude the geometry column
-sites |> 
-  select(!geometry) |> 
-  arrange(site) |> 
-  head()
+#Checking results
+glimpse(sites)
 ```
 
-    ## # A tibble: 6 × 6
-    ##   site        subsite  deployment_location coords_deg$geometry   lon   lat
-    ##   <chr>       <chr>    <chr>                           <POINT> <dbl> <dbl>
-    ## 1 100th Site  100THSI… other                (96.8709 -12.1069)  96.9 -12.1
-    ## 2 19-131 Reef 19131FL1 reef flat           (149.3786 -19.7641) 149.  -19.8
-    ## 3 19-131 Reef 19131SL1 reef slope          (149.3802 -19.7662) 149.  -19.8
-    ## 4 19-131 Reef 19131SL3 reef slope           (149.376 -19.7728) 149.  -19.8
-    ## 5 19-138 Reef 19138SL1 reef slope          (149.4305 -19.8069) 149.  -19.8
-    ## 6 19-138 Reef 19138FL1 reef flat           (149.4199 -19.8024) 149.  -19.8
+    Rows: 589
+    Columns: 4
+    $ site                <chr> "Hamelin Bay", "Flinders Bay", "Geographe Bay", "C…
+    $ subsite             <chr> "HAMBAYFL1", "FLINDERSBAY1", "GEOBAYFL1", "COWBAYF…
+    $ geometry            <POINT [°]> POINT (115.0268 -34.2206), POINT (115.2009 -…
+    $ deployment_location <chr> "reef flat", "other", "reef flat", "reef flat", "r…
 
-## Extracting sites and coordinates from dataset (Option \#2)
-
-You may have noticed while [exploring the dataset
-structure](#exploring-dataset-structure) that this dataset also includes
-`lat` and `lon` fields. As their name suggest, they contain latitude and
-longitude values in decimal degrees. We could also use these fields to
-extract coordinates as shown in the block below.
-
-``` r
-data_df |> 
-  #We select unique sites included in the dataset together with lat and lon values
-  distinct(site, subsite, lon, lat) |> 
-  #Selecting the first rows for comparison with option#1
-  arrange(site) |> 
-  head() |> 
-  #We load them into memory
-  collect()
-```
-
-    ## # A tibble: 6 × 4
-    ##   site        subsite     lon   lat
-    ##   <chr>       <chr>     <dbl> <dbl>
-    ## 1 100th Site  100THSITE  96.9 -12.1
-    ## 2 19-131 Reef 19131FL1  149.  -19.8
-    ## 3 19-131 Reef 19131SL1  149.  -19.8
-    ## 4 19-131 Reef 19131SL3  149.  -19.8
-    ## 5 19-138 Reef 19138SL1  149.  -19.8
-    ## 6 19-138 Reef 19138FL1  149.  -19.8
-
-The two options shown above for extracting latitude and longitude values
-for each site are equivalent and produce the same results. They are
-interchangeable and you can use whichever you prefer.
-
-# Plotting map of sampled sites in this dataset
+# Plotting map of sampled sites in the AIMS dataset
 
 We will make a map of all sites included in the AIMS Water Temperature
 Monitoring Program. We will also highlight the location of two sites:
@@ -280,17 +221,19 @@ oce_asia |>
   ggplot()+
   geom_sf()+
   #Plotting monitoring sites
-  geom_point(inherit.aes = F, data = sites, aes(x = lon, y = lat))+
-  geom_point(inherit.aes = F, data = sites[sites["site"] == "Hayman Island" | sites["site"] == "Heron Island",], 
-             aes(x = lon, y = lat), color = "red", size = 2)+
-  #Changing map limits - Adding a buffer of 2 degree around max and min site coordinates
-  lims(y = c(floor(min(sites$lat))-2, ceiling(max(sites$lat))+2),
-       x = c(floor(min(sites$lon))-2, ceiling(max(sites$lon))+2))+
+  geom_sf(inherit.aes = F, data = sites)+
+  geom_sf(inherit.aes = F, 
+          data = sites[str_detect(sites$site, "Hayman|Heron"),], 
+          color = "red", size = 2)+
+  #Changing map limits - Adding a 2 degree buffer around max and min site 
+  #coordinates
+  lims(y = c(floor(st_bbox(sites)$ymin)-2, ceiling(st_bbox(sites)$ymax)+2),
+       x = c(floor(st_bbox(sites)$xmin)-2, ceiling(st_bbox(sites)$xmax)+2))+
   #Removing default grey background
   theme_bw()
 ```
 
-![](Extracting_Water_Temperature_at_Site_files/figure-gfm/map_sites-1.png)<!-- -->
+![](Extracting_Water_Temperature_at_Site_files/figure-commonmark/unnamed-chunk-6-1.png)
 
 # Extracting data for sites of interest
 
@@ -304,40 +247,86 @@ we can plot time series that will show us how temperature has changed
 over time.
 
 ``` r
-sites_coords <- sites |> 
+sites_int <- sites |> 
   #Using random site as example
-  filter(site %in% c("Hayman Island", "Heron Island")) |> 
+  filter(str_detect(site, "(Hayman|Heron) Island")) |> 
   #Extracting latitude and longitude coordinates
-  select(site, lon, lat, deployment_location)
+  select(site, deployment_location)
 
 #Checking results
-sites_coords
+sites_int
 ```
 
-    ## # A tibble: 8 × 4
-    ##   site            lon   lat deployment_location
-    ##   <chr>         <dbl> <dbl> <chr>              
-    ## 1 Heron Island   152. -23.4 reef flat          
-    ## 2 Heron Island   152. -23.4 reef flat          
-    ## 3 Heron Island   152. -23.4 reef flat          
-    ## 4 Heron Island   152. -23.4 reef flat          
-    ## 5 Heron Island   152. -23.4 reef flat          
-    ## 6 Heron Island   152. -23.4 reef slope         
-    ## 7 Hayman Island  149. -20.0 reef flat          
-    ## 8 Hayman Island  149. -20.1 reef slope
+    Simple feature collection with 8 features and 2 fields
+    Geometry type: POINT
+    Dimension:     XY
+    Bounding box:  xmin: 148.8819 ymin: -23.4448 xmax: 151.9184 ymax: -20.0413
+    Geodetic CRS:  WGS 84
+    # A tibble: 8 × 3
+      site          deployment_location            geometry
+      <chr>         <chr>                       <POINT [°]>
+    1 Heron Island  reef flat           (151.9115 -23.4436)
+    2 Heron Island  reef flat           (151.9131 -23.4441)
+    3 Heron Island  reef flat           (151.9149 -23.4448)
+    4 Heron Island  reef slope          (151.9081 -23.4435)
+    5 Heron Island  reef flat           (151.9184 -23.4448)
+    6 Heron Island  reef flat           (151.9182 -23.4384)
+    7 Hayman Island reef flat           (148.8819 -20.0413)
+    8 Hayman Island reef slope          (148.8997 -20.0572)
 
 We can see that there are multiple coordinates for each site, but they
-are located in close proximity to one another. In this case, both sites
-include instrument deployments in the reef flat and slope. We will use
-this information to extract data from the original AIMS dataset.
-
-Note that `qc_val` is the variable containing quality-controlled
-temperature data in this dataset.
+are located in close proximity to one another. We can plot them to see
+their location. We will plot them separately because these two sites are
+not close to another. We will start with Heron Island sites.
 
 ``` r
+sites_int |> 
+  filter(str_detect(site, "Heron")) |> 
+  ggplot()+
+  geom_sf(aes(colour = deployment_location))
+```
+
+![](Extracting_Water_Temperature_at_Site_files/figure-commonmark/unnamed-chunk-7-1.png)
+
+These sites are relatively close to one another (see the axes in the
+map), and now we can plot the Hayman Island sites.
+
+``` r
+sites_int |> 
+  filter(str_detect(site, "Hayman")) |> 
+  ggplot()+
+  geom_sf(aes(colour = deployment_location))
+```
+
+![](Extracting_Water_Temperature_at_Site_files/figure-commonmark/unnamed-chunk-8-1.png)
+
+These are a little more spread out, but they are sampling slightly
+different areas of the reef (flat and slope). The good news is that the
+`site` name is the same regardless of their location, so we can use
+their names to extract data from the original AIMS dataset. Note that
+`qc_val` is the variable containing quality-controlled temperature data
+in this dataset.
+
+An alternatively is to get the coordinates for each point of interest
+and use this information to extract data. This is more useful in case
+the sites are named slightly different, for example: Heron Island 1,
+Heron Island 2, etc. Since we have already shown how to extract data by
+name, we will show the second option, so let’s start with getting the
+coordinates.
+
+``` r
+#Getting coordinate values
+coords <- sites_int |> 
+  #Adding to data frame
+  mutate(lon = st_coordinates(sites_int)[,"X"],
+         lat = st_coordinates(sites_int)[,"Y"]) |> 
+  #Removing original geometry
+  st_drop_geometry()
+  
+#Extract data from DMS dataset
 sites_temp <- data_df |> 
   #We will only keep data for the sites of our interest
-  inner_join(sites_coords, by = c("site", "lon", "lat")) |> 
+  inner_join(coords, by = c("site", "lon", "lat")) |> 
   #Turning results into data frame
   collect()
 ```
@@ -360,24 +349,24 @@ sites_temp <- sites_temp |>
   arrange(site, deployment_location, year, month)
 ```
 
-    ## `summarise()` has grouped output by 'year', 'month', 'site'. You can override
-    ## using the `.groups` argument.
+    `summarise()` has grouped output by 'year', 'month', 'site'. You can override
+    using the `.groups` argument.
 
 ``` r
 #Checking results
 head(sites_temp)
 ```
 
-    ## # A tibble: 6 × 6
-    ## # Groups:   year, month, site [6]
-    ##    year month site          deployment_location temp_monthly_mean tot_obs
-    ##   <dbl> <dbl> <chr>         <chr>                           <dbl>   <int>
-    ## 1  1996     5 Hayman Island reef flat                        25.2     116
-    ## 2  1996     6 Hayman Island reef flat                        24.4    1439
-    ## 3  1996     7 Hayman Island reef flat                        23.2    1488
-    ## 4  1996     8 Hayman Island reef flat                        22.7    1488
-    ## 5  1996     9 Hayman Island reef flat                        23.6    1440
-    ## 6  1996    10 Hayman Island reef flat                        25.0    1487
+    # A tibble: 6 × 6
+    # Groups:   year, month, site [6]
+       year month site          deployment_location temp_monthly_mean tot_obs
+      <dbl> <dbl> <chr>         <chr>                           <dbl>   <int>
+    1  1996     5 Hayman Island reef flat                        25.2     116
+    2  1996     6 Hayman Island reef flat                        24.4    1439
+    3  1996     7 Hayman Island reef flat                        23.2    1488
+    4  1996     8 Hayman Island reef flat                        22.7    1488
+    5  1996     9 Hayman Island reef flat                        23.6    1440
+    6  1996    10 Hayman Island reef flat                        25.0    1487
 
 ## Plotting timeseries
 
@@ -408,9 +397,9 @@ temp_plot <- sites_temp |>
 temp_plot
 ```
 
-    ## Warning: Removed 3 rows containing missing values (`geom_point()`).
+    Warning: Removed 3 rows containing missing values (`geom_point()`).
 
-![](Extracting_Water_Temperature_at_Site_files/figure-gfm/timeseries_plot-1.png)<!-- -->
+![](Extracting_Water_Temperature_at_Site_files/figure-commonmark/timeseries_plot-1.png)
 
 Note that `ggplot2` is warning us that three rows were removed from the
 plot. This is because between May and July 2010, there were no
