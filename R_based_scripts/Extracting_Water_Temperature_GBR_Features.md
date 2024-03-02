@@ -1,17 +1,11 @@
----
-title: "Extracting temperature using GBR features"
-author: "Denisse Fierro Arcos"
-date: "2023-06-14"
-output: 
-  md_document:
-    variant: gfm
-    toc: true
-    preserve_yaml: true    
----
+# Extracting_Water_Temperature_GBR_Features
+Denisse Fierro Arcos
+2023-06-14
 
 - [Goal of this notebook](#goal-of-this-notebook)
 - [Loading libraries](#loading-libraries)
-- [Connecting to RIMReP collection](#connecting-to-rimrep-collection)
+- [Connecting to AIMS Temperature
+  collection](#connecting-to-aims-temperature-collection)
 - [Extracting monitoring sites and their
   coordinates](#extracting-monitoring-sites-and-their-coordinates)
 - [Identifying AIMS sites within GBR feature of
@@ -26,17 +20,18 @@ output:
 
 # Goal of this notebook
 
-This notebook will demonstrate how to use one or more Great Barrier Reef
-(GBR) features recognised by the Great Barrier Reef Marine Park
-Authority (GBRMPA) dataset to extract water temperature data from the
-AIMS Sea Surface Temperature Monitoring Program available at RIMReP
-`geoparquet` collection.
+This notebook will demonstrate how to use one or more [Great Barrier
+Reef (GBR)
+features](https://stac.reefdata.io/browser/collections/gbrmpa-admin-regions/items/gbrmpa-complete-gbr-features)
+recognised by the Great Barrier Reef Marine Park Authority (GBRMPA)
+dataset to extract water temperature data from the AIMS Sea Surface
+Temperature Monitoring Program available at RIMReP DMS `geoparquet`
+collection.
 
 In addition to published `R` libraries, this notebook uses a set of
 functions especially created for manipulating RIMReP data collections.
-These functions are available in the
-`useful_functions.R` script, which **must** exist in the same directory
-where this notebook is located.
+These functions are available in the `useful_functions.R` script, which
+**must** exist in the same directory where this notebook is located.
 
 # Loading libraries
 
@@ -44,13 +39,10 @@ where this notebook is located.
 #Accessing S3 bucket
 library(arrow)
 #Data manipulation
-library(dplyr)
-library(magrittr)
-library(stringr)
+library(tidyverse)
 #Managing dates
 library(lubridate)
 #Plotting
-library(ggplot2)
 library(leaflet)
 #Mapping
 library(sf)
@@ -58,14 +50,15 @@ library(sf)
 source("useful_functions.R")
 ```
 
-# Connecting to RIMReP collection
+# Connecting to AIMS Temperature collection
 
-Connecting to the AIMS Sea Surface Temperature Monitoring Program
+Connecting to the [AIMS Sea Surface Temperature Monitoring
+Program](https://stac.reefdata.io/browser/collections/aims-temp/items/aims-temp-loggers?.language=en-AU&.asset=asset-data)
 dataset. This can take a minute or so.
 
 ``` r
 #Establishing connection
-data_bucket <- s3_bucket("s3://rimrep-data-public/091-aims-sst/test-50-64-spatialpart")
+data_bucket <- s3_bucket("s3://gbr-dms-data-public/aims-temp-loggers/data.parquet")
 
 #Accessing dataset
 data_df <- open_dataset(data_bucket)
@@ -82,6 +75,7 @@ sites_shp <- data_df |>
 
 #Creating shapefile of unique locations
 sites_shp <- sites_shp |> 
+  drop_na(lon, lat) |> 
   #Creating column to identify deployment location
   mutate(deployment_location =  case_when(str_detect(subsite, "FL[0-9]{1}") ~ "reef flat",
                                           str_detect(subsite, "SL[0-9]{1}") ~ "reef slope",
@@ -94,12 +88,12 @@ sites_shp <- sites_shp |>
 glimpse(sites_shp)
 ```
 
-    ## Rows: 589
-    ## Columns: 4
-    ## $ site                <chr> "Hamelin Bay", "Flinders Bay", "Geographe Bay", "C…
-    ## $ subsite             <chr> "HAMBAYFL1", "FLINDERSBAY1", "GEOBAYFL1", "COWBAYF…
-    ## $ deployment_location <chr> "reef flat", "other", "reef flat", "reef flat", "r…
-    ## $ geometry            <POINT [°]> POINT (115.0268 -34.2206), POINT (115.2009 -…
+    Rows: 589
+    Columns: 4
+    $ site                <chr> "Geoffrey Bay", "Pioneer Bay", "Geoffrey Bay", "Ge…
+    $ subsite             <chr> "GBSL2", "PBSL1", "GBSL1", "GBFL3", "GBFL1", "CBSL…
+    $ deployment_location <chr> "reef slope", "reef slope", "reef slope", "reef fl…
+    $ geometry            <POINT [°]> POINT (146.865 -19.155), POINT (146.4839 -18…
 
 # Identifying AIMS sites within GBR feature of interest
 
@@ -127,32 +121,32 @@ and thus will overlap with the most number of AIMS monitoring sites.
 un_reefs <- gbr_features(site_name = "u/n reef")
 ```
 
-    ## Subsetting GBR features by u/n reef
+    Subsetting GBR features by u/n reef
 
 ``` r
 #Checking results
 un_reefs
 ```
 
-    ## Simple feature collection with 4101 features and 3 fields
-    ## Geometry type: POLYGON
-    ## Dimension:     XY
-    ## Bounding box:  xmin: 141.1284 ymin: -24.43007 xmax: 153.1677 ymax: -8.965184
-    ## Geodetic CRS:  WGS 84
-    ## # A tibble: 4,101 × 4
-    ##    UNIQUE_ID   GBR_NAME LOC_NAME_S                                      geometry
-    ##  * <chr>       <chr>    <chr>                                      <POLYGON [°]>
-    ##  1 09361104104 U/N Reef U/N Reef (09-361d) ((143.2286 -9.263747, 143.2286 -9.26…
-    ##  2 09361104100 U/N Reef U/N Reef (09-361)  ((143.2367 -9.267288, 143.2377 -9.26…
-    ##  3 09361104102 U/N Reef U/N Reef (09-361b) ((143.2341 -9.259977, 143.232 -9.259…
-    ##  4 09361104103 U/N Reef U/N Reef (09-361c) ((143.2284 -9.260164, 143.2287 -9.25…
-    ##  5 09361104105 U/N Reef U/N Reef (09-361e) ((143.2196 -9.257815, 143.2199 -9.25…
-    ##  6 09361104106 U/N Reef U/N Reef (09-361f) ((143.2299 -9.256957, 143.2299 -9.25…
-    ##  7 09361104101 U/N Reef U/N Reef (09-361a) ((143.2398 -9.260512, 143.2399 -9.26…
-    ##  8 09354104100 U/N Reef U/N Reef (09-354)  ((143.1372 -9.261412, 143.1374 -9.26…
-    ##  9 09359104100 U/N Reef U/N Reef (09-359)  ((143.2262 -9.272064, 143.2262 -9.27…
-    ## 10 09363104109 U/N Reef U/N Reef (09-363i) ((143.2719 -9.323137, 143.2715 -9.32…
-    ## # ℹ 4,091 more rows
+    Simple feature collection with 4101 features and 3 fields
+    Geometry type: POLYGON
+    Dimension:     XY
+    Bounding box:  xmin: 141.1284 ymin: -24.43007 xmax: 153.1677 ymax: -8.965184
+    Geodetic CRS:  GDA94
+    # A tibble: 4,101 × 4
+       UNIQUE_ID   GBR_NAME LOC_NAME_S                                      geometry
+     * <chr>       <chr>    <chr>                                      <POLYGON [°]>
+     1 09361104104 U/N Reef U/N Reef (09-361d) ((143.2286 -9.263747, 143.2286 -9.26…
+     2 09361104100 U/N Reef U/N Reef (09-361)  ((143.2367 -9.267288, 143.2377 -9.26…
+     3 09361104102 U/N Reef U/N Reef (09-361b) ((143.2341 -9.259977, 143.232 -9.259…
+     4 09361104103 U/N Reef U/N Reef (09-361c) ((143.2284 -9.260164, 143.2287 -9.25…
+     5 09361104105 U/N Reef U/N Reef (09-361e) ((143.2196 -9.257815, 143.2199 -9.25…
+     6 09361104106 U/N Reef U/N Reef (09-361f) ((143.2299 -9.256957, 143.2299 -9.25…
+     7 09361104101 U/N Reef U/N Reef (09-361a) ((143.2398 -9.260512, 143.2399 -9.26…
+     8 09354104100 U/N Reef U/N Reef (09-354)  ((143.1372 -9.261412, 143.1374 -9.26…
+     9 09359104100 U/N Reef U/N Reef (09-359)  ((143.2262 -9.272064, 143.2262 -9.27…
+    10 09363104109 U/N Reef U/N Reef (09-363i) ((143.2719 -9.323137, 143.2715 -9.32…
+    # ℹ 4,091 more rows
 
 ## Identifying sites of interest
 
@@ -170,14 +164,24 @@ Below we are including two ways of plotting sites and polygons: using
 `ggplot2`, which produces a static map, and using `leaflet`, which
 produces an interactive map.
 
+Before getting the data we need, we will need to ensure that both files
+have the same coordinate reference system (CRS).
+
 ### Mapping with `ggplot2`
 
 ``` r
+#Checking CRS
+if(st_crs(sites_shp) != st_crs(un_reefs)){
+  un_reefs <- un_reefs |> 
+    st_transform(crs = st_crs(sites_shp))
+}
+
+#Getting information for sites of interest
 site_list <- sites_of_interest(sites_shp, un_reefs)
 ```
 
-    ## Warning: attribute variables are assumed to be spatially constant throughout
-    ## all geometries
+    Warning: attribute variables are assumed to be spatially constant throughout
+    all geometries
 
 ``` r
 #Plotting results
@@ -192,7 +196,7 @@ sites_shp |>
   theme_bw()
 ```
 
-![](Extracting_Water_Temperature_GBR_Features_files/figure-gfm/gg_map-1.png)<!-- -->
+![](Extracting_Water_Temperature_GBR_Features_files/figure-commonmark/gg_map-1.png)
 
 ### Mapping with `leaflet`
 
@@ -215,7 +219,7 @@ leaflet() |>
 **Note**: Due to the size of the interactive map, we chose not to
 display it in the GitHub markdown (file ending in `.md`), however, you
 will be able to see it and interact with it when you run the code above
-in `RStudio` using the file ending in `.Rmd`.
+in `RStudio` using the file ending in `.qmd`.
 
 ## Extracting temperature for monitoring site within area of interest
 
@@ -246,24 +250,24 @@ temp_area_int <- temp_area_int |>
   summarise(temp_monthly_mean = round(mean(qc_val, na.rm = TRUE), 2))
 ```
 
-    ## `summarise()` has grouped output by 'year', 'month'. You can override using the
-    ## `.groups` argument.
+    `summarise()` has grouped output by 'year', 'month'. You can override using the
+    `.groups` argument.
 
 ``` r
 #Checking results
 head(temp_area_int)
 ```
 
-    ## # A tibble: 6 × 4
-    ## # Groups:   year, month [3]
-    ##    year month deployment_location temp_monthly_mean
-    ##   <dbl> <dbl> <chr>                           <dbl>
-    ## 1  1995    11 reef flat                        26.2
-    ## 2  1995    11 reef slope                       26.1
-    ## 3  1995    12 reef flat                        26.8
-    ## 4  1995    12 reef slope                       26.8
-    ## 5  1996     1 reef flat                        27.3
-    ## 6  1996     1 reef slope                       27.4
+    # A tibble: 6 × 4
+    # Groups:   year, month [3]
+       year month deployment_location temp_monthly_mean
+      <dbl> <dbl> <chr>                           <dbl>
+    1  1995    11 reef flat                        26.2
+    2  1995    11 reef slope                       26.1
+    3  1995    12 reef flat                        26.8
+    4  1995    12 reef slope                       26.8
+    5  1996     1 reef flat                        27.3
+    6  1996     1 reef slope                       27.4
 
 ## Plotting timeseries
 
@@ -294,7 +298,7 @@ temp_plot <- temp_area_int |>
 temp_plot
 ```
 
-![](Extracting_Water_Temperature_GBR_Features_files/figure-gfm/timeseries_plot-1.png)<!-- -->
+![](Extracting_Water_Temperature_GBR_Features_files/figure-commonmark/timeseries_plot-1.png)
 
 ## Saving data summaries and plot
 

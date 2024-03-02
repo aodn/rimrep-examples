@@ -2,10 +2,9 @@
 title: "NOAA_Degree_Heating_Week"
 author: "Denisse Fierro Arcos"
 date: "2023-10-18"
-output:
-  github_document:
+format: 
+  gfm:
     toc: true
-    html_preview: false
 ---
 
 # Accessing and plotting NOAA's Degree Heating Week data
@@ -15,7 +14,11 @@ In this notebook, we will use the `connect_dms_dataset` function from the `usefu
     
 # Loading libraries
   
-```{r, results = "hide", message = F, warning = F}
+```{r}
+#| results: hide
+#| message: false
+#| warning: false
+
 #Loading useful_functions script
 source("useful_functions.R")
 #Mapping
@@ -31,7 +34,7 @@ We will show how to get data from this API link for the period between 2023-01-0
   
 ```{r}
 #Defining API URL (obtained from STAC catalogue)
-base_url <- "https://pygeoapi.staging.reefdata.io/collections/noaa-crw-dhw/"
+base_url <- "https://pygeoapi.reefdata.io/collections/noaa-crw-chs-dhw"
 
 #Defining variable of interest (obtained from STAC catalogue)
 variable_name <- "degree_heating_week"
@@ -48,5 +51,3 @@ This function will query the API and return the data in gridded form (i.e., rast
 ```{r}
 plot(ras_dhw)
 ```
-
-

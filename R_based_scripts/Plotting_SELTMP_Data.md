@@ -1,5 +1,4 @@
-Plotting SELTMP data
-================
+# Plotting_SELTMP_Data
 Denisse Fierro Arcos
 2023-09-04
 
@@ -25,10 +24,11 @@ Denisse Fierro Arcos
 
 # Goal of this notebook
 
-This notebook will show how to access the RIMReP `geoparquet` collection
-for the Social and Economic Long-Term Monitoring Program (SELTMP) from
-CSIRO, which contains the latest results of this survey (2021). This
-dataset collects data on a subset of Great Barrier Reef (GBR) human
+This notebook will show how to access the RIMReP DMS `geoparquet`
+collection for the [Social and Economic Long-Term Monitoring Program
+(SELTMP)](https://stac.reefdata.io/browser/collections/seltmp/items/csiro-seltmp-baseline-surveys-jul22?.asset=asset-data)
+from CSIRO, which contains the latest results of this survey (2021).
+This dataset collects data on a subset of Great Barrier Reef (GBR) human
 dimension indicators relating to social, economic, cultural, and
 governance aspects of the GBR, as described within the Reef 2050 Long
 Term Sustainability Plan (Reef 2050 Plan). These human dimensions are
@@ -45,11 +45,14 @@ perception of climate change
 # Loading libraries
 
 ``` r
+#Accessing S3 bucket
 library(arrow)
+#Data cleaning and manipulation
 library(tidyverse)
-library(magrittr)
-library(tm)
 library(janitor)
+#Text mining
+library(tm)
+#Word cloud
 library(wordcloud2)
 ```
 
@@ -57,7 +60,7 @@ library(wordcloud2)
 
 ``` r
 #Establishing connection
-data_bucket <- s3_bucket("s3://rimrep-data-public/csiro-seltmp-baseline-surveys-jul22/data.parquet")
+data_bucket <- s3_bucket("s3://gbr-dms-data-public/csiro-seltmp-baseline-surveys-jul22/data.parquet")
 
 #Accessing SELTMP dataset
 data_df <- open_dataset(data_bucket)
@@ -66,31 +69,31 @@ data_df <- open_dataset(data_bucket)
 dim(data_df)
 ```
 
-    ## [1] 2440 1235
+    [1] 2440 1236
 
 ## Checking dataset structure
 
-As we can see above, the SELTMP dataset contains 2440 rows and 1235
+As we can see above, the SELTMP dataset contains 2440 rows and 1236
 columns. We can explore the contents of this dataset looking at its
 `schema`, which will print the name of all columns available in the
-dataset and the type of data they contain. Since there are 1235 columns,
+dataset and the type of data they contain. Since there are 1236 columns,
 we will just print the first 10 column names.
 
 ``` r
 head(data_df$schema, n = 10)
 ```
 
-    ## Schema
-    ## REGION: int64
-    ## recruit path: int64
-    ## q1: int64
-    ## q1a: double
-    ## q1a-label: string
-    ## quotagroup: int64
-    ## quotagroup-label: string
-    ## q1b: double
-    ## q1b-label: string
-    ## q2: int64
+    Schema
+    responseid: int64
+    REGION: int64
+    recruit path: int64
+    q1: int64
+    q1a: double
+    q1a-label: string
+    quotagroup: int64
+    quotagroup-label: string
+    q1b: double
+    q1b-label: string
 
 ## Loading dataset metadata
 
@@ -111,15 +114,15 @@ table <- read_parquet(table_bucket)
 head(table)
 ```
 
-    ## # A tibble: 6 × 3
-    ##   description                                                     new_name field
-    ##   <chr>                                                           <chr>    <chr>
-    ## 1 responseid                                                      ID       resp…
-    ## 2 REGION (1=WT, 2=TSV, 3=MWI, 4=FIT; 5=GH)                        REGION … REGI…
-    ## 3 Recruiting pathway (1 =  ORU panel, 2 = live link) (added by M… Recruit… recr…
-    ## 4 Q1 - What is your current residential / home postcode?          q1 - ho… q1   
-    ## 5 Q1a - Please select your City / Town (LGA):                     q1a - c… q1a  
-    ## 6 Text value for q1a                                              <NA>     q1a-…
+    # A tibble: 6 × 3
+      description                                                     new_name field
+      <chr>                                                           <chr>    <chr>
+    1 responseid                                                      ID       resp…
+    2 REGION (1=WT, 2=TSV, 3=MWI, 4=FIT; 5=GH)                        REGION … REGI…
+    3 Recruiting pathway (1 =  ORU panel, 2 = live link) (added by M… Recruit… recr…
+    4 Q1 - What is your current residential / home postcode?          q1 - ho… q1   
+    5 Q1a - Please select your City / Town (LGA):                     q1a - c… q1a  
+    6 Text value for q1a                                              <NA>     q1a-…
 
 ## Extracting data about recreational activities
 
@@ -134,20 +137,20 @@ rec <- table |>
 rec
 ```
 
-    ## # A tibble: 65 × 3
-    ##    description                                                    new_name field
-    ##    <chr>                                                          <chr>    <chr>
-    ##  1 W9_1 - Fishing                                                 w9_1 - … w9_1 
-    ##  2 W9_2 - Boating or sailing                                      w9_2 - … w9_2 
-    ##  3 W9_3 - Snorkelling/freediving/Scuba diving                     w9_3 - … w9_3 
-    ##  4 W9_4 - Motor-powered water sports (e.g. water skiing, jet ski) w9_4 - … w9_4 
-    ##  5 W9_5 - Wind-powered water sports (e.g. kite surfing)           w9_5 - … w9_5 
-    ##  6 W9_6 - Paddling/canoeing/kayaking                              w9_6 - … w9_6 
-    ##  7 W9_7 - Camping                                                 w9_7 - … w9_7 
-    ##  8 W9_8 - Swimming                                                w9_8 - … w9_8 
-    ##  9 W9_9 - Picnics and barbeques                                   w9_9 - … w9_9 
-    ## 10 W9_10 - Exercising/hiking/biking/running                       w9_10 -… w9_10
-    ## # ℹ 55 more rows
+    # A tibble: 65 × 3
+       description                                                    new_name field
+       <chr>                                                          <chr>    <chr>
+     1 W9_1 - Fishing                                                 w9_1 - … w9_1 
+     2 W9_2 - Boating or sailing                                      w9_2 - … w9_2 
+     3 W9_3 - Snorkelling/freediving/Scuba diving                     w9_3 - … w9_3 
+     4 W9_4 - Motor-powered water sports (e.g. water skiing, jet ski) w9_4 - … w9_4 
+     5 W9_5 - Wind-powered water sports (e.g. kite surfing)           w9_5 - … w9_5 
+     6 W9_6 - Paddling/canoeing/kayaking                              w9_6 - … w9_6 
+     7 W9_7 - Camping                                                 w9_7 - … w9_7 
+     8 W9_8 - Swimming                                                w9_8 - … w9_8 
+     9 W9_9 - Picnics and barbeques                                   w9_9 - … w9_9 
+    10 W9_10 - Exercising/hiking/biking/running                       w9_10 -… w9_10
+    # ℹ 55 more rows
 
 From the table above, we can see that question `9` contains data about
 recreational activities. We can also see that there are multiple options
@@ -172,20 +175,20 @@ rec <- rec |>
 rec
 ```
 
-    ## # A tibble: 65 × 3
-    ##    activity                                                field region     
-    ##    <chr>                                                   <chr> <chr>      
-    ##  1 Fishing                                                 w9_1  WET TROPICS
-    ##  2 Boating or sailing                                      w9_2  WET TROPICS
-    ##  3 Snorkelling/freediving/Scuba diving                     w9_3  WET TROPICS
-    ##  4 Motor-powered water sports (e.g. water skiing, jet ski) w9_4  WET TROPICS
-    ##  5 Wind-powered water sports (e.g. kite surfing)           w9_5  WET TROPICS
-    ##  6 Paddling/canoeing/kayaking                              w9_6  WET TROPICS
-    ##  7 Camping                                                 w9_7  WET TROPICS
-    ##  8 Swimming                                                w9_8  WET TROPICS
-    ##  9 Picnics and barbeques                                   w9_9  WET TROPICS
-    ## 10 Exercising/hiking/biking/running                        w9_10 WET TROPICS
-    ## # ℹ 55 more rows
+    # A tibble: 65 × 3
+       activity                                                field region     
+       <chr>                                                   <chr> <chr>      
+     1 Fishing                                                 w9_1  WET TROPICS
+     2 Boating or sailing                                      w9_2  WET TROPICS
+     3 Snorkelling/freediving/Scuba diving                     w9_3  WET TROPICS
+     4 Motor-powered water sports (e.g. water skiing, jet ski) w9_4  WET TROPICS
+     5 Wind-powered water sports (e.g. kite surfing)           w9_5  WET TROPICS
+     6 Paddling/canoeing/kayaking                              w9_6  WET TROPICS
+     7 Camping                                                 w9_7  WET TROPICS
+     8 Swimming                                                w9_8  WET TROPICS
+     9 Picnics and barbeques                                   w9_9  WET TROPICS
+    10 Exercising/hiking/biking/running                        w9_10 WET TROPICS
+    # ℹ 55 more rows
 
 Now we have the necessary information to extract the questions from the
 complete SELTMP dataset that tell us about recreational activities in
@@ -236,24 +239,24 @@ recreation <- recreation |>
   mutate(order_plot = mean(per_rec))
 ```
 
-    ## `summarise()` has grouped output by 'region'. You can override using the
-    ## `.groups` argument.
+    `summarise()` has grouped output by 'region'. You can override using the
+    `.groups` argument.
 
 ``` r
 #Checking result
 head(recreation)
 ```
 
-    ## # A tibble: 6 × 6
-    ## # Groups:   activity [6]
-    ##   region  activity                         rec_act respondent per_rec order_plot
-    ##   <chr>   <chr>                              <dbl>      <dbl>   <dbl>      <dbl>
-    ## 1 Fitzroy Boating or sailing                   136        453      30       31.8
-    ## 2 Fitzroy Camping                              147        453      32       32.8
-    ## 3 Fitzroy Exercising/hiking/biking/running     188        453      42       49  
-    ## 4 Fitzroy Fishing                              225        453      50       50.2
-    ## 5 Fitzroy Motor-powered water sports (e.g…      45        453      10        8.4
-    ## 6 Fitzroy Other                                 39        453       9        7.2
+    # A tibble: 6 × 6
+    # Groups:   activity [6]
+      region  activity                         rec_act respondent per_rec order_plot
+      <chr>   <chr>                              <dbl>      <dbl>   <dbl>      <dbl>
+    1 Fitzroy Boating or sailing                   136        453      30       31.8
+    2 Fitzroy Camping                              147        453      32       32.8
+    3 Fitzroy Exercising/hiking/biking/running     188        453      42       49  
+    4 Fitzroy Fishing                              225        453      50       50.2
+    5 Fitzroy Motor-powered water sports (e.g…      45        453      10        8.4
+    6 Fitzroy Other                                 39        453       9        7.2
 
 ### Plotting data about recreational activities
 
@@ -295,7 +298,7 @@ rec_plot <- recreation |>
 rec_plot
 ```
 
-![](Plotting_SELTMP_Data_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](Plotting_SELTMP_Data_files/figure-commonmark/unnamed-chunk-5-1.png)
 
 The above figure can be saved locally with the following line:
 `ggsave("recreation_activities_plot.png", rec_plot, device = "png")`.
@@ -315,20 +318,20 @@ health <- table |>
 health
 ```
 
-    ## # A tibble: 53 × 3
-    ##    description                                             new_name        field
-    ##    <chr>                                                   <chr>           <chr>
-    ##  1 W13_1 - Freshwater creeks and rivers                    w13_1 - WET TR… w13_1
-    ##  2 W13_2 - Freshwater lakes, dams and wetlands             w13_2 - WET TR… w13_2
-    ##  3 W13_3 - Estuaries (including mangroves and saltmarshes) w13_3 - WET TR… w13_3
-    ##  4 W13_4 - Beaches and the coast                           w13_4 - WET TR… w13_4
-    ##  5 W13_5 - Seagrass                                        w13_5 - WET TR… w13_5
-    ##  6 W13_6 - Inshore coral reefs                             w13_6 - WET TR… w13_6
-    ##  7 W13_7 - Offshore coral reefs                            w13_7 - WET TR… w13_7
-    ##  8 W13_8 - Ocean and sea                                   w13_8 - WET TR… w13_8
-    ##  9 T13_1 - Freshwater creeks and rivers                    t13_1 - TOWNSV… t13_1
-    ## 10 T13_2 - Freshwater lakes, dams and wetlands             t13_2 - TOWNSV… t13_2
-    ## # ℹ 43 more rows
+    # A tibble: 53 × 3
+       description                                             new_name        field
+       <chr>                                                   <chr>           <chr>
+     1 W13_1 - Freshwater creeks and rivers                    w13_1 - WET TR… w13_1
+     2 W13_2 - Freshwater lakes, dams and wetlands             w13_2 - WET TR… w13_2
+     3 W13_3 - Estuaries (including mangroves and saltmarshes) w13_3 - WET TR… w13_3
+     4 W13_4 - Beaches and the coast                           w13_4 - WET TR… w13_4
+     5 W13_5 - Seagrass                                        w13_5 - WET TR… w13_5
+     6 W13_6 - Inshore coral reefs                             w13_6 - WET TR… w13_6
+     7 W13_7 - Offshore coral reefs                            w13_7 - WET TR… w13_7
+     8 W13_8 - Ocean and sea                                   w13_8 - WET TR… w13_8
+     9 T13_1 - Freshwater creeks and rivers                    t13_1 - TOWNSV… t13_1
+    10 T13_2 - Freshwater lakes, dams and wetlands             t13_2 - TOWNSV… t13_2
+    # ℹ 43 more rows
 
 The first thing we notice is that for some regions there are more
 questions about perceived health, which refer to areas that are not
@@ -372,20 +375,20 @@ health <- health |>
 health
 ```
 
-    ## # A tibble: 30 × 3
-    ##    area                                            field       region     
-    ##    <chr>                                           <chr>       <chr>      
-    ##  1 Freshwater creeks and rivers                    w13_1-label WET TROPICS
-    ##  2 Freshwater lakes, dams and wetlands             w13_2-label WET TROPICS
-    ##  3 Estuaries (including mangroves and saltmarshes) w13_3-label WET TROPICS
-    ##  4 Beaches and the coast                           w13_4-label WET TROPICS
-    ##  5 Seagrass                                        w13_5-label WET TROPICS
-    ##  6 Inshore coral reefs                             w13_6-label WET TROPICS
-    ##  7 Offshore coral reefs                            w13_7-label WET TROPICS
-    ##  8 Ocean and sea                                   w13_8-label WET TROPICS
-    ##  9 Freshwater creeks and rivers                    t13_1-label TOWNSVILLE 
-    ## 10 Freshwater lakes, dams and wetlands             t13_2-label TOWNSVILLE 
-    ## # ℹ 20 more rows
+    # A tibble: 30 × 3
+       area                                            field       region     
+       <chr>                                           <chr>       <chr>      
+     1 Freshwater creeks and rivers                    w13_1-label WET TROPICS
+     2 Freshwater lakes, dams and wetlands             w13_2-label WET TROPICS
+     3 Estuaries (including mangroves and saltmarshes) w13_3-label WET TROPICS
+     4 Beaches and the coast                           w13_4-label WET TROPICS
+     5 Seagrass                                        w13_5-label WET TROPICS
+     6 Inshore coral reefs                             w13_6-label WET TROPICS
+     7 Offshore coral reefs                            w13_7-label WET TROPICS
+     8 Ocean and sea                                   w13_8-label WET TROPICS
+     9 Freshwater creeks and rivers                    t13_1-label TOWNSVILLE 
+    10 Freshwater lakes, dams and wetlands             t13_2-label TOWNSVILLE 
+    # ℹ 20 more rows
 
 As we did with the previous plot, we will use the table above to extract
 the questions that contain data about perceptions of waterway health. In
@@ -445,22 +448,22 @@ water_health_reg <- water_health |>
 head(water_health)
 ```
 
-    ## # A tibble: 6 × 31
-    ##   `w13_1-label`          `w13_2-label` `w13_3-label` `w13_4-label` `w13_5-label`
-    ##   <chr>                  <chr>         <chr>         <chr>         <chr>        
-    ## 1 In good health         In good heal… In good heal… In good heal… In good heal…
-    ## 2 <NA>                   <NA>          <NA>          <NA>          <NA>         
-    ## 3 <NA>                   <NA>          <NA>          <NA>          <NA>         
-    ## 4 In fair health         In fair heal… In fair heal… In good heal… I don't know 
-    ## 5 Not applicable (have … Not applicab… Not applicab… In fair heal… I don't know 
-    ## 6 In good health         In good heal… In good heal… Not applicab… In good heal…
-    ## # ℹ 26 more variables: `w13_6-label` <chr>, `w13_7-label` <chr>,
-    ## #   `w13_8-label` <chr>, `t13_1-label` <chr>, `t13_2-label` <chr>,
-    ## #   `t13_3-label` <chr>, `t13_4-label` <chr>, `t13_5-label` <chr>,
-    ## #   `t13_6-label` <chr>, `t13_7-label` <chr>, `t13_8-label` <chr>,
-    ## #   `m13_1-label` <chr>, `m13_2-label` <chr>, `m13_3-label` <chr>,
-    ## #   `m13_4-label` <chr>, `m13_5-label` <chr>, `m13_6-label` <chr>,
-    ## #   `m13_7-label` <chr>, `m13_8-label` <chr>, `f13_1-label` <chr>, …
+    # A tibble: 6 × 31
+      `w13_1-label`          `w13_2-label` `w13_3-label` `w13_4-label` `w13_5-label`
+      <chr>                  <chr>         <chr>         <chr>         <chr>        
+    1 In good health         In good heal… In good heal… In good heal… In good heal…
+    2 <NA>                   <NA>          <NA>          <NA>          <NA>         
+    3 <NA>                   <NA>          <NA>          <NA>          <NA>         
+    4 In fair health         In fair heal… In fair heal… In good heal… I don't know 
+    5 Not applicable (have … Not applicab… Not applicab… In fair heal… I don't know 
+    6 In good health         In good heal… In good heal… Not applicab… In good heal…
+    # ℹ 26 more variables: `w13_6-label` <chr>, `w13_7-label` <chr>,
+    #   `w13_8-label` <chr>, `t13_1-label` <chr>, `t13_2-label` <chr>,
+    #   `t13_3-label` <chr>, `t13_4-label` <chr>, `t13_5-label` <chr>,
+    #   `t13_6-label` <chr>, `t13_7-label` <chr>, `t13_8-label` <chr>,
+    #   `m13_1-label` <chr>, `m13_2-label` <chr>, `m13_3-label` <chr>,
+    #   `m13_4-label` <chr>, `m13_5-label` <chr>, `m13_6-label` <chr>,
+    #   `m13_7-label` <chr>, `m13_8-label` <chr>, `f13_1-label` <chr>, …
 
 ### Plotting data about waterway health
 
@@ -495,7 +498,7 @@ water_health_reg |>
         plot.caption = element_text(hjust = 0))
 ```
 
-![](Plotting_SELTMP_Data_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+![](Plotting_SELTMP_Data_files/figure-commonmark/unnamed-chunk-9-1.png)
 
 ## Extracting data about governance
 
@@ -517,19 +520,19 @@ table |>
   filter(str_detect(str_to_lower(description), "science"))
 ```
 
-    ## # A tibble: 10 × 3
-    ##    description                                                    new_name field
-    ##    <chr>                                                          <chr>    <chr>
-    ##  1 W18_12 - I trust the science about waterway health and manage… w18_12 … w18_…
-    ##  2 W21_5 - Science and Education                                  w21_5 -… w21_5
-    ##  3 T18_12 - I trust the science about waterway health and manage… t18_12 … t18_…
-    ##  4 T21_5 - Science and Education                                  t21_5 -… t21_5
-    ##  5 M18_12 - I trust the science about waterway health and manage… m18_12 … m18_…
-    ##  6 M21_5 - Science and Education                                  m21_5 -… m21_5
-    ##  7 F18_12 - I trust the science about waterway health and manage… f18_12 … f18_…
-    ##  8 F21_5 - Science and Education                                  f21_5 -… f21_5
-    ##  9 F18. Please rate your level of agreement with the following s… F18_12 … F18_…
-    ## 10 F21. Which broad sector of waterway-dependent business or emp… F21_9 -… F21_9
+    # A tibble: 10 × 3
+       description                                                    new_name field
+       <chr>                                                          <chr>    <chr>
+     1 W18_12 - I trust the science about waterway health and manage… w18_12 … w18_…
+     2 W21_5 - Science and Education                                  w21_5 -… w21_5
+     3 T18_12 - I trust the science about waterway health and manage… t18_12 … t18_…
+     4 T21_5 - Science and Education                                  t21_5 -… t21_5
+     5 M18_12 - I trust the science about waterway health and manage… m18_12 … m18_…
+     6 M21_5 - Science and Education                                  m21_5 -… m21_5
+     7 F18_12 - I trust the science about waterway health and manage… f18_12 … f18_…
+     8 F21_5 - Science and Education                                  f21_5 -… f21_5
+     9 F18. Please rate your level of agreement with the following s… F18_12 … F18_…
+    10 F21. Which broad sector of waterway-dependent business or emp… F21_9 -… F21_9
 
 We can see that trust in science falls under question `18`. We will do
 another query to our table and check that all variables needed for the
@@ -550,20 +553,20 @@ govern <- table |>
 govern
 ```
 
-    ## # A tibble: 30 × 3
-    ##    description                                                    new_name field
-    ##    <chr>                                                          <chr>    <chr>
-    ##  1 W18_7 - I think that decisions about managing local waterways… w18_7 -… w18_7
-    ##  2 W18_8 - I do not have fair access to all the waterways in my … w18_8 -… w18_8
-    ##  3 W18_9 - I feel I personally have some influence over how loca… w18_9 -… w18_9
-    ##  4 W18_10 - I feel able to have input into the management of wat… w18_10 … w18_…
-    ##  5 W18_11 - I trust the information I receive from institutions … w18_11 … w18_…
-    ##  6 W18_12 - I trust the science about waterway health and manage… w18_12 … w18_…
-    ##  7 T18_7 - I think that decisions about managing local waterways… t18_7 -… t18_7
-    ##  8 T18_8 - I do not have fair access to all the waterways in my … t18_8 -… t18_8
-    ##  9 T18_9 - I feel I personally have some influence over how loca… t18_9 -… t18_9
-    ## 10 T18_10 - I feel able to have input into the management of wat… t18_10 … t18_…
-    ## # ℹ 20 more rows
+    # A tibble: 30 × 3
+       description                                                    new_name field
+       <chr>                                                          <chr>    <chr>
+     1 W18_7 - I think that decisions about managing local waterways… w18_7 -… w18_7
+     2 W18_8 - I do not have fair access to all the waterways in my … w18_8 -… w18_8
+     3 W18_9 - I feel I personally have some influence over how loca… w18_9 -… w18_9
+     4 W18_10 - I feel able to have input into the management of wat… w18_10 … w18_…
+     5 W18_11 - I trust the information I receive from institutions … w18_11 … w18_…
+     6 W18_12 - I trust the science about waterway health and manage… w18_12 … w18_…
+     7 T18_7 - I think that decisions about managing local waterways… t18_7 -… t18_7
+     8 T18_8 - I do not have fair access to all the waterways in my … t18_8 -… t18_8
+     9 T18_9 - I feel I personally have some influence over how loca… t18_9 -… t18_9
+    10 T18_10 - I feel able to have input into the management of wat… t18_10 … t18_…
+    # ℹ 20 more rows
 
 We have identified the fields containing the information we need to
 recreate the plot. We now need to tidy up our table as we have done
@@ -584,20 +587,20 @@ govern <- govern |>
 govern
 ```
 
-    ## # A tibble: 30 × 3
-    ##    question                        field  region     
-    ##    <chr>                           <chr>  <chr>      
-    ##  1 " DECISIONS ARE MADE FAIRLY"    w18_7  WET TROPICS
-    ##  2 " DONT HAVE FAIR ACCESS"        w18_8  WET TROPICS
-    ##  3 " SOME PERSONAL INFLUENCE"      w18_9  WET TROPICS
-    ##  4 " ABLE TO HAVE INPUT"           w18_10 WET TROPICS
-    ##  5 " TRUST INFO FROM INSTITUTIONS" w18_11 WET TROPICS
-    ##  6 " TRUST THE SCIENCE"            w18_12 WET TROPICS
-    ##  7 " DECISIONS ARE MADE FAIRLY"    t18_7  TOWNSVILLE 
-    ##  8 " DONT HAVE FAIR ACCESS"        t18_8  TOWNSVILLE 
-    ##  9 " SOME PERSONAL INFLUENCE"      t18_9  TOWNSVILLE 
-    ## 10 " ABLE TO HAVE INPUT"           t18_10 TOWNSVILLE 
-    ## # ℹ 20 more rows
+    # A tibble: 30 × 3
+       question                        field  region     
+       <chr>                           <chr>  <chr>      
+     1 " DECISIONS ARE MADE FAIRLY"    w18_7  WET TROPICS
+     2 " DONT HAVE FAIR ACCESS"        w18_8  WET TROPICS
+     3 " SOME PERSONAL INFLUENCE"      w18_9  WET TROPICS
+     4 " ABLE TO HAVE INPUT"           w18_10 WET TROPICS
+     5 " TRUST INFO FROM INSTITUTIONS" w18_11 WET TROPICS
+     6 " TRUST THE SCIENCE"            w18_12 WET TROPICS
+     7 " DECISIONS ARE MADE FAIRLY"    t18_7  TOWNSVILLE 
+     8 " DONT HAVE FAIR ACCESS"        t18_8  TOWNSVILLE 
+     9 " SOME PERSONAL INFLUENCE"      t18_9  TOWNSVILLE 
+    10 " ABLE TO HAVE INPUT"           t18_10 TOWNSVILLE 
+    # ℹ 20 more rows
 
 Note that unlike the previous example, we will not use the `-label`
 columns because we are interested in the quantifying the level of
@@ -642,29 +645,29 @@ governance <- governance |>
   mutate(order_plot = mean(agree_mean))
 ```
 
-    ## `summarise()` has grouped output by 'region'. You can override using the
-    ## `.groups` argument.
+    `summarise()` has grouped output by 'region'. You can override using the
+    `.groups` argument.
 
 ``` r
 #Checking results
 governance
 ```
 
-    ## # A tibble: 30 × 7
-    ## # Groups:   question [6]
-    ##    region    question         agree_mean agree_sd respondent agree_se order_plot
-    ##    <chr>     <chr>                 <dbl>    <dbl>      <dbl>    <dbl>      <dbl>
-    ##  1 Fitzroy   " ABLE TO HAVE …       4.98     2.36        467   0.109        5.00
-    ##  2 Fitzroy   " DECISIONS ARE…       5.55     2.16        467   0.0999       5.52
-    ##  3 Fitzroy   " DONT HAVE FAI…       4.35     2.48        467   0.115        4.41
-    ##  4 Fitzroy   " SOME PERSONAL…       4.29     2.34        467   0.108        4.27
-    ##  5 Fitzroy   " TRUST INFO FR…       5.94     2.30        467   0.107        6.02
-    ##  6 Fitzroy   " TRUST THE SCI…       6.65     2.45        467   0.113        6.8 
-    ##  7 Gladstone " ABLE TO HAVE …       5.53     2.29        563   0.0967       5.00
-    ##  8 Gladstone " DECISIONS ARE…       6.09     2.05        563   0.0863       5.52
-    ##  9 Gladstone " DONT HAVE FAI…       4.02     2.39        563   0.101        4.41
-    ## 10 Gladstone " SOME PERSONAL…       4.59     2.24        563   0.0945       4.27
-    ## # ℹ 20 more rows
+    # A tibble: 30 × 7
+    # Groups:   question [6]
+       region    question         agree_mean agree_sd respondent agree_se order_plot
+       <chr>     <chr>                 <dbl>    <dbl>      <dbl>    <dbl>      <dbl>
+     1 Fitzroy   " ABLE TO HAVE …       4.98     2.36        467   0.109        5.00
+     2 Fitzroy   " DECISIONS ARE…       5.55     2.16        467   0.0999       5.52
+     3 Fitzroy   " DONT HAVE FAI…       4.35     2.48        467   0.115        4.41
+     4 Fitzroy   " SOME PERSONAL…       4.29     2.34        467   0.108        4.27
+     5 Fitzroy   " TRUST INFO FR…       5.94     2.30        467   0.107        6.02
+     6 Fitzroy   " TRUST THE SCI…       6.65     2.45        467   0.113        6.8 
+     7 Gladstone " ABLE TO HAVE …       5.53     2.29        563   0.0967       5.00
+     8 Gladstone " DECISIONS ARE…       6.09     2.05        563   0.0863       5.52
+     9 Gladstone " DONT HAVE FAI…       4.02     2.39        563   0.101        4.41
+    10 Gladstone " SOME PERSONAL…       4.59     2.24        563   0.0945       4.27
+    # ℹ 20 more rows
 
 ### Plotting data about governance
 
@@ -704,7 +707,7 @@ governance |>
         plot.caption = element_text(hjust = 0))
 ```
 
-![](Plotting_SELTMP_Data_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+![](Plotting_SELTMP_Data_files/figure-commonmark/unnamed-chunk-14-1.png)
 
 ### Word cloud example using favourite waterways for recreation
 
@@ -722,20 +725,20 @@ water <- table |>
   select(field, region)
 ```
 
-    ## Warning: Expected 2 pieces. Additional pieces discarded in 4 rows [1, 2, 3, 4].
+    Warning: Expected 2 pieces. Additional pieces discarded in 4 rows [1, 2, 3, 4].
 
 ``` r
 #Checking results
 water
 ```
 
-    ## # A tibble: 4 × 2
-    ##   field region     
-    ##   <chr> <chr>      
-    ## 1 w10   WET TROPICS
-    ## 2 t10   TOWNSVILLE 
-    ## 3 m10   MWI        
-    ## 4 f10   FITZROY
+    # A tibble: 4 × 2
+      field region     
+      <chr> <chr>      
+    1 w10   WET TROPICS
+    2 t10   TOWNSVILLE 
+    3 m10   MWI        
+    4 f10   FITZROY    
 
 In this case, we will show global results, so we will ignore regions.
 However, by changing the grouping of the data, we can create word clouds
@@ -791,20 +794,20 @@ fav_water <- fav_water |>
 fav_water
 ```
 
-    ## # A tibble: 957 × 2
-    ##    waterways              n
-    ##    <chr>              <int>
-    ##  1 ross river            93
-    ##  2 fitzroy river         83
-    ##  3 strand                81
-    ##  4 crystal creek         45
-    ##  5 beach                 43
-    ##  6 great barrier reef    28
-    ##  7 magnetic island       28
-    ##  8 pioneer river         27
-    ##  9 stoney creek          24
-    ## 10 causeway lake         22
-    ## # ℹ 947 more rows
+    # A tibble: 957 × 2
+       waterways              n
+       <chr>              <int>
+     1 ross river            93
+     2 fitzroy river         83
+     3 strand                81
+     4 crystal creek         45
+     5 beach                 43
+     6 great barrier reef    28
+     7 magnetic island       28
+     8 pioneer river         27
+     9 stoney creek          24
+    10 causeway lake         22
+    # ℹ 947 more rows
 
 More work needs to be done in cleaning this dataset. However, since
 there are over 1,000 rows with responses, it is beyond the scope of this

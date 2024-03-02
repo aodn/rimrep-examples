@@ -1,35 +1,36 @@
 ---
-title: "Plotting SELTMP data"
+title: "Plotting_SELTMP_Data"
 author: "Denisse Fierro Arcos"
 date: "2023-09-04"
-output: 
-  github_document:
+format: 
+  gfm:
     toc: true
-    html_preview: false
 ---
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
 
 # Goal of this notebook
 
-This notebook will show how to access the RIMReP `geoparquet` collection for the Social and Economic Long-Term Monitoring Program (SELTMP) from CSIRO, which contains the latest results of this survey (2021). This dataset collects data on a subset of Great Barrier Reef (GBR) human dimension indicators relating to social, economic, cultural, and governance aspects of the GBR, as described within the Reef 2050 Long Term Sustainability Plan (Reef 2050 Plan). These human dimensions are considered to play a pivotal role in resilience-based management of the GBR.  
+This notebook will show how to access the RIMReP DMS `geoparquet` collection for the [Social and Economic Long-Term Monitoring Program (SELTMP)](https://stac.reefdata.io/browser/collections/seltmp/items/csiro-seltmp-baseline-surveys-jul22?.asset=asset-data) from CSIRO, which contains the latest results of this survey (2021). This dataset collects data on a subset of Great Barrier Reef (GBR) human dimension indicators relating to social, economic, cultural, and governance aspects of the GBR, as described within the Reef 2050 Long Term Sustainability Plan (Reef 2050 Plan). These human dimensions are considered to play a pivotal role in resilience-based management of the GBR.  
   
 In this example, we will produce three figures:  
 1. Bar plot showing the proportion of people surveyed performing recreational activities per region  
 2. Bar plot showing people's perception of waterway health  
 3. Bar plot comparing the trust in science by fishers against their perception of climate change  
   
-
 # Loading libraries
+  
+```{r} 
+#| results: hide
+#| message: false
+#| warning: false
 
-```{r libraries, results = "hide", message = F, warning = F}
+#Accessing S3 bucket
 library(arrow)
+#Data cleaning and manipulation
 library(tidyverse)
-library(magrittr)
-library(tm)
 library(janitor)
+#Text mining
+library(tm)
+#Word cloud
 library(wordcloud2)
 ```
 
@@ -37,7 +38,7 @@ library(wordcloud2)
 
 ```{r connect_abs_data}
 #Establishing connection
-data_bucket <- s3_bucket("s3://rimrep-data-public/csiro-seltmp-baseline-surveys-jul22/data.parquet")
+data_bucket <- s3_bucket("s3://gbr-dms-data-public/csiro-seltmp-baseline-surveys-jul22/data.parquet")
 
 #Accessing SELTMP dataset
 data_df <- open_dataset(data_bucket)
@@ -47,7 +48,6 @@ dim(data_df)
 ```
   
 ## Checking dataset structure
-
 As we can see above, the SELTMP dataset contains `r nrow(data_df)` rows and `r ncol(data_df)` columns. We can explore the contents of this dataset looking at its `schema`, which will print the name of all columns available in the dataset and the type of data they contain. Since there are `r ncol(data_df)` columns, we will just print the first 10 column names.  
   
 ```{r exploring_dataset}
@@ -82,7 +82,7 @@ rec
   
 From the table above, we can see that question `9` contains data about recreational activities. We can also see that there are multiple options for recreational activities under the same question. We will create a new column that will identify the activity, so we can plot it.  
   
-We will also keep the region column (`quotagroup-label`) because this contains the regions where respondents were located and we want to create a bar plot that shows the differences in responses across regions.      
+We will also keep the region column (`quotagroup-label`) because this contains the regions where respondents were located and we want to create a bar plot that shows the differences in responses across regions.  
   
 ```{r}
 rec <- rec |> 
@@ -149,7 +149,6 @@ head(recreation)
 ### Plotting data about recreational activities
 Our data is now ready for us to make a plot. We will order our plot by the mean percentage of people reporting performing an activity. Higher proportions will be at the bottom and decrease towards the top.  
   
-
 ```{r}
 #Creating plot and assign it to a variable
 rec_plot <- recreation |> 
@@ -185,9 +184,9 @@ rec_plot
 ```
   
 The above figure can be saved locally with the following line: `ggsave("recreation_activities_plot.png", rec_plot, device = "png")`.  
-
+  
 ## Extracting data about waterway health
-Using the metadata table we loaded towards the beginning of this notebook, we will find the survey questions that cover perceived waterway health.
+Using the metadata table we loaded towards the beginning of this notebook, we will find the survey questions that cover perceived waterway health.  
   
 ```{r}
 #Searching for matches
@@ -319,7 +318,7 @@ Finally, we will replicate one of the plots about governance of waterways that i
   
 Since the plot does not include a keyword that is common for all variables, we will search for `science` since the first variable in the plot is about "trust in science about waterways".  
   
-![Original plot from SELTMP to be replicated here](../images/sample_plot.jpeg).
+![Original plot from SELTMP to be replicated here](../images/sample_plot.jpeg).  
   
 ```{r}
 #Searching for matches - We will use "science" as a keyword
@@ -405,7 +404,7 @@ governance
   
 ### Plotting data about governance
 Our data is now ready for us to make a plot. We will order our plot by the mean agreement. Higher agreement will be on the left and decrease to the right.  
-
+  
 ```{r}
 #Creating plot and assign it to a variable
 governance |> 
@@ -440,9 +439,8 @@ governance |>
 ```
     
 ### Word cloud example using favourite waterways for recreation
-  
 We will search for the relevant questions in our table of variables, and prepare query results to extract data from SELTMP dataset.    
-
+  
 ```{r}
 #Searching for matches
 water <- table |>
@@ -516,4 +514,5 @@ Note that you will need to run this notebook in your local machine to see the re
 ```{r eval=FALSE}
 wordcloud2(fav_water)
 ```
+
 

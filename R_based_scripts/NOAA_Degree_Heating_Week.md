@@ -1,5 +1,4 @@
-NOAA_Degree_Heating_Week
-================
+# NOAA_Degree_Heating_Week
 Denisse Fierro Arcos
 2023-10-18
 
@@ -57,7 +56,7 @@ RIMReP team to set up an account by emailing <info-rimrep@utas.edu.au>.
 
 ``` r
 #Defining API URL (obtained from STAC catalogue)
-base_url <- "https://pygeoapi.staging.reefdata.io/collections/noaa-crw-dhw/"
+base_url <- "https://pygeoapi.reefdata.io/collections/noaa-crw-chs-dhw"
 
 #Defining variable of interest (obtained from STAC catalogue)
 variable_name <- "degree_heating_week"
@@ -69,7 +68,13 @@ ras_dhw <- connect_dms_dataset(base_url, variable_name,
                            lat_limits = c(-17, -16.30))
 ```
 
-    ## Loading required package: tcltk
+    Warning: No 'access_token' and no user credentials were provided as input.
+
+    Checking if 'CLIENT_ID' variable exists.
+
+    Warning: No 'access_token' and user credentials were provided as input.
+
+    Checking if 'CLIENT_SECRET' variable exists.
 
 This function will query the API and return the data in gridded form
 (i.e., raster). Once the data is loaded to memory, we can plot it using
@@ -79,4 +84,4 @@ the `terra` library.
 plot(ras_dhw)
 ```
 
-![](NOAA_Degree_Heating_Week_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+![](NOAA_Degree_Heating_Week_files/figure-commonmark/unnamed-chunk-3-1.png)
