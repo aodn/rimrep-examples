@@ -7,7 +7,6 @@
 # Loading libraries -------------------------------------------------------
 library(arrow)
 library(dplyr)
-library(magrittr)
 library(stringr)
 library(ggplot2)
 library(sf)
