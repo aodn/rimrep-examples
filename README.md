@@ -14,11 +14,11 @@ This repository contains example notebooks in `R` and `Python` showing how to ac
 
 ## More information
 
--   [Using API to access RIMReP DMS datasets](docs/rimrep_api_access.md)  
--   [Running example notebooks in this repository](docs/running_notebooks.md)  
-    -   [Setting up your machine](docs/running_notebooks.md/#setting-up-your-machine)  
--   [Description of example notebooks in repository](docs/repository_file_description.md/#description-of-example-notebooks-in-repository)  
--   [Description of scripts in repository](docs/repository_file_description.md/#description-of-scripts-in-repository)  
+-   [Using API to access RIMReP DMS datasets](more_information/rimrep_api_access.md)  
+-   [Running example notebooks in this repository](more_information/running_notebooks.md)  
+    -   [Setting up your machine](more_information/running_notebooks.md/#setting-up-your-machine)  
+-   [Description of example notebooks in repository](more_information/repository_file_description.md/#description-of-example-notebooks-in-repository)  
+-   [Description of scripts in repository](more_information/repository_file_description.md/#description-of-scripts-in-repository)  
 
 ## What is RIMReP DMS?
 
