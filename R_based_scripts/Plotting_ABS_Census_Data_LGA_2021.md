@@ -1,15 +1,14 @@
-Plotting ABS data
-================
+# Plotting_ABS_Census_Data_LGA_2021
 Denisse Fierro Arcos
 2023-06-14
 
 - [Goal of this notebook](#goal-of-this-notebook)
   - [Loading libraries](#loading-libraries)
-  - [Connecting to RIMReP collection and loading ABS regional
-    dataset](#connecting-to-rimrep-collection-and-loading-abs-regional-dataset)
+  - [Connecting to RIMReP DMS collection and loading ABS regional
+    dataset](#connecting-to-rimrep-dms-collection-and-loading-abs-regional-dataset)
   - [Subsetting ABS dataset: QLD LGAs](#subsetting-abs-dataset-qld-lgas)
-  - [Connecting to RIMReP collection and loading description of each
-    column](#connecting-to-rimrep-collection-and-loading-description-of-each-column)
+  - [Connecting to dataset table with description of each
+    column](#connecting-to-dataset-table-with-description-of-each-column)
   - [Subsetting ABS dataset: Keeping columns of
     interest](#subsetting-abs-dataset-keeping-columns-of-interest)
   - [Creating summary tables](#creating-summary-tables)
@@ -21,11 +20,12 @@ Denisse Fierro Arcos
 
 # Goal of this notebook
 
-This notebook will show how to access the RIMReP `geoparquet` collection
-for the Regional Data by Local Government Area (LGA) from the Australian
-Bureau of Statistics (ABS), which contains data for the period between
-2011 and 2022. This dataset includes data for the Census of Population
-and Housing for 2011, 2016 and 2021.
+This notebook will show how to access the RIMReP DMS `geoparquet`
+collection for the [Regional Data by Local Government Area
+(LGA)](s3://gbr-dms-data-public/abs-lgas-2021/data.parquet) from the
+Australian Bureau of Statistics (ABS), which contains data for the
+period between 2011 and 2022. This dataset includes data for the Census
+of Population and Housing for 2011, 2016 and 2021.
 
 Although this dataset has information available for all Australian
 states and territories, we will focus on accessing data for the state of
@@ -35,19 +35,21 @@ and maps.
 ## Loading libraries
 
 ``` r
+#Accessing S3 bucket
 library(arrow)
-library(wkb)
+#Data cleaning and manipulation
 library(tidyverse)
-library(sf)
 library(lubridate)
+#Mapping
+library(sf)
 library(rnaturalearth)
 ```
 
-## Connecting to RIMReP collection and loading ABS regional dataset
+## Connecting to RIMReP DMS collection and loading ABS regional dataset
 
 ``` r
 #Establishing connection
-data_bucket <- s3_bucket("s3://rimrep-data-public/abs-regional-lga-2021/data.parquet")
+data_bucket <- s3_bucket("s3://gbr-dms-data-public/abs-regional-lga-2021/data.parquet")
 
 #Accessing ABS dataset
 data_df <- open_dataset(data_bucket)
@@ -56,7 +58,7 @@ data_df <- open_dataset(data_bucket)
 dim(data_df)
 ```
 
-    ## [1] 4355  665
+    [1] 4355  665
 
 ## Subsetting ABS dataset: QLD LGAs
 
@@ -69,17 +71,17 @@ there are 665 columns, we will just inspect the first 10 column names.
 head(data_df$schema, n = 10)
 ```
 
-    ## Schema
-    ## DATAFLOW: string
-    ## FREQUENCY: string
-    ## TIME_PERIOD: int64
-    ## REGIONTYPE: string
-    ## REGION_CODE: int64
-    ## REGION_NAME: string
-    ## ACTIV_2: double
-    ## ACTIV_3: double
-    ## ADFS_2: double
-    ## ADFS_3: double
+    Schema
+    DATAFLOW: string
+    FREQUENCY: string
+    TIME_PERIOD: int64
+    REGIONTYPE: string
+    REGION_CODE: int64
+    REGION_NAME: string
+    ACTIV_2: double
+    ACTIV_3: double
+    ADFS_2: double
+    ADFS_3: double
 
 We can see that there is a `REGION_CODE` column, which as its name
 suggests, it contains a code that identifies its region or LGA included
@@ -108,7 +110,7 @@ qld_lgas <- data_df |>
 dim(qld_lgas)
 ```
 
-    ## [1] 616 665
+    [1] 616 665
 
 Our dataset now has 616 rows instead of 4355, but we still have 665
 columns. We can check the contents of the QLD data and decide which
@@ -118,22 +120,22 @@ columns to keep.
 head(qld_lgas)
 ```
 
-    ## # A tibble: 6 × 665
-    ##   DATAFLOW      FREQUENCY TIME_PERIOD REGIONTYPE REGION_CODE REGION_NAME ACTIV_2
-    ##   <chr>         <chr>           <int> <chr>            <int> <chr>         <dbl>
-    ## 1 ABS:ABS_REGI… A                2011 LGA2021          30250 Aurukun         3.2
-    ## 2 ABS:ABS_REGI… A                2011 LGA2021          30300 Balonne         3.4
-    ## 3 ABS:ABS_REGI… A                2011 LGA2021          30370 Banana          3.3
-    ## 4 ABS:ABS_REGI… A                2011 LGA2021          30410 Barcaldine      3.5
-    ## 5 ABS:ABS_REGI… A                2011 LGA2021          30450 Barcoo          3.9
-    ## 6 ABS:ABS_REGI… A                2011 LGA2021          30760 Blackall T…     4.4
-    ## # ℹ 658 more variables: ACTIV_3 <dbl>, ADFS_2 <dbl>, ADFS_3 <dbl>,
-    ## #   ADFS_4 <dbl>, ADFS_5 <dbl>, AGEMIG_10 <dbl>, AGEMIG_11 <dbl>,
-    ## #   AGEMIG_12 <dbl>, AGEMIG_13 <dbl>, AGEMIG_14 <dbl>, AGEMIG_15 <dbl>,
-    ## #   AGEMIG_16 <dbl>, AGEMIG_17 <dbl>, AGEMIG_18 <dbl>, AGEMIG_19 <dbl>,
-    ## #   AGEMIG_2 <dbl>, AGEMIG_3 <dbl>, AGEMIG_4 <dbl>, AGEMIG_5 <dbl>,
-    ## #   AGEMIG_6 <dbl>, AGEMIG_7 <dbl>, AGEMIG_8 <dbl>, AGEMIG_9 <dbl>,
-    ## #   AGRIC_10 <dbl>, AGRIC_11 <dbl>, AGRIC_12 <dbl>, AGRIC_13 <dbl>, …
+    # A tibble: 6 × 665
+      DATAFLOW      FREQUENCY TIME_PERIOD REGIONTYPE REGION_CODE REGION_NAME ACTIV_2
+      <chr>         <chr>           <int> <chr>            <int> <chr>         <dbl>
+    1 ABS:ABS_REGI… A                2011 LGA2021          30250 Aurukun         3.2
+    2 ABS:ABS_REGI… A                2011 LGA2021          30300 Balonne         3.4
+    3 ABS:ABS_REGI… A                2011 LGA2021          30370 Banana          3.3
+    4 ABS:ABS_REGI… A                2011 LGA2021          30410 Barcaldine      3.5
+    5 ABS:ABS_REGI… A                2011 LGA2021          30450 Barcoo          3.9
+    6 ABS:ABS_REGI… A                2011 LGA2021          30760 Blackall T…     4.4
+    # ℹ 658 more variables: ACTIV_3 <dbl>, ADFS_2 <dbl>, ADFS_3 <dbl>,
+    #   ADFS_4 <dbl>, ADFS_5 <dbl>, AGEMIG_10 <dbl>, AGEMIG_11 <dbl>,
+    #   AGEMIG_12 <dbl>, AGEMIG_13 <dbl>, AGEMIG_14 <dbl>, AGEMIG_15 <dbl>,
+    #   AGEMIG_16 <dbl>, AGEMIG_17 <dbl>, AGEMIG_18 <dbl>, AGEMIG_19 <dbl>,
+    #   AGEMIG_2 <dbl>, AGEMIG_3 <dbl>, AGEMIG_4 <dbl>, AGEMIG_5 <dbl>,
+    #   AGEMIG_6 <dbl>, AGEMIG_7 <dbl>, AGEMIG_8 <dbl>, AGEMIG_9 <dbl>,
+    #   AGRIC_10 <dbl>, AGRIC_11 <dbl>, AGRIC_12 <dbl>, AGRIC_13 <dbl>, …
 
 The first few column names are informative, we can guess what the
 contents of the `REGION_CODE` and `REGION_NAME` are. But the information
@@ -142,7 +144,7 @@ RIMReP collection has a table that gives a description of the data that
 is stored in each column. In the next step we will load this table so we
 can inspect it.
 
-## Connecting to RIMReP collection and loading description of each column
+## Connecting to dataset table with description of each column
 
 ``` r
 #Establishing connection
@@ -154,15 +156,15 @@ table <- read_parquet(table_bucket)
 head(table)
 ```
 
-    ## # A tibble: 6 × 4
-    ##   DESCRIPTION                                             UNIT  MULTIPLIER CODE 
-    ##   <chr>                                                   <chr> <chr>      <chr>
-    ## 1 Persons who have need for assistance with core activit… Perc… <NA>       ACTI…
-    ## 2 Persons who have need for assistance with core activit… Numb… <NA>       ACTI…
-    ## 3 Currently serving in the Australian Defence Force       Pers… <NA>       ADFS…
-    ## 4 Previously served in the Australian Defence Force       Pers… <NA>       ADFS…
-    ## 5 Currently serving in the Australian Defence Force (%)   Perc… <NA>       ADFS…
-    ## 6 Previously served in the Australian Defence Force (%)   Perc… <NA>       ADFS…
+    # A tibble: 6 × 4
+      description                                             unit  multiplier code 
+      <chr>                                                   <chr> <chr>      <chr>
+    1 Persons who have need for assistance with core activit… Perc… <NA>       ACTI…
+    2 Persons who have need for assistance with core activit… Numb… <NA>       ACTI…
+    3 Currently serving in the Australian Defence Force       Pers… <NA>       ADFS…
+    4 Previously served in the Australian Defence Force       Pers… <NA>       ADFS…
+    5 Currently serving in the Australian Defence Force (%)   Perc… <NA>       ADFS…
+    6 Previously served in the Australian Defence Force (%)   Perc… <NA>       ADFS…
 
 For this example, we have already selected some columns of interest:  
 - `ERP_23`: Median age  
@@ -187,23 +189,23 @@ capitalised.
 
 ``` r
 table |> 
-  filter(str_detect(str_to_lower(DESCRIPTION), "overseas"))
+  filter(str_detect(str_to_lower(description), "overseas"))
 ```
 
-    ## # A tibble: 74 × 4
-    ##    DESCRIPTION                              UNIT   MULTIPLIER CODE     
-    ##    <chr>                                    <chr>  <chr>      <chr>    
-    ##  1 Persons born overseas: 40-44 years       Number <NA>       AGEMIG_10
-    ##  2 Persons born overseas: 45-49 years       Number <NA>       AGEMIG_11
-    ##  3 Persons born overseas: 50-54 years       Number <NA>       AGEMIG_12
-    ##  4 Persons born overseas: 55-59 years       Number <NA>       AGEMIG_13
-    ##  5 Persons born overseas: 60-64 years       Number <NA>       AGEMIG_14
-    ##  6 Persons born overseas: 65-69 years       Number <NA>       AGEMIG_15
-    ##  7 Persons born overseas: 70-74 years       Number <NA>       AGEMIG_16
-    ##  8 Persons born overseas: 75-79 years       Number <NA>       AGEMIG_17
-    ##  9 Persons born overseas: 80-84 years       Number <NA>       AGEMIG_18
-    ## 10 Persons born overseas: 85 years and over Number <NA>       AGEMIG_19
-    ## # ℹ 64 more rows
+    # A tibble: 74 × 4
+       description                              unit   multiplier code     
+       <chr>                                    <chr>  <chr>      <chr>    
+     1 Persons born overseas: 40-44 years       Number <NA>       AGEMIG_10
+     2 Persons born overseas: 45-49 years       Number <NA>       AGEMIG_11
+     3 Persons born overseas: 50-54 years       Number <NA>       AGEMIG_12
+     4 Persons born overseas: 55-59 years       Number <NA>       AGEMIG_13
+     5 Persons born overseas: 60-64 years       Number <NA>       AGEMIG_14
+     6 Persons born overseas: 65-69 years       Number <NA>       AGEMIG_15
+     7 Persons born overseas: 70-74 years       Number <NA>       AGEMIG_16
+     8 Persons born overseas: 75-79 years       Number <NA>       AGEMIG_17
+     9 Persons born overseas: 80-84 years       Number <NA>       AGEMIG_18
+    10 Persons born overseas: 85 years and over Number <NA>       AGEMIG_19
+    # ℹ 64 more rows
 
 ## Subsetting ABS dataset: Keeping columns of interest
 
@@ -220,26 +222,26 @@ qld_lgas_sub <- qld_lgas |>
 qld_lgas_sub
 ```
 
-    ## # A tibble: 616 × 82
-    ##    TIME_PERIOD REGION_CODE REGION_NAME   ERP_17 ERP_23 ERP_P_20 EQUIV_2 ERP_F_10
-    ##          <int>       <int> <chr>          <dbl>  <dbl>    <dbl>   <dbl>    <dbl>
-    ##  1        2011       30250 Aurukun           NA     NA       NA     348       NA
-    ##  2        2011       30300 Balonne           NA     NA       NA     669       NA
-    ##  3        2011       30370 Banana            NA     NA       NA     852       NA
-    ##  4        2011       30410 Barcaldine        NA     NA       NA     676       NA
-    ##  5        2011       30450 Barcoo            NA     NA       NA     752       NA
-    ##  6        2011       30760 Blackall Tam…     NA     NA       NA     600       NA
-    ##  7        2011       30900 Boulia            NA     NA       NA     703       NA
-    ##  8        2011       31000 Brisbane          NA     NA       NA     951       NA
-    ##  9        2011       31750 Bulloo            NA     NA       NA     720       NA
-    ## 10        2011       31820 Bundaberg         NA     NA       NA     550       NA
-    ## # ℹ 606 more rows
-    ## # ℹ 74 more variables: ERP_F_11 <dbl>, ERP_F_12 <dbl>, ERP_F_13 <dbl>,
-    ## #   ERP_F_14 <dbl>, ERP_F_15 <dbl>, ERP_F_16 <dbl>, ERP_F_17 <dbl>,
-    ## #   ERP_F_18 <dbl>, ERP_F_19 <dbl>, ERP_F_2 <dbl>, ERP_F_20 <dbl>,
-    ## #   ERP_F_21 <dbl>, ERP_F_22 <dbl>, ERP_F_23 <dbl>, ERP_F_24 <dbl>,
-    ## #   ERP_F_25 <dbl>, ERP_F_26 <dbl>, ERP_F_27 <dbl>, ERP_F_28 <dbl>,
-    ## #   ERP_F_29 <dbl>, ERP_F_3 <dbl>, ERP_F_30 <dbl>, ERP_F_31 <dbl>, …
+    # A tibble: 616 × 82
+       TIME_PERIOD REGION_CODE REGION_NAME   ERP_17 ERP_23 ERP_P_20 EQUIV_2 ERP_F_10
+             <int>       <int> <chr>          <dbl>  <dbl>    <dbl>   <dbl>    <dbl>
+     1        2011       30250 Aurukun           NA     NA       NA     348       NA
+     2        2011       30300 Balonne           NA     NA       NA     669       NA
+     3        2011       30370 Banana            NA     NA       NA     852       NA
+     4        2011       30410 Barcaldine        NA     NA       NA     676       NA
+     5        2011       30450 Barcoo            NA     NA       NA     752       NA
+     6        2011       30760 Blackall Tam…     NA     NA       NA     600       NA
+     7        2011       30900 Boulia            NA     NA       NA     703       NA
+     8        2011       31000 Brisbane          NA     NA       NA     951       NA
+     9        2011       31750 Bulloo            NA     NA       NA     720       NA
+    10        2011       31820 Bundaberg         NA     NA       NA     550       NA
+    # ℹ 606 more rows
+    # ℹ 74 more variables: ERP_F_11 <dbl>, ERP_F_12 <dbl>, ERP_F_13 <dbl>,
+    #   ERP_F_14 <dbl>, ERP_F_15 <dbl>, ERP_F_16 <dbl>, ERP_F_17 <dbl>,
+    #   ERP_F_18 <dbl>, ERP_F_19 <dbl>, ERP_F_2 <dbl>, ERP_F_20 <dbl>,
+    #   ERP_F_21 <dbl>, ERP_F_22 <dbl>, ERP_F_23 <dbl>, ERP_F_24 <dbl>,
+    #   ERP_F_25 <dbl>, ERP_F_26 <dbl>, ERP_F_27 <dbl>, ERP_F_28 <dbl>,
+    #   ERP_F_29 <dbl>, ERP_F_3 <dbl>, ERP_F_30 <dbl>, ERP_F_31 <dbl>, …
 
 ## Creating summary tables
 
@@ -266,21 +268,21 @@ qld_2021 <- qld_lgas_sub |>
 qld_2021
 ```
 
-    ## # A tibble: 78 × 7
-    ##    REGION_NAME    REGION_CODE tot_population female_per male_per working_age_per
-    ##    <chr>                <int>          <dbl>      <dbl>    <dbl>           <dbl>
-    ##  1 Aurukun              30250           1131       52.7     47.3            72.1
-    ##  2 Balonne              30300           4379       49.7     50.3            63.4
-    ##  3 Banana               30370          14663       48.3     51.7            62.9
-    ##  4 Barcaldine           30410           2863       49.0     51.0            62.6
-    ##  5 Barcoo               30450            312       46.5     53.5            67.9
-    ##  6 Blackall Tambo       30760           1920       51.0     49.0            55.8
-    ##  7 Boulia               30900            470       56.4     43.6            61.3
-    ##  8 Brisbane             31000        1264024       50.4     49.6            69.2
-    ##  9 Bulloo               31750            342       47.7     52.3            77.2
-    ## 10 Bundaberg            31820         100118       50.6     49.4            57.9
-    ## # ℹ 68 more rows
-    ## # ℹ 1 more variable: med_house_inc_AUD <dbl>
+    # A tibble: 78 × 7
+       REGION_NAME    REGION_CODE tot_population female_per male_per working_age_per
+       <chr>                <int>          <dbl>      <dbl>    <dbl>           <dbl>
+     1 Aurukun              30250           1131       52.7     47.3            72.1
+     2 Balonne              30300           4379       49.7     50.3            63.4
+     3 Banana               30370          14663       48.3     51.7            62.9
+     4 Barcaldine           30410           2863       49.0     51.0            62.6
+     5 Barcoo               30450            312       46.5     53.5            67.9
+     6 Blackall Tambo       30760           1920       51.0     49.0            55.8
+     7 Boulia               30900            470       56.4     43.6            61.3
+     8 Brisbane             31000        1264024       50.4     49.6            69.2
+     9 Bulloo               31750            342       47.7     52.3            77.2
+    10 Bundaberg            31820         100118       50.6     49.4            57.9
+    # ℹ 68 more rows
+    # ℹ 1 more variable: med_house_inc_AUD <dbl>
 
 We can then save this summary table into a local machine as a csv file
 using the code below.
@@ -299,13 +301,13 @@ qld_2021 |>
   filter(med_house_inc_AUD > 1000 & working_age_per >= 75)
 ```
 
-    ## # A tibble: 3 × 7
-    ##   REGION_NAME REGION_CODE tot_population female_per male_per working_age_per
-    ##   <chr>             <int>          <dbl>      <dbl>    <dbl>           <dbl>
-    ## 1 Bulloo            31750            342       47.7     52.3            77.2
-    ## 2 Diamantina        32750            270       43.7     56.3            76.3
-    ## 3 McKinlay          34800            838       45.9     54.1            78.8
-    ## # ℹ 1 more variable: med_house_inc_AUD <dbl>
+    # A tibble: 3 × 7
+      REGION_NAME REGION_CODE tot_population female_per male_per working_age_per
+      <chr>             <int>          <dbl>      <dbl>    <dbl>           <dbl>
+    1 Bulloo            31750            342       47.7     52.3            77.2
+    2 Diamantina        32750            270       43.7     56.3            76.3
+    3 McKinlay          34800            838       45.9     54.1            78.8
+    # ℹ 1 more variable: med_house_inc_AUD <dbl>
 
 ## Plotting age classes
 
@@ -328,10 +330,10 @@ age_groups <- table |>
   #Select column names starting with ERP_F except ERP_F_20 because it contains 
   #total number of people. We will also include only columns with number of people 
   #and not percentages
-  filter(str_starts(CODE, "ERP_F") & UNIT == "Persons" & CODE != "ERP_F_20") |> 
+  filter(str_starts(code, "ERP_F") & unit == "Persons" & code != "ERP_F_20") |> 
   #Getting the age group numbers and age range for each age class
-  mutate(age_group = str_extract(CODE, "[0-9]{1,2}"), 
-         age_class = str_remove(DESCRIPTION, "Females aged ")) |> 
+  mutate(age_group = str_extract(code, "[0-9]{1,2}"), 
+         age_class = str_remove(description, "Females aged ")) |> 
   select(age_group, age_class)
 
 #Extracting data for Townsville (2016 and 2021 only)
@@ -354,20 +356,20 @@ townsville <- qld_lgas |>
 townsville
 ```
 
-    ## # A tibble: 72 × 6
-    ##    TIME_PERIOD gender age_group number_ind age_class    year
-    ##          <int> <chr>      <dbl>      <dbl> <chr>       <int>
-    ##  1        2016 F              2       6403 0-4 years    2016
-    ##  2        2016 M              2       6960 0-4 years    2016
-    ##  3        2021 F              2       5481 0-4 years    2021
-    ##  4        2021 M              2       6113 0-4 years    2021
-    ##  5        2016 F              3       6654 5-9 years    2016
-    ##  6        2016 M              3       6720 5-9 years    2016
-    ##  7        2021 F              3       6231 5-9 years    2021
-    ##  8        2021 M              3       6786 5-9 years    2021
-    ##  9        2016 F              4       6055 10-14 years  2016
-    ## 10        2016 M              4       6351 10-14 years  2016
-    ## # ℹ 62 more rows
+    # A tibble: 72 × 6
+       TIME_PERIOD gender age_group number_ind age_class    year
+             <int> <chr>      <dbl>      <dbl> <chr>       <int>
+     1        2016 F              2       6403 0-4 years    2016
+     2        2016 M              2       6960 0-4 years    2016
+     3        2021 F              2       5481 0-4 years    2021
+     4        2021 M              2       6113 0-4 years    2021
+     5        2016 F              3       6654 5-9 years    2016
+     6        2016 M              3       6720 5-9 years    2016
+     7        2021 F              3       6231 5-9 years    2021
+     8        2021 M              3       6786 5-9 years    2021
+     9        2016 F              4       6055 10-14 years  2016
+    10        2016 M              4       6351 10-14 years  2016
+    # ℹ 62 more rows
 
 ### Plotting data
 
@@ -402,7 +404,7 @@ towns_age <- townsville |>
 towns_age
 ```
 
-![](Plotting_ABS_Census_Data_LGA_2021_files/figure-gfm/age_plot-1.png)<!-- -->
+![](Plotting_ABS_Census_Data_LGA_2021_files/figure-commonmark/age_plot-1.png)
 
 From this plot, we can see that the amount of people in the younger age
 classes has decreased, while there was an increase in the older classes
@@ -434,16 +436,7 @@ qld_pop_2021 <- qld_lgas_sub |>
   #Keeping only columns of interest
   select(REGION_CODE, REGION_NAME, ERP_P_20, geometry) |> 
   #Adding column with spatial information in degrees
-  mutate(coords_deg = readWKB(geometry) |> st_as_sf()) |>
-  #Removing original geometry column
-  select(!geometry) |> 
-  #Renaming coordinate degrees column
-  mutate(coords_deg = coords_deg$geometry) |> 
-  rename("geometry" = "coords_deg") |> 
-  #Transforming into simple feature
-  st_as_sf() |> 
-  #Assigning reference systems: WGS84 (EPSG: 4326)
-  st_set_crs(4326)
+  st_as_sf(crs = 4326)
 ```
 
 Now we are ready to plot the population data for Queensland.
@@ -481,4 +474,4 @@ australia |>
   theme(legend.position = "bottom", plot.title = element_text(hjust = 0.5))
 ```
 
-![](Plotting_ABS_Census_Data_LGA_2021_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+![](Plotting_ABS_Census_Data_LGA_2021_files/figure-commonmark/unnamed-chunk-3-1.png)

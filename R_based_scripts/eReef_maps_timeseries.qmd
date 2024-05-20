@@ -1,0 +1,204 @@
+---
+title: "eReef_maps_timeseries"
+author: "Denisse Fierro Arcos"
+date: "2024-01-14"
+format:
+  gfm:
+    toc: true
+---
+
+# Plotting maps and time series from eReefs outputs
+
+[eReefs](https://research.csiro.au/ereefs/) is a group of environmental models managed by various government and non-profit organisations. These models can simulate past conditions and predict future states for hydrodynamic conditions, sediment transport, and water quality within the Greet Barrier Reef (GBR). The aim is to provide information about the past and current states of GBR, as well as its likely future condition.  
+  
+eReefs model outputs can be found in the DMS under the [**eReefs** collection](https://stac.reefdata.io/browser/collections/ereefs). In this notebook, we will use the [daily hydrodynamic model outputs at a 1 km resolution](https://stac.reefdata.io/browser/collections/ereefs/items/aims-ereefs-agg-hydrodynamic-1km-daily?.asset=asset-data) as an example of how to extract data.  
+  
+## Loading libraries
+  
+```{r}
+#| results: hide
+#| message: false
+#| warning: false
+
+#Loading useful_functions script
+source("useful_functions.R")
+#Mapping
+library(terra)
+library(sf)
+library(tidyterra)
+library(rnaturalearth)
+#Dealing with tabular data
+library(tibble)
+```
+
+## Connecting to RIMREP collection via API
+
+From the STAC catalogue item for the [daily hydrodynamic model outputs at a 1 km resolution](https://stac.reefdata.io/browser/collections/ereefs/items/aims-ereefs-agg-hydrodynamic-1km-daily?.asset=asset-data), we can get the link to the API from the *Additional Resources* section of the page on the left under the map.  
+    
+As an example, we will access data for using the API link for the period between 2023-01-01 and 2023-01-07. We will only select data for coastal waters up to ~150 km away from the coastline between Daintree and Cairns.  
+  
+**Note:** Before running the code chunk below, make sure you either have store your user credentials as environmental variables, or have this information with you to input in the `connect_dms_dataset` function below. Alternatively, if you already have an access token, you can provide this as an input in the `connect_dms_dataset` function. Refer to **The data API** subsection under **How to use DMS services and data** in the [README page](https://github.com/aodn/rimrep-training/blob/main/CoTS-training-Jan2024/README.md) for more information.  
+  
+If you do not user credentials, you will not be able to access our API, please contact the DMS team to set up an account by emailing [info-dms@utas.edu.au](mailto:info-dms@utas.edu.au).  
+  
+```{r}
+#Defining API URL (obtained from STAC catalogue)
+base_url <- "https://pygeoapi.reefdata.io/collections/aims-ereefs-agg-hydrodynamic-1km-daily/"
+
+#Defining variable of interest (obtained from STAC catalogue)
+variable_name <- "temp"
+
+#Connecting to DMS to extract data
+temp_gbr <- connect_dms_dataset(API_base_url = base_url, 
+                                variable_name, 
+                                start_time = "2023-01-01", end_time = "2023-01-05", 
+                                lon_limits = c(145.5, 146.00),
+                                lat_limits = c(-17.00, -16.50))
+```
+  
+## Plotting data 
+We will plot the first layer of this raster in a map to check the temperature data.  
+  
+```{r}
+#Get map of Australia
+aust <- ne_countries(country = "Australia", returnclass = "sf")
+
+#Start a plot
+ggplot()+
+  #Plot one raster layer
+  geom_spatraster(data = temp_gbr$`temp_k=-140_1`)+
+  #Choose a nicer palette for our map
+  scale_fill_distiller(palette = "YlOrRd")+
+  #Add Australia
+  geom_sf(data = aust)+
+  #Establish map limits
+  lims(x = c(145.30, 146.90), y = c(-17, -16.30))+
+  #Apply a nice predefined theme
+  theme_bw()+
+  #Add a title
+  labs(title = "Temperature in degrees C")+
+  #Center the plot title
+  theme(plot.title = element_text(hjust = 0.5))
+```
+  
+The dark grey areas in the plot are areas with no values in the model. This is often seen in models because their grid may not match exactly the land masses. However, this is a high resolution model (1 km grid cells), so this needs more investigation. First, we will check our multilayer raster.  
+  
+```{r}
+temp_gbr
+```
+    
+We can see the dimensions are 140 rows (i.e., 140 grid cells along `latitude`), 320 columns (i.e., 320 grid cells along `longitude`), and 112 layers. These layer should refer to the time steps, but why do we have 112 when we requested data for seven days only? Let's check the time stamps.  
+  
+```{r}
+time(temp_gbr)
+```
+  
+We can see that we have data for the time period we wanted, but each day is repeated multiple times. Why would that be? Let's look at the names of the raster for more information.  
+  
+```{r}
+names(temp_gbr)
+```
+  
+The names gives us an indication of what is happening here. Let's break it down using the first name as an example: `temp_k=-140_1`. The first part `temp_k` refers to our variable of interest, temperature. The second part `-140` seems to be referring to the depth. If you look at the names above, you can see that the negative numbers are repeated several times. The last part of the name `_1` refers to the days of our data, notice they are numbered one to seven, matching the seven days of data we requested.  
+  
+We could have also referred to the STAC catalogue for this [item](https://stac.reefdata.io/browser/collections/ereefs/items/aims-ereefs-agg-hydrodynamic-1km-daily?.language=en-AU&.asset=asset-data), which has links to the original data and metadata that can help us understand our data.  
+  
+Now that we understand our data structure better, we will calculate the mean surface temperature for the seven days for which we have data, and create a map.  
+  
+## Calculating mean temperature values for area of interest
+Before calculating a mean, we will need to subset our raster. Notice that the smallest depth value in the names is -0.5, so we will use this information to select the top layers only.  
+  
+```{r}
+#Extract layer names for the surface
+surf_layers <- str_subset(names(temp_gbr), "-0.5")
+
+#Subsetting raster
+sst_gbr <- temp_gbr[[surf_layers]]
+
+#Checking results
+sst_gbr
+```
+  
+We have a raster with seven layers and they all correspond to the shallowest depth bin: -0.5 m. Now, we can calculate mean temperatures using the `mean` function, so the `latitude` and `longitude` dimensions of the raster remain same, but we will have 1 layer across time.  
+  
+```{r}
+mean_sst_gbr <- mean(sst_gbr)
+mean_sst_gbr
+```
+    
+Let's plot a new map with the mean temperature values. We will also change the colour of `NA` grid cells so we can clearly distinguish them from the land.  
+  
+```{r}
+#Start a plot
+ggplot()+
+  #Plot mean raster - Note that we do not need to specify a layer
+  geom_spatraster(data = mean_sst_gbr)+
+  #Choose a nicer palette for our map
+  scale_fill_distiller(palette = "YlOrRd", 
+                       #Change colour for NA grid cells
+                       na.value = "#ff0099")+
+  #Add Australia
+  geom_sf(data = aust)+
+  #Establish map limits
+  lims(x = c(145.30, 146.90), y = c(-17, -16.30))+
+  #Apply a nice predefined theme
+  theme_bw()+
+  #Add a title
+  labs(title = "Mean temperature in degrees C")+
+  #Center the plot title
+  theme(plot.title = element_text(hjust = 0.5))
+```
+  
+Now the `NA` grid cells show as a bright pink, and there are much less of these grid cells, which makes sense. However, bright pink is probably not the best choice of colour, but it highlights them in our example map above. You can simply replace the pink by some other more sensible choice.    
+    
+## Calculating time series for temperature raster
+The `terra` package has a `global` function that allows us to apply a function across the entire raster. We will use it to calculate mean temperature values for each time step. This will return a data frame with mean temperature values per layer.    
+  
+```{r}
+#Calculating mean temperature per time step
+temp_ts_gbr <- global(temp_gbr, "mean", na.rm = T) |> 
+  #Let's add a new column with the date for each raster
+  mutate(date = time(temp_gbr))
+
+#Let's check the result
+temp_ts_gbr
+```
+  
+Remember, the initial dataset has multiple layers for each because they belong to different depth bins. We will add the depth bin information in a new column using the row names.   
+   
+```{r}
+temp_ts_gbr <- temp_ts_gbr |> 
+  #Add row names to column named depth
+  rownames_to_column("depth") |> 
+  #Keep only depth information using regular expressions
+  mutate(depth = as.numeric(str_extract(depth, "-(\\d{1,3}[.]\\d{1,2}|\\d{1,3})_", group = 1)),
+         #We will transform depth to factors so it is easier to plot the data
+         depth = factor(depth, levels = sort(unique(depth)), ordered = T))
+
+#Checking results
+head(temp_ts_gbr)
+```
+  
+We will now plot the mean temperatures over time for every depth bin.  
+  
+```{r}
+temp_ts_gbr |> 
+  #Plotting per depth bin
+  ggplot(aes(x = date, y = mean, color = depth))+
+  #Use a line plot and increase line width
+  geom_line(linewidth = 0.75)+
+  #Change title of legend
+  guides(colour = guide_legend(title = "Depth (m)"))+
+  #Change the y axis label
+  labs(y = "Mean temperature in degrees celsius")+
+  #Change labels of x axis and show them daily
+  scale_x_date(date_labels = "%Y-%m-%d", breaks = "1 day")+
+  #Apply a nicer predefined theme
+  theme_bw()+
+  #Remove x axis title, change positioning of labels
+  theme(axis.title.x = element_blank(), 
+        axis.text.x = element_text(angle = 45, hjust = 1))
+```
+   
+We have a line plot with mean temperatures over time for each depth bin in the model. We can save this plot using the `ggsave` function.  
+  

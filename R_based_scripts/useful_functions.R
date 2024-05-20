@@ -7,7 +7,6 @@
 # Loading libraries -------------------------------------------------------
 library(arrow)
 library(dplyr)
-library(magrittr)
 library(stringr)
 library(ggplot2)
 library(sf)
@@ -138,9 +137,15 @@ gbr_features <- function(site_name = NULL, site_ID = NULL){
 # Clipping AIMS sites with GBR features -----------------------------------
 sites_of_interest <- function(sites_pts, area_polygons){
   #Checking all polygons have valid geometries, otherwise fix
-  if(sum(!st_is_valid(un_reefs)) != 0){
+  if(sum(!st_is_valid(area_polygons)) != 0){
     area_polygons <- st_make_valid(area_polygons)
   }
+  
+  #Checking if CRS is the same in both shapefiles
+  if(st_crs(sites_pts) != st_crs(area_polygons)){
+    stop("Both inputs must have the same CRS. Please check and try again.")
+  }
+  
   #Cropping to polygon boundaries
   crop_sites <- st_crop(sites_pts, area_polygons)
   #Extracting points that intersect with polygon
