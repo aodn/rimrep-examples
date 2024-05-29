@@ -4,13 +4,16 @@ This repository contains example notebooks in `R` and `Python` showing how to ac
 
 ## Table of contents 
 
--   [What is RIMReP DMS?](#What-is-RIMReP-DMS?)
--   [Discovering for datasets in RIMReP DMS](#Discovering-datasets-in-RIMReP-DMS)
-    -   [Discovering for datasets via STAC](#Discovering-datasets-via-STAC)
--   [Code snippets](#Code-snippets)
-    -   [Connecting to tabular dataset in S3 bucket](#Connecting-to-tabular-dataset-in-S3-bucket)
-    -   [Extracting tabular data from S3 bucket](#Extracting-tabular-data-from-s3-bucket)
-    -   [Extracting gridded data from S3 bucket](#Extracting-gridded-data-from-S3-bucket)
+- [Automated data access from the Reef 2050 Integrated Monitoring and Reporting Program Data Management System (RIMReP DMS)](#automated-data-access-from-the-reef-2050-integrated-monitoring-and-reporting-program-data-management-system-rimrep-dms)
+  - [Table of contents](#table-of-contents)
+  - [More information](#more-information)
+  - [What is RIMReP DMS?](#what-is-rimrep-dms)
+  - [Discovering datasets in RIMReP DMS](#discovering-datasets-in-rimrep-dms)
+    - [Discovering datasets via STAC](#discovering-datasets-via-stac)
+  - [Code snippets](#code-snippets)
+    - [Connecting to tabular dataset in S3 bucket](#connecting-to-tabular-dataset-in-s3-bucket)
+    - [Extracting tabular data from S3 bucket](#extracting-tabular-data-from-s3-bucket)
+    - [Extracting gridded data from S3 bucket](#extracting-gridded-data-from-s3-bucket)
 
 ## More information
 
@@ -161,36 +164,35 @@ You can change the values of the conditions above to extract data that is releva
 
 <summary><b> Instructions for Python users </b></summary>
 
-Once you have connected to the S3 bucket, you can use the `dask_geopandas` package to connect to a dataset and extract a subset of the data based on one or more conditions. We will assume that our dataset has `longitude`, `latitude`, and `time` columns, and we will use them to extract data based on spatial and temporal conditions. We will use the *AIMS Sea Surface Temperature Monitoring Program* dataset as an example, but you can replace the S3 URL address with the one for the dataset you want to access.
+Once you have connected to the S3 bucket, you can use the `pandas` package to connect to a dataset and extract a subset of the data based on one or more conditions. We will assume that our dataset has `longitude`, `latitude`, and `time` columns, and we will use them to extract data based on spatial and temporal conditions. We will use the *AIMS Sea Surface Temperature Monitoring Program* dataset as an example, but you can replace the S3 URL address with the one for the dataset you want to access.
 
 ``` python
 # Loading relevant packages
-import dask_geopandas as dgp
+import pandas as pd
 
 # We store the S3 URL address in a variable
 dataset_s3 = 's3://gbr-dms-data-public/aims-temp-loggers/data.parquet'
 
-# We will define a variable our conditions to extract data for the year 2019 that includes Townsville and Cairns
-filter = [(lon > 145.6),
-          (lon < 146.9),
-          (lat > -19.3),
-          (lat < -16.8),
-          (time >= "2019-01-01"),
-          (time <= "2019-12-31")]
+# We will define a variable with our conditions to extract data for the year 2019 that includes Townsville and Cairns
+filters = [
+    ('lon', '>', 145.6),
+    ('lon', '<', 146.9),
+    ('lat', '>', -19.3),
+    ('lat', '<', -16.8),
+    ('time', '>=', pd.Timestamp('2019-01-01T10:00:00Z')),
+    ('time', '<', pd.Timestamp('2020-01-01T10:00:00Z')),
+]
 
 # We will extract data for the year 2019 that includes Townsville and Cairns
-ds_subset = dgp.read_parquet(dataset_s3,
-                            # We can select the columns of our interest with the columns argument
-                             columns = ['lon', 'lat', 'time', 'site', 'qc_val'],
-                            # We can specify the column we want to use as index
-                             index = 'fid',
-                            # We can now apply our filters
-                             filters = filter,
-                            # We can connect anonimously because this is a public dataset
-                             storage_options = {'anon': True})
-
-# We can now load the data into memory
-ds_subset = ds_subset.compute()
+ds_subset = pd.read_parquet(
+    dataset_s3,
+    # We can select the columns of our interest with the columns argument
+    columns=['lon', 'lat', 'time', 'site', 'qc_val'],
+    # We can now apply our filters
+    filters=filters,
+    # We can connect anonymously because this is a public dataset
+    storage_options={'anon': True},
+)
 ```
 
 </details>
