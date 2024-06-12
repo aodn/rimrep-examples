@@ -154,7 +154,7 @@ def gbr_features(**kwargs):
     site_id: string. Unique ID of the site to be extracted. If not specified, all sites will be returned.
     '''
 
-    dask_geo_df = dask_geopandas.read_parquet('s3://rimrep-data-public/gbrmpa-complete-gbr-features/data.parquet',
+    dask_geo_df = dask_geopandas.read_parquet('s3://gbr-dms-data-public/gbrmpa-complete-gbr-features/data.parquet',
                                               #Specifying which columns to read
                                               columns = ['UNIQUE_ID', 'GBR_NAME', 'LOC_NAME_S', 'geometry'],
                                               #Specifying the column to be used as index
