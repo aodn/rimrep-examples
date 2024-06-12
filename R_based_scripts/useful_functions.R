@@ -7,6 +7,7 @@
 # Loading libraries -------------------------------------------------------
 library(arrow)
 library(dplyr)
+library(magrittr)
 library(stringr)
 library(ggplot2)
 library(sf)
@@ -37,7 +38,7 @@ sub_site <- function(site_name, sites){
     }}
   #Fuzzy matching of site names
   out_site <- tryCatch({
-    sites <- sites |> 
+    sites <- sites %>% 
       filter(str_detect(str_to_lower(LOC_NAME_S), str_to_lower(paste(site_name, collapse = "|"))))
   },
   error = function(cond){
@@ -49,7 +50,7 @@ sub_site <- function(site_name, sites){
   warning = function(cond){
     message("Here's the original error message:")
     message(cond)
-  },
+    },
   #Printing message of sites included in subsetting of GBR features
   finally = message("Subsetting GBR features by ", paste(true_site, collapse = ",")))
   return(out_site)
@@ -74,11 +75,11 @@ sub_ID <- function(site_ID, sites){
   #which will NOT be processed
   if(length(site_ID) != length(true_ID)){
     not_ID <- site_ID[!site_ID %in% unique_ID]
-    warning(paste("One or more site IDs do not seem to exist. Check site IDs:", paste(not_ID, collapse = ",")))
+  warning(paste("One or more site IDs do not seem to exist. Check site IDs:", paste(not_ID, collapse = ",")))
   }
   #Matching of site IDs
   out_ID <- tryCatch({
-    sites <- sites |> 
+    sites <- sites %>% 
       filter(UNIQUE_ID %in% true_ID)
   },
   error = function(cond){
@@ -103,14 +104,15 @@ gbr_features <- function(site_name = NULL, site_ID = NULL){
   data_df <- open_dataset(data_bucket)
   
   #Extract sites
-  sites_all <- data_df |> 
-    #Selecting unique sites included in the dataset
-    distinct(UNIQUE_ID, GBR_NAME, LOC_NAME_S, geometry) |>
-    #This will load them into memory
-    collect()
+  sites_all <- data_df %>% 
+  #Selecting unique sites included in the dataset
+  distinct(UNIQUE_ID, GBR_NAME, LOC_NAME_S, geometry, FEAT_NAME,
+           LEVEL_1, LEVEL_2, LEVEL_3) %>%
+  #This will load them into memory
+  collect()
   
   #Cleaning up data
-  sites_all <- sites_all |> 
+  sites_all <- sites_all %>% 
     #Turning into sf object and assigning reference system: GDA94 (EPSG: 4283)
     st_as_sf(crs = 4283)
   
@@ -137,15 +139,9 @@ gbr_features <- function(site_name = NULL, site_ID = NULL){
 # Clipping AIMS sites with GBR features -----------------------------------
 sites_of_interest <- function(sites_pts, area_polygons){
   #Checking all polygons have valid geometries, otherwise fix
-  if(sum(!st_is_valid(area_polygons)) != 0){
+  if(sum(!st_is_valid(un_reefs)) != 0){
     area_polygons <- st_make_valid(area_polygons)
   }
-  
-  #Checking if CRS is the same in both shapefiles
-  if(st_crs(sites_pts) != st_crs(area_polygons)){
-    stop("Both inputs must have the same CRS. Please check and try again.")
-  }
-  
   #Cropping to polygon boundaries
   crop_sites <- st_crop(sites_pts, area_polygons)
   #Extracting points that intersect with polygon
@@ -183,10 +179,10 @@ dms_token <- function(client_id, client_secret){
   if(resp$status_code == 200){
     # Extract the access token from the response and store as environmental variable
     return(resp_body_json(resp)$access_token)
-  }else{
-    #Print error if request is unsuccessful
-    stop("'Error retrieving access token. Check your CLIENT_ID and CLIENT_SECRET are correct and try again.'")
-  }
+    }else{
+      #Print error if request is unsuccessful
+      stop("'Error retrieving access token. Check your CLIENT_ID and CLIENT_SECRET are correct and try again.'")
+      }
 }
 
 
@@ -240,18 +236,19 @@ connect_dms_dataset <- function(API_base_url, variable_name, start_time = NULL,
       }}
     #If client_secret does not exist, check environmental variable
     if(missing(client_secret)){
-      message("Warning: No 'access_token' and user credentials were provided as input.")
-      message("Checking if 'CLIENT_SECRET' variable exists.")
-      #If environmental variable exists, assign to client_secret
-      if(tryCatch(expr = !is.na(Sys.getenv("CLIENT_SECRET", unset = NA)))){
-        client_secret <- Sys.getenv("CLIENT_SECRET")
-      }else{
-        #If CLIENT_SECRET variable does not exist, stop function
-        stop("'CLIENT_SECRET' does not exist. Provide 'client_secret' parameter and try again.")
-      }}
+        message("Warning: No 'access_token' and user credentials were provided as input.")
+        message("Checking if 'CLIENT_SECRET' variable exists.")
+        #If environmental variable exists, assign to client_secret
+        if(tryCatch(expr = !is.na(Sys.getenv("CLIENT_SECRET", unset = NA)))){
+          client_secret <- Sys.getenv("CLIENT_SECRET")
+          }else{
+            #If CLIENT_SECRET variable does not exist, stop function
+            stop("'CLIENT_SECRET' does not exist. Provide 'client_secret' parameter and try again.")
+          }}
     #Once we have credentials ready, get token
     access_token <- dms_token(client_id, client_secret)
-  }
+    message("Access token retrieved successfully.")
+    }
   
   #Checking URL ending is correct
   if(str_detect(API_base_url, "coverage$", negate = T)){
@@ -292,7 +289,7 @@ connect_dms_dataset <- function(API_base_url, variable_name, start_time = NULL,
   #If temporal limits provided, add to URL query
   if(exists("dt_limits")){
     query_list <- str_c("datetime=", dt_limits)
-  }
+    }
   
   #Check if shapefile was provided
   if(!missing(bounding_shape)){
@@ -359,13 +356,13 @@ connect_dms_dataset <- function(API_base_url, variable_name, start_time = NULL,
     }else if(!exists("lon_query") & exists("lat_query")){
       print("Longitudinal limits not provided, cannot apply a bounding box.")
     }}
-  
-  #Add format
-  if(is.null(query_list)){
-    query_list <- str_c("f=netcdf")
-  }else{
-    query_list <- str_c(query_list, "&f=netcdf")
-  }
+    
+    #Add format
+    if(is.null(query_list)){
+      query_list <- str_c("f=netcdf")
+    }else{
+      query_list <- str_c(query_list, "&f=netcdf")
+    }
   
   #Get URL ready
   url <- str_c(url, query_list) 
@@ -402,3 +399,110 @@ connect_dms_dataset <- function(API_base_url, variable_name, start_time = NULL,
     return(brick)
   }
 }
+
+
+# Applying function to SpatRaster -----------------------------------------
+raster_calc <- function(ras, period, fun, na.rm = F){
+  ############
+  #This function uses the tapp function from terra to apply a function to a 
+  #SpatRaster object. Any functions accepted by app can be used here. Raster
+  #will be grouped either by year or month before applying the function.
+  #
+  #Inputs:
+  #ras (SpatRaster): Raster object to which the function will be applied. It 
+  #must contain a time dimension.
+  #period (character): Period for which the function will be applied. It can
+  #be either "monthly" or "yearly".
+  #fun (function): Function to be applied to the raster. It must be a function
+  #accepted by the tapp function from terra.
+  #na.rm (logical): If TRUE, NA values will be removed before applying the
+  #function. Default is FALSE.
+  
+  #Get the time information from the raster
+  time_ras <- time(ras)
+  
+  #Get units from the raster
+  units_ras <- units(ras) |> 
+    unique()
+  
+  #If period is monthly, we will get the month and year
+  if(period == "monthly"){
+    mystamp <- stamp("2020-01", order = "%Y-%m")
+    #Get month and year combinations
+    per_int <- mystamp(time_ras)
+  }else if (period == "yearly"){
+    #Get years
+    per_int <- year(time_ras) |> 
+      as.character()
+  }else{
+    stop("Period should be either 'monthly' or 'yearly'")
+  }
+  
+  #Initialise empty vector to store results
+  ras_out <- tapp(ras, index = per_int, fun = fun, na.rm = na.rm)
+  
+  #Update variable name
+  varnames(ras_out) <- paste(fun, varnames(ras), sep = "_")
+  
+  #New name for layer - including time
+  names(ras_out) <- paste(fun, unique(per_int), sep = "_")
+  
+  #Update time information
+  if(period == "monthly"){
+    time(ras_out) <- ym(unique(per_int))
+  }else{
+    time(ras_out) <- ymd(paste0(unique(per_int), "-01-01"))
+  }
+  
+  #Add units
+  units(ras_out) <- units_ras
+  
+  #Return SpatRaster
+  return(ras_out)
+}
+
+
+
+# Extracting time series from SpatRaster ----------------------------------
+ras_to_ts <- function(ras, fun, na.rm = F){
+  ############
+  #This function uses the global function from terra to calculate global 
+  #statistics from a SpatRaster object. Any functions accepted by global can
+  #be used here. It will also return the maximum monthly value of the time
+  #series
+  #
+  #Inputs:
+  #ras (SpatRaster): Raster object to which the function will be applied. It 
+  #must contain a time dimension.
+  #fun (function): Function to be applied to the raster. It must be a function
+  #accepted by the global function from terra.
+  #na.rm (logical): If TRUE, NA values will be removed before applying the
+  #function. Default is FALSE.
+  
+  #Get time information from raster
+  time_ras <- time(ras) |> 
+    #Transform to date format
+    as.Date(origin = lubridate::origin)
+  #Get unit information from raster
+  unit_ras <- units(ras)
+  #Get the time series of the raster
+  ras_ts <- global(ras, fun = fun, na.rm = na.rm) |> 
+    #Add time and units to the time series
+    mutate(time = time_ras, unit = unit_ras) |> 
+    #Store rownmaes as column
+    rownames_to_column("layer_name")
+  
+  #Return maximum values per month
+  max_df <- ras_ts |>
+    mutate(month = month(time, label = T)) |>
+    #Group by month
+    group_by(month) |> 
+    #Identify the maximum monthly value
+    summarise(max_monthly_val = max(get(names(ras_ts)[2])))
+  
+  return(list(time_series = ras_ts,
+              max_monthly_ts = max_df))
+}
+
+
+
