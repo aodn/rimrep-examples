@@ -37,7 +37,7 @@ library(terra)
 # Connecting to RIMReP collection via API
 
 From the STAC catalogue entry for the [DHW
-dataset](https://stac.staging.reefdata.io/browser/collections/noaa-crw/items/noaa-crw-dhw?.language=en&.asset=asset-data),
+dataset](https://stac.reefdata.io/browser/collections/noaa-crw/items/noaa-crw-dhw?.language=en&.asset=asset-data),
 we can get the link to the API from the *Additional Resources* section
 of the page (bottom left).
 
