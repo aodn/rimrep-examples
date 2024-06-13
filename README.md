@@ -35,7 +35,7 @@ Datasets that have an open licence are publicly available in the RIMReP DMS, whi
 
 ## Discovering datasets in RIMReP DMS
 
-To browse datasets available in the RIMReP DMS you can use the SpatioTemporal Asset Catalogs (STAC). STAC provides a common language to describe a range of geospatial information, so that data can be indexed and easily discovered. Our STAC catalogue is available at [https://stac.reefdata.io/browser/](https://stac.staging.reefdata.io/browser/).
+To browse datasets available in the RIMReP DMS you can use the SpatioTemporal Asset Catalogs (STAC). STAC provides a common language to describe a range of geospatial information, so that data can be indexed and easily discovered. Our STAC catalogue is available at [https://stac.reefdata.io/browser/](https://stac.reefdata.io/browser/).
 
 Alternatively, we provide a link to the original source of the dataset to give users the option of accessing the data directly from the data provider.
 
