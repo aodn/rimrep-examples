@@ -110,19 +110,19 @@ data_df |>
     # A tibble: 13 × 1
        variable         
        <chr>            
-     1 Large fishes     
-     2 Damselfishes     
-     3 Total fishes     
-     4 Harvested        
-     5 Herbivores       
-     6 Coral Trout      
-     7 Secondary targets
-     8 HC               
-     9 HARD CORAL       
-    10 ABUNDANCE        
-    11 ALGAE            
-    12 MACROALGAE       
-    13 SOFT CORAL       
+     1 Harvested        
+     2 Total fishes     
+     3 ALGAE            
+     4 HARD CORAL       
+     5 SOFT CORAL       
+     6 Damselfishes     
+     7 MACROALGAE       
+     8 Herbivores       
+     9 ABUNDANCE        
+    10 Large fishes     
+    11 Coral Trout      
+    12 Secondary targets
+    13 HC               
 
 Let’s explore the `Large fishes` a bit further. We can check the time
 period for which we have records for this variable.
@@ -171,12 +171,12 @@ head(large_fishes_23)
     # A tibble: 6 × 36
       a_sector aims_reef_name data_type date       depth domain_category domain_name
          <dbl>          <dbl> <chr>     <date>     <dbl> <chr>           <chr>      
-    1       NA             NA fish      2023-03-02     9 reef            HASTINGS R…
-    2       NA             NA fish      2023-02-01     9 reef            REBE REEF  
-    3       NA             NA fish      2023-01-30     9 reef            REEF 19-131
-    4       NA             NA fish      2023-01-30     9 reef            REEF 19-131
-    5       NA             NA fish      2023-01-30     9 reef            REEF 19-131
-    6       NA             NA fish      2023-01-30     9 reef            REEF 19-131
+    1       NA             NA fish      2023-09-25     9 reef            ERSKINE IS…
+    2       NA             NA fish      2023-09-25     9 reef            ERSKINE IS…
+    3       NA             NA fish      2023-09-25     9 reef            ERSKINE IS…
+    4       NA             NA fish      2023-09-25     9 reef            ERSKINE IS…
+    5       NA             NA fish      2023-09-25     9 reef            ERSKINE IS…
+    6       NA             NA fish      2023-09-25     9 reef            ERSKINE IS…
     # ℹ 29 more variables: fullreef_id <dbl>, gaz_name <dbl>, gbrmpa_reef_id <dbl>,
     #   id <int>, lat_deg <dbl>, lat_min <dbl>, long_deg <dbl>, long_min <dbl>,
     #   lower <dbl>, mean <dbl>, median <dbl>, nrm_region <dbl>,
@@ -205,7 +205,7 @@ large_fishes_23 |>
         plot.title = element_text(hjust = 0.5))
 ```
 
-![](04-LTMP_data_extraction_files/figure-commonmark/unnamed-chunk-5-1.png)
+![](04-LTMP_Data_Extraction_files/figure-commonmark/unnamed-chunk-5-1.png)
 
 As with the other examples, you are able to save any summarised data our
 outputs to your computer.

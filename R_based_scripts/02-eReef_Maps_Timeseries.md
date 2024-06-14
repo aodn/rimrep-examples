@@ -123,7 +123,7 @@ ggplot()+
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
-![](02-eReef_maps_timeseries_files/figure-commonmark/unnamed-chunk-3-1.png)
+![](02-eReef_Maps_Timeseries_files/figure-commonmark/unnamed-chunk-3-1.png)
 
 The dark grey areas in the plot are areas with no values in the model.
 This is often seen in models because their grid may not match exactly
@@ -140,7 +140,7 @@ temp_gbr
     resolution  : 0.005, 0.005  (x, y)
     extent      : 145.4979, 145.9979, -17.0024, -16.5024  (xmin, xmax, ymin, ymax)
     coord. ref. : lon/lat WGS 84 
-    source      : raster_dms_a85b2179b469.nc:temp 
+    source      : raster_dms_8ccf8d550e.nc:temp 
     varname     : temp (Temperature) 
     names       : temp_~140_1, temp_~120_1, temp_~103_1, temp_k=-88_1, temp_k=-73_1, temp_k=-60_1, ... 
     unit        :   degrees C,   degrees C,   degrees C,    degrees C,    degrees C,    degrees C, ... 
@@ -242,7 +242,7 @@ sst_gbr
     resolution  : 0.005, 0.005  (x, y)
     extent      : 145.4979, 145.9979, -17.0024, -16.5024  (xmin, xmax, ymin, ymax)
     coord. ref. : lon/lat WGS 84 
-    source      : raster_dms_a85b2179b469.nc:temp 
+    source      : raster_dms_8ccf8d550e.nc:temp 
     varname     : temp (Temperature) 
     names       : temp_k=-0.5_1, temp_k=-0.5_2, temp_k=-0.5_3, temp_k=-0.5_4, temp_k=-0.5_5 
     unit        :     degrees C,     degrees C,     degrees C,     degrees C,     degrees C 
@@ -293,7 +293,7 @@ ggplot()+
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
-![](02-eReef_maps_timeseries_files/figure-commonmark/unnamed-chunk-9-1.png)
+![](02-eReef_Maps_Timeseries_files/figure-commonmark/unnamed-chunk-9-1.png)
 
 Now the `NA` grid cells show as a bright pink, and there are much less
 of these grid cells, which makes sense. However, bright pink is probably
@@ -449,7 +449,7 @@ temp_ts_gbr |>
     Warning: Removed 35 rows containing missing values or values outside the scale range
     (`geom_line()`).
 
-![](02-eReef_maps_timeseries_files/figure-commonmark/unnamed-chunk-12-1.png)
+![](02-eReef_Maps_Timeseries_files/figure-commonmark/unnamed-chunk-12-1.png)
 
 We have a line plot with mean temperatures over time for each depth bin
 in the model. We can save this plot using the `ggsave` function.
