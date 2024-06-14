@@ -159,7 +159,7 @@ ggplot()+
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
-![](01-eReef_data_extraction_files/figure-commonmark/unnamed-chunk-4-1.png)
+![](01-eReef_Data_Extraction_files/figure-commonmark/unnamed-chunk-4-1.png)
 
 The grey areas are land areas without any salinity data.
 
@@ -271,7 +271,7 @@ salt_whi_reefs |>
   theme_bw()
 ```
 
-![](01-eReef_data_extraction_files/figure-commonmark/unnamed-chunk-9-1.png)
+![](01-eReef_Data_Extraction_files/figure-commonmark/unnamed-chunk-9-1.png)
 
 That is the end of the notebook. Do not forget that you can save any
 data accessed from the DMS or the outputs produced here.

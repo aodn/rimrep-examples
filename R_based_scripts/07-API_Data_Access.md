@@ -161,7 +161,7 @@ ggplot()+
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
-![](07-API_data_access_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](07-API_Data_Access_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
 The grey areas are land areas without any temperature data.
 
@@ -227,7 +227,7 @@ ggplot()+
   theme(plot.title = element_text(hjust = 0.5))
 ```
 
-![](07-API_data_access_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](07-API_Data_Access_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
 
 ## Calculating time series and maximum monthly values
 
@@ -255,7 +255,7 @@ sst_ts$time_series |>
         axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-![](07-API_data_access_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
+![](07-API_Data_Access_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
 
 We can also plot the maximum monthly values. This function could be used
 to calculate the Maximum Monthly Mean (MMM), which is a metric used to
@@ -275,7 +275,7 @@ sst_ts$max_monthly_ts |>
   theme(axis.title.x = element_blank())
 ```
 
-![](07-API_data_access_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
+![](07-API_Data_Access_files/figure-gfm/unnamed-chunk-8-1.png)<!-- -->
 
 Plotting time series if months are numbers instead of names.
 
@@ -294,7 +294,7 @@ sst_ts$max_monthly_ts |>
   theme(axis.title.x = element_blank())
 ```
 
-![](07-API_data_access_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
+![](07-API_Data_Access_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 # Extra examples during workshop
 
@@ -334,7 +334,7 @@ pt_max_mth_sst |>
   geom_line()
 ```
 
-![](07-API_data_access_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+![](07-API_Data_Access_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
 
 ``` r
 #Plotting maximum monthly SST values
@@ -345,4 +345,4 @@ pt |>
   geom_line()
 ```
 
-![](07-API_data_access_files/figure-gfm/unnamed-chunk-10-2.png)<!-- -->
+![](07-API_Data_Access_files/figure-gfm/unnamed-chunk-10-2.png)<!-- -->

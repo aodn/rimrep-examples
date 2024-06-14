@@ -37,7 +37,7 @@ library(terra)
 # Connecting to RIMReP collection via API
 
 From the STAC catalogue entry for the [DHW
-dataset](https://stac.staging.reefdata.io/browser/collections/noaa-crw/items/noaa-crw-dhw?.language=en&.asset=asset-data),
+dataset](https://stac.reefdata.io/browser/collections/noaa-crw/items/noaa-crw-dhw?.language=en&.asset=asset-data),
 we can get the link to the API from the *Additional Resources* section
 of the page (bottom left).
 
@@ -47,12 +47,14 @@ coastal waters up to 150 km away from the coastline between Daintree and
 Cairns.
 
 **Note:** Before running the code chunk below, ensure you head over to
-our dashboard: <https://dashboard.staging.reefdata.io/>. Then click on
-the blue **Copy token to clipboard** button. After you run the code
-chunk below, you will see a pop-up box requesting for this token. Paste
-your token in the box and press *OK* to continue. If you do not have
-this token, you will not be able to access our API, please contact the
-RIMReP team to set up an account by emailing <info-rimrep@utas.edu.au>.
+our dashboard:
+[https://dashboard.reefdata.io/](https://dashboard.staging.reefdata.io/).
+Then click on the blue **Copy token to clipboard** button. After you run
+the code chunk below, you will see a pop-up box requesting for this
+token. Paste your token in the box and press *OK* to continue. If you do
+not have this token, you will not be able to access our API, please
+contact the RIMReP team to set up an account by emailing
+<info-rimrep@utas.edu.au>.
 
 ``` r
 #Defining API URL (obtained from STAC catalogue)

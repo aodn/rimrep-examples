@@ -210,7 +210,7 @@ data_mth |>
   facet_wrap(shelf~depth)
 ```
 
-![](05-LTMP_data_extraction_2_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
+![](05-LTMP_Data_Extraction_2_files/figure-gfm/unnamed-chunk-4-1.png)<!-- -->
 
 It appears that most of the data in 2020 came from offshore areas at a
 depth of 9 meters.
@@ -251,4 +251,4 @@ hc |>
   theme(axis.title.x = element_blank(), legend.position = "top")
 ```
 
-![](05-LTMP_data_extraction_2_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->
+![](05-LTMP_Data_Extraction_2_files/figure-gfm/unnamed-chunk-5-1.png)<!-- -->

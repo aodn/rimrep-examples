@@ -1,0 +1,144 @@
+---
+title: "Extracting data from LTMP model"
+author: "Denisse Fierro Arcos"
+date: "2024-01-19"
+output: 
+  github_document:
+    toc: true
+    html_preview: true
+---
+
+# Goal of this notebook
+
+This notebook will demonstrate how to access the Long-Term Monitoring Program (LTMP) dataset from AIMS. The goal of the LTMP is to measure the long-term status and trend of reefs in the Great Barrier Reef (GBR) World Heritage Area. Data has been collected across the GBR for over 35 years. There are a variety of variables measured during this campaign, but they all provide information about the health of the coral reefs.  
+  
+You can see more information about the LTMP in our [catalogue](https://stac.reefdata.io/browser/collections/aims-ltmp-mmp-coralreef/items/aims-ltmp-mmp-coralreef-model).  
+
+  
+# Loading libraries
+
+```{r libraries, results = "hide", message = F, warning = F}
+#Accessing S3 bucket
+library(arrow)
+#Data manipulation
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(janitor)
+#Managing dates
+library(lubridate)
+#Plotting
+library(ggplot2)
+```
+
+# Connecting to RIMReP collection
+We will connect to the LTMP dataset from AIMS stored in a S3 bucket. Depending on your internet connection, this make take a couple of minutes.  
+  
+```{r connect}
+#Establishing connection
+data_bucket <- s3_bucket("s3://gbr-dms-data-public/aims-ltmp-mmp-coralreef-model/data.parquet")
+
+#Accessing dataset
+data_df <- open_dataset(data_bucket)
+```
+  
+## Exploring dataset structure
+We can explore the dataset `schema` to understand its structure, and identify the variables that are relevant to us.
+
+```{r explore}
+#Checking data structure
+data_df$schema
+```
+    
+We will get the first rows of the dataset to understand the information included in it because the column names are not very informative.  
+  
+```{r}
+df_sub <- data_df |> 
+  #We will ignore the geometry column for now
+  select(!geometry) |> 
+  #Get the first 10 rows
+  slice_head(n = 10) |> 
+  collect()
+
+#Check results
+names(df_sub)
+```
+  
+We can see that there are a number of columns that are completely empty. We can remove these columns to make the dataset more manageable.  
+  
+```{r}
+df_sub <- df_sub |> 
+  #Remove columns with no data
+  remove_empty("cols")
+
+#Check results
+df_sub
+```
+  
+We can see that the dataset contains information about the date of the record, the location of the record (`domain_name` and `shelf`), the depth, the variable measured, among other things.
+
+For this example, we will extract data for the year 2020, and we will calculate the mean abundance of fishes (`variable` columns) for each `domain_name`, `depth` and `shelf` combination.  
+  
+```{r}
+data_mth <- data_df |> 
+  #We will ignore the geometry column for now
+  select(!geometry) |> 
+  #Select data for 2020
+  filter(report_year == 2020) |> 
+  #Return results
+  collect() |> 
+  #Add a month column
+  mutate(month = month(ymd(date), label = T)) |>
+  remove_empty("cols") |> 
+  #Group data
+  group_by(month, depth, shelf, variable) |>
+  #Calculate mean abundance
+  summarise(mean_val = mean(mean, na.rm = T)) |> 
+  ungroup()
+
+#Check results
+head(data_mth)
+```
+
+  
+Let's check what the mean abundance of fishes looks like for each month.      
+```{r}
+data_mth |> 
+  ggplot(aes(month, mean_val, color = variable))+
+  geom_point()+
+  facet_wrap(shelf~depth)
+```
+  
+It appears that most of the data in 2020 came from offshore areas at a depth of 9 meters.  
+
+By checking the contents of a subset of the dataset, we can get a better idea of the information included in it. This will help us to identify the variables that are relevant to us, and to understand the structure of the dataset.
+  
+## Extra example during workshop
+Plotting hard coral cover over entire period of dataset.
+  
+```{r}
+#Extracting hard coral data
+hc <- data_df |>
+  #Ignoring geometries (because it takes a long time)
+  select(!geometry) |>
+  filter(variable == "HARD CORAL") |> 
+  collect()
+
+#Creating a plot
+hc |> 
+  #Transforming to percentage
+  mutate(mean = mean*100, lower = lower*100, upper = upper*100) |> 
+  remove_empty("cols") |> 
+  filter(domain_name == "LANGFORD AND BIRD ISLES" &
+           domain_category == "reef" & purpose == "COMPOSITION") |> 
+  mutate(date = ymd(date)) |> 
+  ggplot(aes(date, mean, color = reefpage_category))+
+  geom_line()+
+  geom_ribbon(aes(ymin = lower, ymax = upper, 
+                  fill = reefpage_category), alpha = 0.3)+
+  facet_wrap(~reefpage_category)+
+  labs(fill = "Hard coral taxa", color = "Hard coral taxa",
+       y = "Coral coverage (%)")+
+  theme_classic()+
+  theme(axis.title.x = element_blank(), legend.position = "top")
+```
