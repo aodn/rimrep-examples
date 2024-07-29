@@ -290,7 +290,7 @@ connect_dms_dataset <- function(API_base_url, variable_name, start_time = NULL,
   
   #Finally check if the temporal limits are included in the DS temporal extent
   #get item id form API base URL
-  item_id <- str_split(base_url, "/", simplify = TRUE)[5]
+  item_id <- str_split(API_base_url, "/", simplify = TRUE)[5]
   #Get extents of dataset
   extents <- getExtents(item_id)
   #Check if temporal limits are within dataset temporal extent
