@@ -23,3 +23,5 @@ This notebook allows you to connect with the DMS NOAA DHW product, extract the m
 ## 07-STAC-Metadata_API
 This notebook shows basic use of our metadata API using a Python library PySTAC-Client. It demonstrates how to fetch all collections, fetch a given collection/item, and perform simple searches.  
 
+## 08-getZonalStatistics_perReef  
+This notebook demonstrates how to extract zonal statistics from a raster (Zarr) dataset using the "Complete GBR Features" dataset. If the raster files contains more than one layer (time) the zonal statistics will be calculated for each layer.
