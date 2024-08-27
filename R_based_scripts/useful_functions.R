@@ -682,7 +682,6 @@ checkPointsCoords <- function(Qpoints, Dbbox){
 }
 
 
-
 #' Check if Query Date is Within Dataset Date Range
 #'
 #' This function checks if the given query date is within the specified dataset date range.

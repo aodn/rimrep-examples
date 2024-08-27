@@ -10,7 +10,7 @@ output:
 
 # Goal of this notebook
 
-This notebook will demonstrate how to access the the different collections that contain Sea Surface Temperature climatologies. We will plot a map of a climatological values for a region, extract climatological expected temperature values from one point and produce a plot of the climatological year for one area.
+This notebook demonstrates how to access the different collections that contain Sea Surface Temperature climatologies. We will plot a map of a climatological values for a region, extract climatological expected temperature values from one point and produce a plot of the climatological year for one area.
 
 The main DMS items used in this notebook are:  
 
@@ -38,7 +38,7 @@ library(tidyr)
 
 # NOAA SST climatology
 
-This dataset is a monthly climatology of Sea Surface Temperature (SST) from NOAA Coral Reef Watch (CRW). The data is available at 0.05 degree resolution and covers the period 1985-2019. It contains the expected SST for each month of the year and the Maximum Monthly Mean (MMM). 
+This dataset is a *monthly* climatology of Sea Surface Temperature (SST) from NOAA Coral Reef Watch (CRW). The data is available at 0.05 degree resolution and covers the period 1985-2019. It contains the expected SST for each month of the year and the Maximum Monthly Mean (MMM). 
 
 
 ## Connecting to RIMREP collection via API
@@ -82,7 +82,7 @@ Note that the MMM retrieves actually two variables, the MMM climatology and the 
 aust <- ne_countries(country = "Australia", returnclass = "sf", scale = "medium")
 
 #Start a plot
-pp <- ggplot()+
+pp <- ggplot() +
   #Plot one raster layer
   geom_spatraster(data = mmm_gbr$sst_clim_mmm)+
   #Choose a nicer palette for our map
