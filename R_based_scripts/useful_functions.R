@@ -277,7 +277,7 @@ connect_dms_dataset <- function(API_base_url, variable_name, start_time = NULL,
   #If only start time exists then use only one date as temporal range
   if(!is.null(start_time) & is.null(end_time)){
     dt_limits <- start_time
-    #If end time is given, bit no start time, then print message
+    #If end time is given, but no start time, then print message
   }else if(is.null(start_time) & !is.null(end_time)){
     stop("'start_time' not provided, cannot use 'end_time'")
   }else if(!is.null(start_time) & !is.null(end_time)){
@@ -285,9 +285,26 @@ connect_dms_dataset <- function(API_base_url, variable_name, start_time = NULL,
       dt_limits <- paste(start_time, end_time, sep = "/")
     }else{
       stop("'start_time' cannot be later than or equal to 'end_time'")}
+  }else{
+    dt_limits <- NULL
   }
+
+  
+  #Finally check if the temporal limits are included in the DS temporal extent
+  #get item id form API base URL
+  item_id <- str_split(API_base_url, "/", simplify = TRUE)[5]
+  #Get extents of dataset
+  extents <- getExtents(item_id)
+  #Check if temporal limits are within dataset temporal extent
+  if(!is.null(dt_limits)){
+    dateStart <- str_split(dt_limits, "/", simplify = TRUE)[1]
+    dateEnd <- str_split(dt_limits, "/", simplify = TRUE)[2]
+    if(!checkPointsDate(dateStart, extents$dateMin, extents$dateMax) | !checkPointsDate(dateEnd, extents$dateMin, extents$dateMax)){
+      stop("ERROR: Temporal limits provided are not within dataset temporal extent")
+    }}
+  
   #If temporal limits provided, add to URL query
-  if(exists("dt_limits")){
+  if(!is.null(dt_limits)){
     query_list <- str_c("datetime=", dt_limits)
     }
   
@@ -342,7 +359,7 @@ connect_dms_dataset <- function(API_base_url, variable_name, start_time = NULL,
       lat_query <- sort(lat_limits)
     }
     
-    #If temporal limits provided, add to URL query
+    #If geographical limits provided, add to URL query
     if(exists("lon_query") & exists("lat_query")){
       box_lims <- paste(lon_query[1], lat_query[1], 
                         lon_query[2], lat_query[2], sep = ",")
@@ -356,6 +373,14 @@ connect_dms_dataset <- function(API_base_url, variable_name, start_time = NULL,
     }else if(!exists("lon_query") & exists("lat_query")){
       print("Longitudinal limits not provided, cannot apply a bounding box.")
     }}
+  
+    #Check if query geographical limits are inside dataset bbox
+    if(exists("lon_query") & exists("lat_query")){
+      #Check if query points are within dataset bbox
+
+      if(!checkPointsCoords(as.numeric(strsplit(box_lims, ",")[[1]]), extents$bbox)){
+        stop("Geographical limits provided are not within dataset bounding box")
+      }}
     
     #Add format
     if(is.null(query_list)){
@@ -366,7 +391,7 @@ connect_dms_dataset <- function(API_base_url, variable_name, start_time = NULL,
   
   #Get URL ready
   url <- str_c(url, query_list) 
-  
+
   #Get temporary file
   t_file <- tempfile("raster_dms_", fileext = ".nc")
   
@@ -382,10 +407,10 @@ connect_dms_dataset <- function(API_base_url, variable_name, start_time = NULL,
     req_auth_bearer_token(access_token) |> 
     #Download as temporary file
     req_perform(path = t_file)
+  message("Data downloaded successfully.")
   
   #Load temporary file as spat raster
-  brick <- rast(t_file)
-  
+  suppressWarnings({brick <- rast(t_file)})
   #Checking layers for variable of interest
   lyrs <- str_subset(names(brick), variable_name)
   if(length(lyrs) == 0){
@@ -503,6 +528,190 @@ ras_to_ts <- function(ras, fun, na.rm = F){
   return(list(time_series = ras_ts,
               max_monthly_ts = max_df))
 }
+
+
+
+#' Get Great Barrier Reef Marine Park Geometry
+#'
+#' This function retrieves the geometry of the Great Barrier Reef Marine Park from the GBRMPA dataset.
+#'
+#' @return A simple feature collection (sf object) representing the Marine Park geometry.
+#'
+#' @examples
+#' \dontrun{
+#'   marine_park_geometry <- getMP()
+#'   print(marine_park_geometry)
+#' }
+#'
+#' @import sf
+#' @import arrow
+#' @export
+getMP <- function(){
+  #Establishing connection
+  data_bucket <- s3_bucket("s3://gbr-dms-data-public/gbrmpa-marine-park-limits/data.parquet")
+  #Accessing dataset
+  data_df <- open_dataset(data_bucket)
+  #Extracting geometry
+  df <- data_df |> collect()
+  df <- df |> sf::st_as_sf(crs = 4326)
+  # MP <- data.frame(ID = "GBR Marine Park boundary", 
+  #                  geometry=st_make_valid((sf::st_as_sfc(structure(as.list(df$geometry), class = "WKB"), crs = 4326))))
+  return(df)
+}
+
+
+#' Get Great Barrier Reef Management Areas Geometry
+#'
+#' This function retrieves the geometry of the Great Barrier Reef Marine Park Management Areas from the GBRMPA dataset.
+#'
+#' @param area An optional string representing the name of the management area to retrieve. If \code{NULL}, all management areas are retrieved. Default is \code{NULL}.
+#'
+#' @return A simple feature collection (sf object) representing the geometry of the specified management area(s).
+#'
+#' @examples
+#' \dontrun{
+#'   # Retrieve all management areas
+#'   all_areas <- getGBRMA()
+#'   print(all_areas)
+#'
+#'   # Retrieve a specific management area
+#'   mackay_area <- getGBRMA("Mackay/Capricorn")
+#'   print(mackay_area)
+#' }
+#'
+#' @import sf
+#' @import arrow
+#' @export
+getGBRMA <- function(area=NULL){
+  areaNames = c("Mackay/Capricorn Management Area","Townsville/Whitsunday Management Area",
+                "Cairns/Cooktown Management Area","Far Northern Management Area")
+  #Establishing connection
+  data_bucket <- s3_bucket("s3://gbr-dms-data-public/gbrmpa-management-areas/data.parquet")
+  #Accessing dataset
+  data_df <- open_dataset(data_bucket)
+  if (!is.null(area)){
+    area <- tolower(area)
+    if (sum(grepl(area,tolower(areaNames)))==1){
+      name <- areaNames[which(grepl(area, tolower(areaNames)))]
+      df <- data_df |> filter(AREA_DESCR == name) |> collect()
+      df <- df |> sf::st_as_sf(crs = 4326)
+    }else if (sum(grepl(area,tolower(areaNames)))==0){
+      print("Area not found")
+      return(NULL)
+    }else if (sum(grepl(area,tolower(areaNames)))>1){
+      print("Multiple areas found")
+      return(NULL)
+    }
+  }else{
+    df <- data_df |> collect()
+    df <- df |> sf::st_as_sf(crs = 4326)
+    name <- df$AREA_DESCR
+  }
+
+  return(df)
+}
+
+
+
+#' Get the Extents of a Dataset
+#'
+#' This function retrieves the spatial and temporal extents of a dataset from a specified root URI.
+#'
+#' @param ds A string representing the dataset identifier.
+#' @param rootURI A string representing the root URI where the dataset is located. Default is "https://gbr-dms-data-public.s3.ap-southeast-2.amazonaws.com/".
+#'
+#' @return A list with the following components:
+#' \describe{
+#'   \item{bbox}{A numeric vector representing the bounding box of the dataset.}
+#'   \item{dateMin}{A string representing the start date of the dataset.}
+#'   \item{dateMax}{A string representing the end date of the dataset.}
+#' }
+#' If the extents file does not exist, the function returns an error message.
+#'
+#' @examples
+#' \dontrun{
+#'   extents <- getExtents("example-dataset")
+#'   print(extents$bbox)
+#'   print(extents$dateMin)
+#'   print(extents$dateMax)
+#' }
+#'
+#' @import jsonlite
+#' @export
+getExtents <- function(ds, rootURI="https://gbr-dms-data-public.s3.ap-southeast-2.amazonaws.com/"){ 
+  require(jsonlite)
+  
+  tryCatch({
+    # Get the extents of the dataset
+    extents <- fromJSON(paste0(rootURI, ds, "/datapackage.json"))
+  }, error = function(e){
+    # If the extents file does not exist, return an error message
+    return("Error: extents file does not exist. Check item identifier.")
+  })
+  bbox <- extents$spatial$bbox
+  dateMin <- extents$temporal$start_datetime
+  dateMax <- extents$temporal$end_datetime
+  return(list(bbox=bbox, dateMin=dateMin, dateMax=dateMax))
+}
+
+
+#' Check if Query Points are Within Dataset Bounding Box
+#'
+#' This function checks if the given query points are within the specified dataset bounding box.
+#'
+#' @param Qpoints A numeric vector representing the query point coordinates (x, y).
+#' @param Dbbox A numeric vector representing the dataset bounding box coordinates (x1, y1, x2, y2).
+#'
+#' @return A logical value: \code{TRUE} if the query points are within the dataset bounding box, \code{FALSE} otherwise.
+#'
+#' @examples
+#' \dontrun{
+#'   Qpoints <- c(150, -35)
+#'   Dbbox <- c(145, -40, 155, -30)
+#'   isWithin <- checkPointsCoords(Qpoints, Dbbox)
+#'   print(isWithin)  # Should return TRUE or FALSE
+#' }
+#'
+#' @export
+checkPointsCoords <- function(Qpoints, Dbbox){
+  if(Qpoints[1] >= Dbbox[1] & Qpoints[3] <= Dbbox[3] & Qpoints[2] >= Dbbox[2] & Qpoints[4] <= Dbbox[4]){
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
+}
+
+
+
+#' Check if Query Date is Within Dataset Date Range
+#'
+#' This function checks if the given query date is within the specified dataset date range.
+#'
+#' @param Qdate A Date object representing the query date.
+#' @param DdateMin A Date object representing the dataset start date.
+#' @param DdateMax A Date object representing the dataset end date.
+#'
+#' @return A logical value: \code{TRUE} if the query date is within the dataset date range, \code{FALSE} otherwise.
+#'
+#' @examples
+#' \dontrun{
+#'   Qdate <- as.Date("2023-07-01")
+#'   DdateMin <- as.Date("2023-01-01")
+#'   DdateMax <- as.Date("2023-12-31")
+#'   isWithin <- checkPointsDate(Qdate, DdateMin, DdateMax)
+#'   print(isWithin)  # Should return TRUE or FALSE
+#' }
+#'
+#' @export
+checkPointsDate <- function(Qdate, DdateMin, DdateMax){
+  if(Qdate >= DdateMin & Qdate <= DdateMax){
+    return(TRUE)
+  } else {
+    return(FALSE)
+  }
+}
+
+
 
 
 
