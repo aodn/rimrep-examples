@@ -1,6 +1,6 @@
 SST climatologies
 ================
-E Klein
+DMS team
 2024-05-25
 
 - [Goal of this notebook](#goal-of-this-notebook)
@@ -54,7 +54,7 @@ library(tidyr)
 
 This dataset is a monthly climatology of Sea Surface Temperature (SST)
 from NOAA Coral Reef Watch (CRW). The data is available at 0.05 degree
-resolution and covers the period 1985-2019. It contains the expect SST
+resolution and covers the period 1985-2019. It contains the expected SST
 for each month of the year and the Maximum Monthly Mean (MMM).
 
 ## Connecting to RIMREP collection via API
@@ -62,7 +62,7 @@ for each month of the year and the Maximum Monthly Mean (MMM).
 From the STAC catalogue item for the [NOAA CRW SST
 Climatology](https://stac.reefdata.io/browser/collections/noaa-crw/items/noaa-crw-climatology),
 we can get the link to the API from the *Additional Resources* section
-of the page on the left under the map.
+of the page under the map.
 
 **Note:** Before running the code chunk below, make sure you either have
 store your user credentials as environmental variables, or have this
@@ -106,6 +106,10 @@ mmm_gbr <- connect_dms_dataset(base_url, variable_name,
     ## Checking if 'CLIENT_SECRET' variable exists.
 
     ## Access token retrieved successfully.
+
+    ## Loading required package: jsonlite
+
+    ## Data downloaded successfully.
 
 ## Plotting the climatology for the GBR region
 
@@ -189,26 +193,14 @@ jb_sst <- connect_dms_dataset(base_url, "sst_climatology", variable_name = var_n
 
     ## Access token retrieved successfully.
 
-    ## Warning in new_CppObject_xp(fields$.module, fields$.pointer, ...): GDAL Message
-    ## 1: 1-pixel width/height files not supported, xdim: 2 ydim: 1
-
-    ## Warning in new_CppObject_xp(fields$.module, fields$.pointer, ...): GDAL Message
-    ## 1: 1-pixel width/height files not supported, xdim: 2 ydim: 1
-
-    ## Warning in min(rs): no non-missing arguments to min; returning Inf
-
-    ## Warning in max(rs): no non-missing arguments to max; returning -Inf
-
-    ## Warning in min(rs): no non-missing arguments to min; returning Inf
-
-    ## Warning: [rast] cells are not equally spaced; extent is not defined
+    ## Data downloaded successfully.
 
 ``` r
 #As the result includes two cells, let's take the average of the cells for each date
 jb_sst_mean <- global(jb_sst, mean, na.rm = T)
 ```
 
-    ## Warning in x@cpp$mglobal(txtfun, na.rm, opt): GDAL Message 1: 1-pixel
+    ## Warning in x@ptr$mglobal(txtfun, na.rm, opt): GDAL Message 1: 1-pixel
     ## width/height files not supported, xdim: 2 ydim: 1
 
 ``` r
@@ -255,6 +247,8 @@ sstaars_gbr <- connect_dms_dataset(base_url, variable_name,
     ## Checking if 'CLIENT_SECRET' variable exists.
 
     ## Access token retrieved successfully.
+
+    ## Data downloaded successfully.
 
 As we asked for a polygon that contains many pixels corresponding to the
 1km SSTAARS grid, we will take the mean of the values.

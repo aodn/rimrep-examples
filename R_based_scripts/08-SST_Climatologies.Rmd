@@ -1,6 +1,6 @@
 ---
 title: "SST climatologies"
-author: "E Klein"
+author: "DMS team"
 date: "2024-05-25"
 output: 
   github_document:
@@ -21,7 +21,7 @@ Note that the methodology behind each of the climatologies are very different, s
 
 # Load libraries
 
-``````{r, message = F, warning = F, message = F}
+```{r, message = F, warning = F, message = F}
 #Loading useful_functions script
 source("useful_functions.R")
 #Gridded data
@@ -38,12 +38,12 @@ library(tidyr)
 
 # NOAA SST climatology
 
-This dataset is a monthly climatology of Sea Surface Temperature (SST) from NOAA Coral Reef Watch (CRW). The data is available at 0.05 degree resolution and covers the period 1985-2019. It contains the expect SST for each month of the year and the Maximum Monthly Mean (MMM). 
+This dataset is a monthly climatology of Sea Surface Temperature (SST) from NOAA Coral Reef Watch (CRW). The data is available at 0.05 degree resolution and covers the period 1985-2019. It contains the expected SST for each month of the year and the Maximum Monthly Mean (MMM). 
 
 
 ## Connecting to RIMREP collection via API
 
-From the STAC catalogue item for the [NOAA CRW SST Climatology](https://stac.reefdata.io/browser/collections/noaa-crw/items/noaa-crw-climatology), we can get the link to the API from the *Additional Resources* section of the page on the left under the map.  
+From the STAC catalogue item for the [NOAA CRW SST Climatology](https://stac.reefdata.io/browser/collections/noaa-crw/items/noaa-crw-climatology), we can get the link to the API from the *Additional Resources* section of the page under the map.  
   
 **Note:** Before running the code chunk below, make sure you either have store your user credentials as environmental variables, or have this information with you to input in the `connect_dms_dataset` function below. Alternatively, if you already have an access token, you can provide this as an input in the `connect_dms_dataset` function. Refer to **The data API** subsection under **How to use DMS services and data** in the [README page](https://github.com/aodn/rimrep-training/blob/main/CoTS-training-Jan2024/README.md) for more information.  
   
