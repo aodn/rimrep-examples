@@ -285,6 +285,8 @@ connect_dms_dataset <- function(API_base_url, variable_name, start_time = NULL,
       dt_limits <- paste(start_time, end_time, sep = "/")
     }else{
       stop("'start_time' cannot be later than or equal to 'end_time'")}
+  }else{
+    dt_limits <- NULL
   }
 
   
@@ -302,7 +304,7 @@ connect_dms_dataset <- function(API_base_url, variable_name, start_time = NULL,
     }}
   
   #If temporal limits provided, add to URL query
-  if(exists("dt_limits")){
+  if(!is.null(dt_limits)){
     query_list <- str_c("datetime=", dt_limits)
     }
   
@@ -375,7 +377,8 @@ connect_dms_dataset <- function(API_base_url, variable_name, start_time = NULL,
     #Check if query geographical limits are inside dataset bbox
     if(exists("lon_query") & exists("lat_query")){
       #Check if query points are within dataset bbox
-      if(!checkPointsCoords(box_lims, extents$bbox)){
+
+      if(!checkPointsCoords(as.numeric(strsplit(box_lims, ",")[[1]]), extents$bbox)){
         stop("Geographical limits provided are not within dataset bounding box")
       }}
     
@@ -388,7 +391,7 @@ connect_dms_dataset <- function(API_base_url, variable_name, start_time = NULL,
   
   #Get URL ready
   url <- str_c(url, query_list) 
-  
+
   #Get temporary file
   t_file <- tempfile("raster_dms_", fileext = ".nc")
   
@@ -407,8 +410,7 @@ connect_dms_dataset <- function(API_base_url, variable_name, start_time = NULL,
   message("Data downloaded successfully.")
   
   #Load temporary file as spat raster
-  brick <- rast(t_file)
-  
+  suppressWarnings({brick <- rast(t_file)})
   #Checking layers for variable of interest
   lyrs <- str_subset(names(brick), variable_name)
   if(length(lyrs) == 0){
@@ -672,7 +674,7 @@ getExtents <- function(ds, rootURI="https://gbr-dms-data-public.s3.ap-southeast-
 #'
 #' @export
 checkPointsCoords <- function(Qpoints, Dbbox){
-  if(Qpoints[1] >= Dbbox[1] & Qpoints[1] <= Dbbox[3] & Qpoints[2] >= Dbbox[2] & Qpoints[2] <= Dbbox[4]){
+  if(Qpoints[1] >= Dbbox[1] & Qpoints[3] <= Dbbox[3] & Qpoints[2] >= Dbbox[2] & Qpoints[4] <= Dbbox[4]){
     return(TRUE)
   } else {
     return(FALSE)
