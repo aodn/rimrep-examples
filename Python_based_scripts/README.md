@@ -25,3 +25,9 @@ This notebook shows basic use of our metadata API using a Python library PySTAC-
 
 ## 08-getZonalStatistics_perReef  
 This notebook demonstrates how to extract zonal statistics from a raster (Zarr) dataset using the "Complete GBR Features" dataset. If the raster files contains more than one layer (time) the zonal statistics will be calculated for each layer.
+
+## 09-bom-reeftemp-sst
+This notebook demonstrates how to access and analyze sea surface temperature (SST) data from the ZARR dataset of [BOM - ReefTemp Sea Surface Temperature](https://stac.reefdata.io/browser/collections/bom-reeftemp/items/bom-reeftemp-sst). The notebook provides the methods to plot SST related variables and high-resolution SST data for the Great Barrier Reef, which can be used to monitor and assess the thermal stress on coral reefs.
+
+## 10-bom-reeftemp-dhd
+This notebook demonstrates how to access and analyze degree heating days (DHD) data from the ZARR dataset of [BOM - ReefTemp Degree Heating Days](https://stac.reefdata.io/browser/collections/bom-reeftemp/items/bom-reeftemp-dhd). It also showed functions to plot `timedalta64` type variables and other general variables from ZARR. The dataset provides high-resolution DHD data for the Great Barrier Reef, which can be used to monitor and assess the thermal stress on coral reefs.
